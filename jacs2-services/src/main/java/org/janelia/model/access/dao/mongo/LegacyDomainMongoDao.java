@@ -540,7 +540,7 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     public Node addChildren(String subjectKey, Node treeNodeArg, Collection<Reference> references) throws Exception {
         Node updatedNode = dao.addChildren(subjectKey, treeNodeArg, references);
         domainObjectIndexer.updateDocsAncestors(
-                references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
+                references.stream().map(Reference::getTargetId).collect(Collectors.toSet()),
                 updatedNode.getId());
         return updatedNode;
     }
@@ -549,7 +549,7 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     public Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references, Integer index) throws Exception {
         Node updatedNode = dao.addChildren(subjectKey, nodeArg, references, index);
         domainObjectIndexer.updateDocsAncestors(
-                references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
+                references.stream().map(Reference::getTargetId).collect(Collectors.toSet()),
                 updatedNode.getId());
         return updatedNode;
     }

@@ -29,7 +29,7 @@ public class MonitoredJobManager {
                                @PropertyValue(name = "service.cluster.checkIntervalInSeconds") int checkIntervalInSeconds) {
         LOG.info("Creating monitored job manager");
         this.jobMgr = jobMgrProvider.get();
-        this.monitor = new JobMonitor(jobMgr, checkIntervalInSeconds);
+        this.monitor = new JobMonitor(jobMgr, checkIntervalInSeconds, false);
     }
 
     @PostConstruct
