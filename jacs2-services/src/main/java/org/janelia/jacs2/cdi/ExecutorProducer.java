@@ -14,8 +14,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
-import org.janelia.jacs2.cdi.qualifier.JacsTask;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.slf4j.Logger;
 
@@ -37,23 +35,6 @@ public class ExecutorProducer {
 
     public void shutdownExecutor(@Disposes @JacsDefault ExecutorService executorService) throws InterruptedException {
         logger.info("Shutting down JACS service executor: {}", executorService);
-        executorService.shutdown();
-        executorService.awaitTermination(10, TimeUnit.MINUTES);
-    }
-
-    @ApplicationScoped
-    @Produces
-    @JacsTask
-    public ExecutorService createTaskExecutorService(@IntPropertyValue(name = "service.task.poolSize", defaultValue = 20) Integer taskPoolSize) {
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("JACS-TASK-%03d")
-                .setDaemon(true)
-                .build();
-        return Executors.newFixedThreadPool(taskPoolSize, threadFactory);
-    }
-
-    public void shutdownTaskExecutor(@Disposes @JacsTask ExecutorService executorService) throws InterruptedException {
-        logger.info("Shutting down task executor: {}", executorService);
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);
     }

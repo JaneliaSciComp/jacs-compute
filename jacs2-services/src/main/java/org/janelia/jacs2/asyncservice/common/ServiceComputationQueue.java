@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.janelia.jacs2.cdi.qualifier.JacsTask;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 
@@ -38,7 +38,7 @@ public class ServiceComputationQueue {
     }
 
     @Inject
-    public ServiceComputationQueue(@JacsTask ExecutorService taskExecutor,
+    public ServiceComputationQueue(@JacsDefault ExecutorService taskExecutor,
                                    @PropertyValue(name = "service.taskQueue.InitialDelayInMillis") int initialDelay,
                                    @PropertyValue(name = "service.taskQueue.PeriodInMillis") int period,
                                    @PropertyValue(name = "service.taskQueue.ThreadPoolSize") int taskQueuePoolSize,

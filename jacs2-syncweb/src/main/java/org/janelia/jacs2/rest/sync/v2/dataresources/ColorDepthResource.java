@@ -1,10 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,8 +41,9 @@ import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithSampleBuilder;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithNeuronsBuilder;
 import org.janelia.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -265,7 +262,14 @@ public class ColorDepthResource {
                                     cdmList,
                                     retrieveSamplesByRefs(cdmList.stream()
                                             .map(ColorDepthImage::getSampleRef)
-                                            .filter(Objects::nonNull).distinct().collect(Collectors.toList())))) {})
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toSet())),
+                                    retrieveEMBodiesByRefs(cdmList.stream()
+                                                    .map(ColorDepthImage::getEmBodyRef)
+                                                    .filter(Objects::nonNull)
+                                                    .collect(Collectors.toSet())
+                                            )
+                            )) {})
                     .build()
                     ;
         } finally {
@@ -273,7 +277,7 @@ public class ColorDepthResource {
         }
     }
 
-    private Map<Reference, Sample> retrieveSamplesByRefs(List<Reference> sampleRefs) {
+    private Map<Reference, Sample> retrieveSamplesByRefs(Set<Reference> sampleRefs) {
         long start = System.currentTimeMillis();
         try {
             return referenceDao.findByReferences(sampleRefs).stream()
@@ -285,14 +289,31 @@ public class ColorDepthResource {
             long end = System.currentTimeMillis();
             LOG.debug("Retrieve samples from refs in {}ms", end - start);
         }
-
     }
 
-    private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList, Map<Reference, Sample> samplesIndexedByRef) {
+    private Map<Reference, EMBody> retrieveEMBodiesByRefs(Set<Reference> bodyRefs) {
+        long start = System.currentTimeMillis();
+        try {
+            return referenceDao.findByReferences(bodyRefs).stream()
+                    .map(d -> (EMBody) d)
+                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
+                    ;
+        } finally {
+            long end = System.currentTimeMillis();
+            LOG.debug("Retrieve bodies from refs in {}ms", end - start);
+        }
+    }
+
+    private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList,
+                                                    Map<Reference, Sample> samplesIndexedByRef,
+                                                    Map<Reference, EMBody> emBodiesIndexedByRef) {
         long start = System.currentTimeMillis();
         try {
             return cdmList.stream()
-                    .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samplesIndexedByRef.get(cdmip.getSampleRef())).build())
+                    .map(cdmip -> new ColorDepthImageWithNeuronsBuilder(cdmip)
+                            .withLMSample(samplesIndexedByRef.get(cdmip.getSampleRef()))
+                            .withEMBody(emBodiesIndexedByRef.get(cdmip.getEmBodyRef()))
+                            .build())
                     .collect(Collectors.toList())
                     ;
         } finally {
