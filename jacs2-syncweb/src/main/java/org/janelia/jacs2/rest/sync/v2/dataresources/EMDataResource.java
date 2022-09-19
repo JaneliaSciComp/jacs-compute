@@ -1,9 +1,32 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import com.google.common.base.Splitter;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -13,21 +36,8 @@ import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
-import org.janelia.model.domain.sample.PublishedImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -49,19 +59,6 @@ import java.util.stream.Collectors;
 @Path("/emdata")
 public class EMDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(EMDataResource.class);
-
-    public static class EmBodyWithDataSet {
-        @JsonProperty
-        final EMDataSet emDataSet;
-
-        @JsonProperty  @JsonUnwrapped
-        final EMBody emBody;
-
-        EmBodyWithDataSet(EMDataSet emDataSet, EMBody emBody) {
-            this.emDataSet = emDataSet;
-            this.emBody = emBody;
-        }
-    }
 
     @Inject
     private EmBodyDao emBodyDao;
@@ -132,12 +129,12 @@ public class EMDataResource {
             Map<Reference, EMDataSet> indexedDataSets = emDataSetDao.findByIds(emDataSetIds).stream()
                     .collect(Collectors.toMap(Reference::createFor, emds -> emds));
 
-            List<EmBodyWithDataSet> emBodyListResult = emBodyList.stream()
-                    .map(emb -> new EmBodyWithDataSet(indexedDataSets.get(emb.getDataSetRef()), emb))
+            List<EMBody> emBodyListResult = emBodyList.stream()
+                    .peek(emb -> emb.setEmDataSet(indexedDataSets.get(emb.getDataSetRef())))
                     .collect(Collectors.toList());
 
             return Response
-                    .ok(new GenericEntity<List<EmBodyWithDataSet>>(emBodyListResult){})
+                    .ok(new GenericEntity<List<EMBody>>(emBodyListResult){})
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting EM bodies for {}", refs, e);

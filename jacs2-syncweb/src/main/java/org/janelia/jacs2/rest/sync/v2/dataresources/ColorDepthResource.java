@@ -1,6 +1,12 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,7 +27,6 @@ import javax.ws.rs.core.Response;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -40,8 +45,10 @@ import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.dao.SampleDao;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.flyem.EMBody;
+import org.janelia.model.domain.flyem.EMDataSet;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithNeuronsBuilder;
 import org.janelia.model.domain.sample.Sample;
@@ -256,20 +263,32 @@ public class ColorDepthResource {
                             .withLength(length)
             ).collect(Collectors.toList());
             LOG.info("Retrieved {} CDMs after {}ms", cdmList.size(), System.currentTimeMillis() - start);
+            Map<Reference, Sample> indexedCDMIPSamples = retrieveDomainObjectsByRefs(
+                    cdmList.stream()
+                            .map(ColorDepthImage::getSampleRef)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet()),
+                    s -> s.setObjectiveSamples(Collections.emptyList())); // clean up objective samples to reduce the bandwidth
+
+            Map<Reference, EMBody> indexedCDMIPBodies = retrieveDomainObjectsByRefs(
+                    cdmList.stream()
+                            .map(ColorDepthImage::getEmBodyRef)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet()),
+                    emb -> {});
+            Map<Reference, EMDataSet> indexedEMDataSets = retrieveDomainObjectsByRefs(
+                    indexedCDMIPBodies.values().stream()
+                            .map(EMBody::getDataSetRef)
+                            .collect(Collectors.toSet()),
+                    emds -> {});
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(
                             updateCDMIPSample(
                                     cdmList,
-                                    retrieveSamplesByRefs(cdmList.stream()
-                                            .map(ColorDepthImage::getSampleRef)
-                                            .filter(Objects::nonNull)
-                                            .collect(Collectors.toSet())),
-                                    retrieveEMBodiesByRefs(cdmList.stream()
-                                                    .map(ColorDepthImage::getEmBodyRef)
-                                                    .filter(Objects::nonNull)
-                                                    .collect(Collectors.toSet())
-                                            )
-                            )) {})
+                                    indexedCDMIPSamples,
+                                    indexedCDMIPBodies,
+                                    indexedEMDataSets)) {
+                    })
                     .build()
                     ;
         } finally {
@@ -277,38 +296,34 @@ public class ColorDepthResource {
         }
     }
 
-    private Map<Reference, Sample> retrieveSamplesByRefs(Set<Reference> sampleRefs) {
+    @SuppressWarnings("unchecked")
+    private <T extends DomainObject> Map<Reference, T> retrieveDomainObjectsByRefs(Set<Reference> refs,
+                                                                                   Consumer<T> domainObjectConsumer) {
         long start = System.currentTimeMillis();
         try {
-            return referenceDao.findByReferences(sampleRefs).stream()
-                    .map(d -> (Sample) d)
-                    .peek(s -> s.setObjectiveSamples(Collections.emptyList())) // clean up objective samples to reduce the bandwidth
-                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
-                    ;
+            if (CollectionUtils.isEmpty(refs)) {
+                return Collections.emptyMap();
+            } else {
+                return referenceDao.findByReferences(refs).stream()
+                        .map(d -> (T) d)
+                        .peek(domainObjectConsumer)
+                        .collect(Collectors.toMap(Reference::createFor, Function.identity()))
+                        ;
+            }
         } finally {
             long end = System.currentTimeMillis();
-            LOG.debug("Retrieve samples from refs in {}ms", end - start);
-        }
-    }
-
-    private Map<Reference, EMBody> retrieveEMBodiesByRefs(Set<Reference> bodyRefs) {
-        long start = System.currentTimeMillis();
-        try {
-            return referenceDao.findByReferences(bodyRefs).stream()
-                    .map(d -> (EMBody) d)
-                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
-                    ;
-        } finally {
-            long end = System.currentTimeMillis();
-            LOG.debug("Retrieve bodies from refs in {}ms", end - start);
+            LOG.debug("Retrieve data from refs in {}ms", end - start);
         }
     }
 
     private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList,
                                                     Map<Reference, Sample> samplesIndexedByRef,
-                                                    Map<Reference, EMBody> emBodiesIndexedByRef) {
+                                                    Map<Reference, EMBody> emBodiesIndexedByRef,
+                                                    Map<Reference, EMDataSet> emDataSetsIndexedByRef) {
         long start = System.currentTimeMillis();
         try {
+            // fill in dataset info
+            emBodiesIndexedByRef.forEach((ref, emBody) -> emBody.setEmDataSet(emDataSetsIndexedByRef.get(emBody.getDataSetRef())));
             return cdmList.stream()
                     .map(cdmip -> new ColorDepthImageWithNeuronsBuilder(cdmip)
                             .withLMSample(samplesIndexedByRef.get(cdmip.getSampleRef()))
