@@ -1,8 +1,8 @@
 package org.janelia.jacs2.asyncservice.files;
 
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacsstorage.newclient.JadeStorageService;
-import org.janelia.jacsstorage.newclient.StorageObject;
+import org.janelia.jacsstorage.clients.api.JadeStorageService;
+import org.janelia.jacsstorage.clients.api.StorageObject;
 import org.janelia.model.access.domain.dao.NDContainerDao;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.files.N5Container;

@@ -7,6 +7,7 @@ import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 
 import java.nio.file.Paths;
 
+@Deprecated
 public class StorageContentInfo {
     @JsonProperty
     private StorageEntryInfo remoteInfo;

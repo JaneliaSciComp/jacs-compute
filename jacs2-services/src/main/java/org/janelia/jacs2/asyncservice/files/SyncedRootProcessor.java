@@ -7,7 +7,7 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacsstorage.newclient.*;
+import org.janelia.jacsstorage.clients.api.*;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.domain.DomainObject;
@@ -51,7 +51,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
     }
 
     private final ExecutorService executorService;
-    private final StorageService storageService;
+    private final String masterStorageServiceURL;
+    private final String storageServiceApiKey;
     private final Instance<FileDiscoveryAgent<?>> agentSource;
     private final SyncedRootDao syncedRootDao;
     private final LegacyDomainDao legacyDomainDao;
@@ -69,7 +70,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                                Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.executorService = executorService;
-        this.storageService = new StorageService(masterStorageServiceURL, storageServiceApiKey);
+        this.masterStorageServiceURL = masterStorageServiceURL;
+        this.storageServiceApiKey = storageServiceApiKey;
         this.agentSource = agentSource;
         this.syncedRootDao = syncedRootDao;
         this.legacyDomainDao = legacyDomainDao;
@@ -104,8 +106,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
         logger.info("Starting refresh for {}", syncedRoot);
 
-        JadeStorageService jadeStorage = new JadeStorageService(
-                storageService, syncedRoot.getOwnerKey(), authToken);
+        JadeStorageService jadeStorage = new JadeStorageService(masterStorageServiceURL, storageServiceApiKey, syncedRoot.getOwnerKey(), authToken);
 
         StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(syncedRoot.getFilepath());
         if (storageLocation == null) {

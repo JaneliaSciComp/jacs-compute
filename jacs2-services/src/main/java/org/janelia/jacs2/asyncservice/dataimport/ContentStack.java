@@ -7,6 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class ContentStack {
     private Number dataNodeId;
     private final StorageContentInfo mainRep; // main content representation

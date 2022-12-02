@@ -9,8 +9,8 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.jacsstorage.newclient.JadeStorageService;
-import org.janelia.jacsstorage.newclient.StorageLocation;
+import org.janelia.jacsstorage.clients.api.JadeStorageService;
+import org.janelia.jacsstorage.clients.api.StorageLocation;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.IdGenerator;
@@ -47,7 +47,6 @@ public class SWCService {
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);
 
     private final StorageService storageService;
-    private final org.janelia.jacsstorage.newclient.StorageService newStorageService;
     private final LegacyDomainDao domainDao;
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
@@ -58,6 +57,8 @@ public class SWCService {
     private final Path defaultSWCLocation;
     private final IdGenerator<Long> neuronIdGenerator;
     private final ExecutorService executorService;
+    private final String masterStorageServiceURL;
+    private final String storageServiceApiKey;
 
     @Inject
     public SWCService(StorageService storageService,
@@ -74,7 +75,8 @@ public class SWCService {
                       @PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
                       @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
         this.storageService = storageService;
-        this.newStorageService = new org.janelia.jacsstorage.newclient.StorageService(masterStorageServiceURL, storageServiceApiKey);
+        this.masterStorageServiceURL = masterStorageServiceURL;
+        this.storageServiceApiKey = storageServiceApiKey;
         this.domainDao = domainDao;
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
@@ -284,7 +286,7 @@ public class SWCService {
         Path swcPath = Paths.get(swcFilepath);
         String swcFilename = swcPath.getFileName().toString();
 
-        JadeStorageService jadeStorage = new JadeStorageService(newStorageService, null, null);
+        JadeStorageService jadeStorage = new JadeStorageService(masterStorageServiceURL, storageServiceApiKey, null, null);
 
         StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(swcFilepath);
         if (storageLocation == null) {

@@ -1,8 +1,8 @@
 package org.janelia.jacs2.asyncservice.files;
 
-import org.janelia.jacsstorage.newclient.JadeStorageService;
-import org.janelia.jacsstorage.newclient.StorageObject;
-import org.janelia.jacsstorage.newclient.StorageObjectNotFoundException;
+import org.janelia.jacsstorage.clients.api.JadeStorageService;
+import org.janelia.jacsstorage.clients.api.StorageObject;
+import org.janelia.jacsstorage.clients.api.StorageObjectNotFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;

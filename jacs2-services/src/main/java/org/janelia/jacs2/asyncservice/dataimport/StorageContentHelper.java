@@ -20,7 +20,10 @@ import java.util.stream.Stream;
 
 /**
  * Helper class for downloading/uploading content to JADE.
+ *
+ * @deprecated use org.janelia.jacsstorage.clients.api.JadeStorageService
  */
+@Deprecated
 public class StorageContentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
