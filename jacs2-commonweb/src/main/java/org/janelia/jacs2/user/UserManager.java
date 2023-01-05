@@ -41,7 +41,6 @@ public class UserManager {
     private WorkspaceNodeDao workspaceNodeDao;
     private ComputeAccounting computeAccounting;
     private EmailNotificationService emailNotificationService;
-    private WorkstationMailingList workstationMailingList;
     private String defaultWorkingDir;
     private String defaultReadGroups;
     private boolean newUserFileStoreCreation;
@@ -63,7 +62,6 @@ public class UserManager {
         this.workspaceNodeDao = workspaceNodeDao;
         this.computeAccounting = computeAccounting;
         this.emailNotificationService = emailNotificationService;
-        this.workstationMailingList = workstationMailingList;
         this.defaultWorkingDir = defaultWorkingDir;
         this.defaultReadGroups = defaultReadGroups;
         this.newUserFileStoreCreation = newUserFileStoreCreation;
@@ -178,18 +176,6 @@ public class UserManager {
                 }
             }
 
-            if (StringUtils.isBlank(user.getEmail())) {
-                log.warn("User has no email defined in LDAP, so they cannot be subscribed to the mailing list: {}", user.getKey());
-            }
-            else {
-                try {
-                    workstationMailingList.subscribe(user.getEmail(), user.getFullName());
-                }
-                catch (Exception e) {
-                    log.warn("Error subscribing user to mailing list: {}", user.getKey(), e);
-                }
-            }
-
         }
         catch (Exception e) {
             log.error("Error configuring user. Rolling back user creation for {}", username, e);
@@ -222,7 +208,7 @@ public class UserManager {
             workspaceNodeDao.createDefaultWorkspace(group.getKey());
         }
         catch (Exception e) {
-            log.error("Error configuring group", groupName, e);
+            log.error("Error configuring group: {}", groupName, e);
             return null;
         }
 
