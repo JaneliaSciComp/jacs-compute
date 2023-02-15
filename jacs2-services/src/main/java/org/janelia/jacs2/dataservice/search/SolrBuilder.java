@@ -76,6 +76,7 @@ public class SolrBuilder {
                     return new ConcurrentUpdateSolrClient.Builder(solrURL)
                             .withQueueSize(queueSize)
                             .withThreadCount(threadCount)
+                            .alwaysStreamDeletes()
                             .build();
                 } catch (Exception e) {
                     LOG.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params - queueSize: {}, threadCount: {}",

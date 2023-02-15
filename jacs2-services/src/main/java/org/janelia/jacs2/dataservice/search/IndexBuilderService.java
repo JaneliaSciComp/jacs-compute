@@ -118,13 +118,13 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private Pair<Class<? extends DomainObject>, Integer> indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass, Map<String, String> mdcContextMap) {
         MDC.setContextMap(mdcContextMap);
         MDC.put("serviceName", domainClass.getSimpleName());
-        Stopwatch stopwatch = Stopwatch.createStarted();
+        long started = System.currentTimeMillis();
         try {
             LOG.info("Begin indexing objects of type {}", domainClass.getName());
             int indexedDocs = domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
             return ImmutablePair.of(domainClass, indexedDocs);
         } finally {
-            LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), stopwatch.elapsed(TimeUnit.SECONDS));
+            LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);
             MDC.remove("serviceName");
         }
     }
