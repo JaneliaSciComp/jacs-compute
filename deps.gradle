@@ -93,7 +93,7 @@ dependencies {
         CRON_UTILS_LIB = "com.cronutils:cron-utils:9.2.0"
 
         // search
-        SOLR_VERSION = "3.6.2"
+        SOLR_VERSION = "8.11.2"
         SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
         HTTP_COMPONENTS_VERSION = "4.5.6"
         HTTP_CLIENT_LIB = "org.apache.httpcomponents:httpclient:${HTTP_COMPONENTS_VERSION}"
@@ -101,7 +101,7 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.2.0"
-        JACS_MODEL_VERSION = "2.68.0"
+        JACS_MODEL_VERSION = "2.69.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"

@@ -7,7 +7,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.search.DomainObjectIndexerProvider;
@@ -38,12 +38,12 @@ public class IndexingProducer {
     }
 
     @Produces
-    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForRealTimeIndexing(
+    public DomainObjectIndexerProvider<SolrClient> createIndexerProviderForRealTimeIndexing(
             Instance<NodeDao<? extends Node>> nodeDaosProvider,
             DomainAnnotationGetter nodeAnnotationGetter,
             DomainObjectGetter objectGetter,
             @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize) {
-        return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
+        return (SolrClient solrClient) -> new SolrBasedDomainObjectIndexer(solrClient,
                 nodeDaosProvider.stream()
                         .map(nodeDao -> new AllNodeAncestorsGetterImpl<>(new DirectNodeAncestorsGetterImpl<>(nodeDao)))
                         .collect(Collectors.toList()),
@@ -65,12 +65,12 @@ public class IndexingProducer {
      */
     @WithCache
     @Produces
-    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(
+    public DomainObjectIndexerProvider<SolrClient> createIndexerProviderForIndexRebuild(
             Instance<NodeDao<? extends Node>> nodeDaosProvider,
             @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
             DomainObjectGetter objectGetter,
             @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize) {
-        return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
+        return (SolrClient solrClient) -> new SolrBasedDomainObjectIndexer(solrClient,
                 nodeDaosProvider.stream()
                         .map(CachedAllNodeAncestorsGetterImpl::new)
                         .collect(Collectors.toList()),
@@ -83,7 +83,7 @@ public class IndexingProducer {
     @Produces
     public DocumentIndexingService createDocumentIndexService(LegacyDomainDao legacyDomainDao,
                                                               SolrConfig solrConfig,
-                                                              DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+                                                              DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
         return new DocumentIndexingService(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 
@@ -91,7 +91,7 @@ public class IndexingProducer {
     @Produces
     public DocumentIndexingService createDocumentIndexServiceWithCachedData(LegacyDomainDao legacyDomainDao,
                                                                             SolrConfig solrConfig,
-                                                                            @WithCache DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+                                                                            @WithCache DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
         return new DocumentIndexingService(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 

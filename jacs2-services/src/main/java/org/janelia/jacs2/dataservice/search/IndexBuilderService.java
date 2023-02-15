@@ -1,6 +1,5 @@
 package org.janelia.jacs2.dataservice.search;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,10 +9,9 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 
 import com.google.common.base.Stopwatch;
-
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.model.access.cdi.WithCache;
@@ -39,7 +37,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     @Inject
     IndexBuilderService(LegacyDomainDao legacyDomainDao,
                         SolrConfig solrConfig,
-                        @WithCache DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+                        @WithCache DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
         super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 
@@ -84,11 +82,11 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private Map<Class<? extends DomainObject>, Integer> execIndexAllDocuments(boolean clearIndex, Predicate<Class<?>> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
-        SolrServer solrServer = createSolrBuilder()
+        SolrClient solrClient = createSolrBuilder()
                 .setSolrCore(solrRebuildCore)
                 .setConcurrentUpdate(true)
                 .build();
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(solrServer);
+        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(solrClient);
         if (clearIndex) {
             domainObjectIndexer.removeIndex();
         }
@@ -111,7 +109,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                         });
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
-        optimize(solrServer);
+        optimize(solrClient);
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
         LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));
         return result;
@@ -134,12 +132,12 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private void swapCores(String currentCoreName, String otherCoreName) {
         try {
             LOG.info("Swapping SOLR core {} with {}", currentCoreName, otherCoreName);
-            SolrServer adminSolrServer = createSolrBuilder().build();
+            SolrClient adminSolrClient = createSolrBuilder().build();
             CoreAdminRequest car = new CoreAdminRequest();
             car.setCoreName(currentCoreName);
             car.setOtherCoreName(otherCoreName);
             car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
-            car.process(adminSolrServer);
+            car.process(adminSolrClient);
             LOG.info("Swapped core {} with {}", currentCoreName, otherCoreName);
         } catch (Exception e) {
             LOG.error("Error while trying to swap core {} with {}", currentCoreName, otherCoreName, e);
@@ -150,10 +148,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     /**
      * Optimize the index (this is a very expensive operation, especially if the index is large!)
      */
-    private void optimize(SolrServer solrServer) {
+    private void optimize(SolrClient solrClient) {
         try {
             LOG.info("Optimizing SOLR index");
-            solrServer.optimize();
+            solrClient.optimize();
         } catch (Exception e) {
             LOG.error("Error while trying to optimize SOLR index", e);
             throw new IllegalStateException(e);

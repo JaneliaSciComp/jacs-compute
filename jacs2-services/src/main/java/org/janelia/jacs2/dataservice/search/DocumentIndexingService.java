@@ -3,7 +3,7 @@ package org.janelia.jacs2.dataservice.search;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
@@ -19,7 +19,7 @@ public class DocumentIndexingService extends AbstractIndexingServiceSupport {
 
     public DocumentIndexingService(LegacyDomainDao legacyDomainDao,
                                    SolrConfig solrConfig,
-                                   DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+                                   DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
         super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 

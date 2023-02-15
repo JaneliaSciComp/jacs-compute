@@ -1,9 +1,9 @@
 package org.janelia.jacs2.dataservice.search;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class SolrBuilder {
         return this;
     }
 
-    public SolrServer build() {
+    public SolrClient build() {
         String solrBaseURL ;
         if (StringUtils.isBlank(solrServerBaseURL)) {
             solrBaseURL = solrConfig.getSolrServerBaseURL();
@@ -73,14 +73,17 @@ public class SolrBuilder {
                     threadCount = indexingThreads;
                 }
                 try {
-                    return new ConcurrentUpdateSolrServer(solrURL, queueSize, threadCount);
+                    return new ConcurrentUpdateSolrClient.Builder(solrURL)
+                            .withQueueSize(queueSize)
+                            .withThreadCount(threadCount)
+                            .build();
                 } catch (Exception e) {
                     LOG.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params - queueSize: {}, threadCount: {}",
                             solrBaseURL, solrCoreName, solrURL, queueSize, threadCount);
                     throw new IllegalArgumentException("Error instantiating concurrent SOLR server for " + solrURL, e);
                 }
             } else {
-                return new HttpSolrServer(solrURL);
+                return new HttpSolrClient.Builder(solrServerBaseURL).build();
             }
         }
     }
