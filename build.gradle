@@ -116,12 +116,12 @@ subprojects {
             dependencyConfiguration = 'implementation'
         }
 
-        task testJar(type: Jar) {
+        tasks.register('testJar', Jar) {
             from sourceSets.test.output
-            archiveClassifier = "test"
+            archiveClassifier.set("test")
         }
 
-        task integrationTest(type: Test) {
+        tasks.register('integrationTest', Test) {
             testClassesDirs += sourceSets.integrationTest.output.classesDirs
             classpath = sourceSets.integrationTest.runtimeClasspath
         }
@@ -136,6 +136,6 @@ subprojects {
 
 }
 
-task updateWrapper(type: Wrapper) {
-    gradleVersion = "5.1.1"
+tasks.register('updateWrapper', Wrapper) {
+    gradleVersion = "7.6"
 }
