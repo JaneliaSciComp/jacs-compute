@@ -8,11 +8,14 @@ dependencies {
 
         // dependency injection
         JAVAX_ENTERPRISE_VERSION = "2.0.SP1"
-        WELD_VERSION = "3.1.5.Final"
+        WELD_VERSION = "3.1.8.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
+
+        // somehow Jetty is needed by a LegacyWeldDecorator
+        JETTY_SERVER = "org.eclipse.jetty:jetty-server:11.0.13"
 
         // ldap
         LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
@@ -60,7 +63,7 @@ dependencies {
 
         // servlet engine
         JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
-        UNDERTOW_VERSION = "2.0.21.Final"
+        UNDERTOW_VERSION = "2.0.42.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 

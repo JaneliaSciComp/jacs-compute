@@ -23,7 +23,8 @@ project(":jacs2-commonweb") {
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
 
         runtimeOnly JWT_RUNTIME_IMPL,
-                    JWT_RUNTIME_JACKSON
+                    JWT_RUNTIME_JACKSON,
+                    JETTY_SERVER
     }
 
     processResources {
