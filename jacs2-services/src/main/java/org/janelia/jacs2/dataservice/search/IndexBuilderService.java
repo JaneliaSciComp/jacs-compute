@@ -123,12 +123,13 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         MDC.setContextMap(mdcContextMap);
         MDC.put("serviceName", domainClass.getSimpleName());
         long started = System.currentTimeMillis();
+        int indexedDocs = 0;
         try {
             LOG.info("Begin indexing objects of type {}", domainClass.getName());
-            int indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass));
+            indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass));
             return ImmutablePair.of(domainClass, indexedDocs);
         } finally {
-            LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);
+            LOG.info("Completed indexing {} objects of type {} in {}s", indexedDocs, domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);
             MDC.remove("serviceName");
         }
     }
