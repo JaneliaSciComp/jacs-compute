@@ -47,12 +47,15 @@ public class SolrBuilder {
         } else {
             String solrCoreName = StringUtils.defaultIfBlank(solrCore, "");
             String solrURL = StringUtils.appendIfMissing(solrBaseURL, "/") + solrCoreName;
+            if (solrConfig.getSolrStallTimeMillis() > 0) {
+                System.setProperty("solr.cloud.client.stallTime", String.valueOf(solrConfig.getSolrStallTimeMillis()));
+            }
             if (concurrentUpdate) {
                 try {
                     return new ConcurrentUpdateSolrClient.Builder(solrURL)
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
-                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeout())
+                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
                             .alwaysStreamDeletes()
                             .build();
                 } catch (Exception e) {

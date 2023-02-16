@@ -25,11 +25,13 @@ public class SolrConfig {
     private final String solrBuildCore;
     private final int solrLoaderQueueSize;
     private final int solrLoaderThreadCount;
-    private final int solrConnectionTimeout;
+    private final int solrConnectionTimeoutMillis;
+    private final int solrStallTimeMillis;
 
     SolrConfig() {
         // CDI required ctor
-        this(null, null, null, 0, 0, 0);
+        this(null, null, null,
+                0, 0, 0, 0);
     }
 
     @Inject
@@ -38,13 +40,15 @@ public class SolrConfig {
                       @PropertyValue(name = "Solr.BuildCore") String solrBuildCore,
                       @IntPropertyValue(name = "Solr.LoaderQueueSize", defaultValue = 100) int solrLoaderQueueSize,
                       @IntPropertyValue(name = "Solr.LoaderThreadCount", defaultValue = 2) int solrLoaderThreadCount,
-                      @IntPropertyValue(name = "Solr.ConnectionTimeoutMillis", defaultValue = 600000 /*10min*/) int solrConnectionTimeout) {
+                      @IntPropertyValue(name = "Solr.ConnectionTimeoutMillis", defaultValue = 600000 /*10min*/) int solrConnectionTimeoutMillis,
+                      @IntPropertyValue(name = "Solr.StallTimeMillis", defaultValue = 120000 /*2min*/) int solrStallTimeMillis) {
         this.solrServerBaseURL = solrServerBaseURL;
         this.solrMainCore = solrMainCore;
         this.solrBuildCore = solrBuildCore;
         this.solrLoaderQueueSize = solrLoaderQueueSize;
         this.solrLoaderThreadCount = solrLoaderThreadCount;
-        this.solrConnectionTimeout = solrConnectionTimeout;
+        this.solrConnectionTimeoutMillis = solrConnectionTimeoutMillis;
+        this.solrStallTimeMillis = solrStallTimeMillis;
         if (StringUtils.isBlank(solrServerBaseURL)) {
             LOG.warn("No SOLR server configured (Solr.ServerURL)");
         } else {
@@ -72,8 +76,12 @@ public class SolrConfig {
         return solrLoaderThreadCount;
     }
 
-    int getSolrConnectionTimeout() {
-        return solrConnectionTimeout;
+    int getSolrConnectionTimeoutMillis() {
+        return solrConnectionTimeoutMillis;
+    }
+
+    int getSolrStallTimeMillis() {
+        return solrStallTimeMillis;
     }
 
     SolrBuilder builder() {
@@ -88,7 +96,8 @@ public class SolrConfig {
                 .append("solrBuildCore", solrBuildCore)
                 .append("solrLoaderQueueSize", solrLoaderQueueSize)
                 .append("solrLoaderThreadCount", solrLoaderThreadCount)
-                .append("solrConnectionTimeout", solrConnectionTimeout)
+                .append("solrConnectionTimeoutMillis", solrConnectionTimeoutMillis)
+                .append("solrStallTimeMillis", solrStallTimeMillis)
                 .toString();
     }
 }
