@@ -60,7 +60,6 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     @Inject
     SolrIndexProcessor(ServiceComputationFactory computationFactory,
                        JacsServiceDataPersistence jacsServiceDataPersistence,
-                       @Any Instance<ExternalProcessRunner> serviceRunners,
                        @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                        IndexBuilderService indexBuilderService,
                        JacsNotificationDao jacsNotificationDao,
