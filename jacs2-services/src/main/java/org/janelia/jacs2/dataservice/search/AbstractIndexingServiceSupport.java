@@ -2,6 +2,7 @@ package org.janelia.jacs2.dataservice.search;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 
 /**
  * A SOLR indexer.
@@ -10,14 +11,14 @@ import org.janelia.model.access.dao.LegacyDomainDao;
  */
 abstract class AbstractIndexingServiceSupport {
 
-    final LegacyDomainDao legacyDomainDao;
+    final ReferenceDomainObjectReadDao referenceDomainObjectReadDao;
     final DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider;
     final SolrConfig solrConfig;
 
-    AbstractIndexingServiceSupport(LegacyDomainDao legacyDomainDao,
+    AbstractIndexingServiceSupport(ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                                    SolrConfig solrConfig,
                                    DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
-        this.legacyDomainDao = legacyDomainDao;
+        this.referenceDomainObjectReadDao = referenceDomainObjectReadDao;
         this.solrConfig = solrConfig;
         this.domainObjectIndexerProvider = domainObjectIndexerProvider;
     }

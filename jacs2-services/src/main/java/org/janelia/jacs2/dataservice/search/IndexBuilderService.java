@@ -16,6 +16,7 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.model.access.cdi.WithCache;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -35,10 +36,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(IndexBuilderService.class);
 
     @Inject
-    IndexBuilderService(LegacyDomainDao legacyDomainDao,
+    IndexBuilderService(ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                         SolrConfig solrConfig,
                         @WithCache DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
-        super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
+        super(referenceDomainObjectReadDao, solrConfig, domainObjectIndexerProvider);
     }
 
     public Map<Class<? extends DomainObject>, Integer> indexAllDocuments(boolean clearIndex, Predicate<Class<?>> domainObjectClassFilter) {
@@ -109,10 +110,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                         });
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
-//!!!FIXME        if (!clearIndex) {
-//!!!            // if we started with a fresh index there's no need to optimize
+        if (!clearIndex) {
+            // if we started with a fresh index there's no need to optimize
             optimize(solrClient);
-//!!!        }
+        }
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
         LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));
         return result;
@@ -124,7 +125,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         long started = System.currentTimeMillis();
         try {
             LOG.info("Begin indexing objects of type {}", domainClass.getName());
-            int indexedDocs = domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
+            int indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass));
             return ImmutablePair.of(domainClass, indexedDocs);
         } finally {
             LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);
@@ -155,9 +156,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         try {
             LOG.info("Optimizing SOLR index");
             solrClient.optimize();
+            LOG.info("Complete optimizing SOLR index");
         } catch (Exception e) {
+            // do not fail the process completely if optimization fails
             LOG.error("Error while trying to optimize SOLR index", e);
-            throw new IllegalStateException(e);
         }
     }
 

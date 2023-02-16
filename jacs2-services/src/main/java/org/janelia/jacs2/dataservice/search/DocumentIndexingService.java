@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -17,16 +18,16 @@ import org.janelia.model.domain.Reference;
  */
 public class DocumentIndexingService extends AbstractIndexingServiceSupport {
 
-    public DocumentIndexingService(LegacyDomainDao legacyDomainDao,
+    public DocumentIndexingService(ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                                    SolrConfig solrConfig,
                                    DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
-        super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
+        super(referenceDomainObjectReadDao, solrConfig, domainObjectIndexerProvider);
     }
 
     public int indexDocuments(List<Reference> domainObjectReferences) {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainObjectReferences));
+        return domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.findByReferences(domainObjectReferences).stream());
     }
 
     public int removeDocuments(List<Long> ids) {

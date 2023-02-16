@@ -15,8 +15,8 @@ import org.janelia.jacs2.dataservice.search.SolrConfig;
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.cdi.WithCache;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.NodeDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.nodetools.AllNodeAncestorsGetterImpl;
 import org.janelia.model.access.domain.nodetools.CachedAllNodeAncestorsGetterImpl;
 import org.janelia.model.access.domain.nodetools.DirectNodeAncestorsGetterImpl;
@@ -81,18 +81,18 @@ public class IndexingProducer {
     }
 
     @Produces
-    public DocumentIndexingService createDocumentIndexService(LegacyDomainDao legacyDomainDao,
+    public DocumentIndexingService createDocumentIndexService(ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                                                               SolrConfig solrConfig,
                                                               DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
-        return new DocumentIndexingService(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
+        return new DocumentIndexingService(referenceDomainObjectReadDao, solrConfig, domainObjectIndexerProvider);
     }
 
     @WithCache
     @Produces
-    public DocumentIndexingService createDocumentIndexServiceWithCachedData(LegacyDomainDao legacyDomainDao,
+    public DocumentIndexingService createDocumentIndexServiceWithCachedData(ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                                                                             SolrConfig solrConfig,
                                                                             @WithCache DomainObjectIndexerProvider<SolrClient> domainObjectIndexerProvider) {
-        return new DocumentIndexingService(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
+        return new DocumentIndexingService(referenceDomainObjectReadDao, solrConfig, domainObjectIndexerProvider);
     }
 
 }
