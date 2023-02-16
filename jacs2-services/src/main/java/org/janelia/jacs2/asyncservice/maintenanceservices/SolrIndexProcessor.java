@@ -40,6 +40,8 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     public static class SolrIndexArgs extends ServiceArgs {
         @Parameter(names = "-clearIndex", arity = 0, description = "Clear index")
         boolean clearIndex = false;
+        @Parameter(names = "-useParallelDataSource", arity = 0, description = "Parallelize data source")
+        boolean useParallelDataSource = false;
         @Parameter(names = "-indexedClassnames", description = "Filter to index only the specified classes. If not defined then it indexes all searchable types.")
         List<String> indexedClassnamesFilter;
         @Parameter(names = "-excludedClassnames", description = "Classes that will not be indexed. If not defined then it indexes all searchable types.")
@@ -120,7 +122,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         } else {
             indexedClassesFilter = indexedClassesPredicate;
         }
-        Map<Class<? extends DomainObject>, Integer> indexedResults = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
+        Map<Class<? extends DomainObject>, Integer> indexedResults = indexBuilderService.indexAllDocuments(args.clearIndex, args.useParallelDataSource, indexedClassesFilter);
         int nDocs = indexedResults.values().stream().reduce(0, Integer::sum);
         logger.info("Completed indexing {} documents", nDocs);
         boolean indexingErrorsFound;

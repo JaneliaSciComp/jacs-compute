@@ -89,7 +89,7 @@ public class RefreshDomainIndexResource {
                             .collect(Collectors.toSet());
                     indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
                 }
-                Map<Class<? extends DomainObject>, Integer>  indexedDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex, indexedClassesFilter);
+                Map<Class<? extends DomainObject>, Integer>  indexedDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex, false, indexedClassesFilter);
                 asyncResponse.resume(indexedDocs);
             } catch (Exception e) {
                 LOG.error("Error occurred while deleting document index", e);
