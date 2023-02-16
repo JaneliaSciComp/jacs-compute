@@ -126,7 +126,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         int indexedDocs = 0;
         try {
             LOG.info("Begin indexing objects of type {}", domainClass.getName());
-            indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass));
+            indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass, true));
             return ImmutablePair.of(domainClass, indexedDocs);
         } finally {
             LOG.info("Completed indexing {} objects of type {} in {}s", indexedDocs, domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);

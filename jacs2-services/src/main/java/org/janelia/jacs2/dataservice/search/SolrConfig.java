@@ -38,7 +38,7 @@ public class SolrConfig {
                       @PropertyValue(name = "Solr.BuildCore") String solrBuildCore,
                       @IntPropertyValue(name = "Solr.LoaderQueueSize", defaultValue = 100) int solrLoaderQueueSize,
                       @IntPropertyValue(name = "Solr.LoaderThreadCount", defaultValue = 2) int solrLoaderThreadCount,
-                      @IntPropertyValue(name = "Solr.ConnectionTimeout", defaultValue = 600000) int solrConnectionTimeout) {
+                      @IntPropertyValue(name = "Solr.ConnectionTimeoutMillis", defaultValue = 600000 /*10min*/) int solrConnectionTimeout) {
         this.solrServerBaseURL = solrServerBaseURL;
         this.solrMainCore = solrMainCore;
         this.solrBuildCore = solrBuildCore;
