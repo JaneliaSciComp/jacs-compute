@@ -15,8 +15,6 @@ public class SolrBuilder {
     private String solrServerBaseURL;
     private String solrCore;
     private boolean concurrentUpdate;
-    private int indexingQueueSize;
-    private int indexingThreads;
 
     SolrBuilder(SolrConfig solrConfig) {
         this.solrConfig = solrConfig;
@@ -37,16 +35,6 @@ public class SolrBuilder {
         return this;
     }
 
-    public SolrBuilder setIndexingQueueSize(int indexingQueueSize) {
-        this.indexingQueueSize = indexingQueueSize;
-        return this;
-    }
-
-    public SolrBuilder setIndexingThreads(int indexingThreads) {
-        this.indexingThreads = indexingThreads;
-        return this;
-    }
-
     public SolrClient build() {
         String solrBaseURL ;
         if (StringUtils.isBlank(solrServerBaseURL)) {
@@ -60,27 +48,16 @@ public class SolrBuilder {
             String solrCoreName = StringUtils.defaultIfBlank(solrCore, "");
             String solrURL = StringUtils.appendIfMissing(solrBaseURL, "/") + solrCoreName;
             if (concurrentUpdate) {
-                int queueSize;
-                if (indexingQueueSize <= 0) {
-                    queueSize = solrConfig.getSolrLoaderQueueSize();
-                } else {
-                    queueSize = indexingQueueSize;
-                }
-                int threadCount;
-                if (indexingThreads <= 0) {
-                    threadCount = solrConfig.getSolrLoaderThreadCount();
-                } else {
-                    threadCount = indexingThreads;
-                }
                 try {
                     return new ConcurrentUpdateSolrClient.Builder(solrURL)
-                            .withQueueSize(queueSize)
-                            .withThreadCount(threadCount)
+                            .withQueueSize(solrConfig.getSolrLoaderQueueSize())
+                            .withThreadCount(solrConfig.getSolrLoaderThreadCount())
+                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeout())
                             .alwaysStreamDeletes()
                             .build();
                 } catch (Exception e) {
-                    LOG.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params - queueSize: {}, threadCount: {}",
-                            solrBaseURL, solrCoreName, solrURL, queueSize, threadCount);
+                    LOG.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params: {}",
+                            solrBaseURL, solrCoreName, solrURL, solrConfig);
                     throw new IllegalArgumentException("Error instantiating concurrent SOLR server for " + solrURL, e);
                 }
             } else {

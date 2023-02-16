@@ -109,7 +109,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                         });
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
-        optimize(solrClient);
+//!!!FIXME        if (!clearIndex) {
+//!!!            // if we started with a fresh index there's no need to optimize
+            optimize(solrClient);
+//!!!        }
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
         LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));
         return result;

@@ -25,10 +25,11 @@ public class SolrConfig {
     private final String solrBuildCore;
     private final int solrLoaderQueueSize;
     private final int solrLoaderThreadCount;
+    private final int solrConnectionTimeout;
 
     SolrConfig() {
         // CDI required ctor
-        this(null, null, null, 0, 0);
+        this(null, null, null, 0, 0, 0);
     }
 
     @Inject
@@ -36,16 +37,17 @@ public class SolrConfig {
                       @PropertyValue(name = "Solr.MainCore") String solrMainCore,
                       @PropertyValue(name = "Solr.BuildCore") String solrBuildCore,
                       @IntPropertyValue(name = "Solr.LoaderQueueSize", defaultValue = 100) int solrLoaderQueueSize,
-                      @IntPropertyValue(name = "Solr.LoaderThreadCount", defaultValue = 2) int solrLoaderThreadCount) {
+                      @IntPropertyValue(name = "Solr.LoaderThreadCount", defaultValue = 2) int solrLoaderThreadCount,
+                      @IntPropertyValue(name = "Solr.ConnectionTimeout", defaultValue = 600000) int solrConnectionTimeout) {
         this.solrServerBaseURL = solrServerBaseURL;
         this.solrMainCore = solrMainCore;
         this.solrBuildCore = solrBuildCore;
         this.solrLoaderQueueSize = solrLoaderQueueSize;
         this.solrLoaderThreadCount = solrLoaderThreadCount;
+        this.solrConnectionTimeout = solrConnectionTimeout;
         if (StringUtils.isBlank(solrServerBaseURL)) {
             LOG.warn("No SOLR server configured (Solr.ServerURL)");
-        }
-        else {
+        } else {
             LOG.info("Use SOLR URL: {} with core {} and build core {}", solrServerBaseURL, solrMainCore, solrBuildCore);
         }
     }
@@ -70,6 +72,10 @@ public class SolrConfig {
         return solrLoaderThreadCount;
     }
 
+    int getSolrConnectionTimeout() {
+        return solrConnectionTimeout;
+    }
+
     SolrBuilder builder() {
         return new SolrBuilder(this);
     }
@@ -82,6 +88,7 @@ public class SolrConfig {
                 .append("solrBuildCore", solrBuildCore)
                 .append("solrLoaderQueueSize", solrLoaderQueueSize)
                 .append("solrLoaderThreadCount", solrLoaderThreadCount)
+                .append("solrConnectionTimeout", solrConnectionTimeout)
                 .toString();
     }
 }
