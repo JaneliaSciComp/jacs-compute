@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.solr.client.solrj.SolrClient;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;

@@ -64,7 +64,7 @@ public class SolrBuilder {
                     throw new IllegalArgumentException("Error instantiating concurrent SOLR server for " + solrURL, e);
                 }
             } else {
-                return new HttpSolrClient.Builder(solrBaseURL).build();
+                return new HttpSolrClient.Builder(solrURL).build();
             }
         }
     }
