@@ -9,6 +9,8 @@ import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A SOLR indexer.
@@ -16,6 +18,8 @@ import org.janelia.model.domain.Reference;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class DocumentIndexingService extends AbstractIndexingServiceSupport {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentIndexingService.class);
 
     public DocumentIndexingService(ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                                    SolrConfig solrConfig,
@@ -38,6 +42,7 @@ public class DocumentIndexingService extends AbstractIndexingServiceSupport {
     public DocumentSearchResults searchIndex(DocumentSearchParams searchParams) {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
+        LOG.info("!!!!! SEARCH INDEX: {}", searchParams);
         return domainObjectIndexer.searchIndex(searchParams);
     }
 
