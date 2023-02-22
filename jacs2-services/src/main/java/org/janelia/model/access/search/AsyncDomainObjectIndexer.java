@@ -78,4 +78,13 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
             indexer.updateDocsAncestors(docIds, ancestorId);
         }
     }
+
+    @Override
+    public void commitChanges() {
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(indexer::commitChanges);
+        } else {
+            indexer.commitChanges();
+        }
+    }
 }

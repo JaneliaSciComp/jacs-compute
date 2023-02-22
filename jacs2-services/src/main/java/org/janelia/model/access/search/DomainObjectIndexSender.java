@@ -81,4 +81,9 @@ class DomainObjectIndexSender implements DomainObjectIndexer {
     private boolean isEnabled() {
         return messageSender != null && messageSender.isConnected();
     }
+
+    @Override
+    public void commitChanges() {
+        throw new UnsupportedOperationException("Explicit commit is not supported by the async indexer");
+    }
 }

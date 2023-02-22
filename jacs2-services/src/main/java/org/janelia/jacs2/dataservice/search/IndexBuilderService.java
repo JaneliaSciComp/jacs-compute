@@ -42,8 +42,8 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         super(referenceDomainObjectReadDao, solrConfig, domainObjectIndexerProvider);
     }
 
-    public Map<Class<? extends DomainObject>, Integer> indexAllDocuments(boolean clearIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
-        return execIndexAllDocuments(clearIndex, useParallelDataSource, domainObjectClassFilter);
+    public Map<Class<? extends DomainObject>, Integer> indexAllDocuments(boolean clearIndex, boolean optimizeIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
+        return execIndexAllDocuments(clearIndex, optimizeIndex, useParallelDataSource, domainObjectClassFilter);
     }
 
     @SuppressWarnings("unchecked")
@@ -80,7 +80,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<Class<? extends DomainObject>, Integer> execIndexAllDocuments(boolean clearIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
+    private Map<Class<? extends DomainObject>, Integer> execIndexAllDocuments(boolean clearIndex, boolean optimizeIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
         SolrClient solrClient = createSolrBuilder()
@@ -90,6 +90,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(solrClient);
         if (clearIndex) {
             domainObjectIndexer.removeIndex();
+            domainObjectIndexer.commitChanges();
         }
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
         Map<String, String> mdcContext = MDC.getCopyOfContextMap();
@@ -110,7 +111,9 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                         });
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
-        if (!clearIndex) {
+        domainObjectIndexer.commitChanges();
+        LOG.info("Committed {} changes after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
+        if (optimizeIndex || !clearIndex) {
             // if we started with a fresh index there's no need to optimize
             optimize(solrClient);
         }
@@ -171,6 +174,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
         domainObjectIndexer.removeIndex();
+        domainObjectIndexer.commitChanges();
     }
 
 }

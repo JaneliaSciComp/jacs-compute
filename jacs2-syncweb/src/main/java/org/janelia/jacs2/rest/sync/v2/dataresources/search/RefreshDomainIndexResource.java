@@ -63,6 +63,7 @@ public class RefreshDomainIndexResource {
     @Path("searchIndex")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     public void refreshDocumentsIndex(@QueryParam("clearIndex") Boolean clearIndex,
+                                      @QueryParam("optimizeIndex") Boolean optimizeIndex,
                                       @QueryParam("indexedClasses") List<String> indexedClassnamesParam,
                                       @Context ContainerRequestContext containerRequestContext,
                                       @Suspended AsyncResponse asyncResponse) {
@@ -89,7 +90,11 @@ public class RefreshDomainIndexResource {
                             .collect(Collectors.toSet());
                     indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
                 }
-                Map<Class<? extends DomainObject>, Integer>  indexedDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex, false, indexedClassesFilter);
+                Map<Class<? extends DomainObject>, Integer>  indexedDocs = indexBuilderService.indexAllDocuments(
+                        clearIndex != null && clearIndex,
+                        optimizeIndex != null && optimizeIndex,
+                        false,
+                        indexedClassesFilter);
                 asyncResponse.resume(indexedDocs);
             } catch (Exception e) {
                 LOG.error("Error occurred while deleting document index", e);
