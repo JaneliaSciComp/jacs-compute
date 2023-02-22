@@ -42,14 +42,16 @@ public class IndexingProducer {
             Instance<NodeDao<? extends Node>> nodeDaosProvider,
             DomainAnnotationGetter nodeAnnotationGetter,
             DomainObjectGetter objectGetter,
-            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize) {
+            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+            @IntPropertyValue(name = "Solr.AutoCommitMillis", defaultValue = -1) int solrAutoCommitMillis) {
         return (SolrClient solrClient) -> new SolrBasedDomainObjectIndexer(solrClient,
                 nodeDaosProvider.stream()
                         .map(nodeDao -> new AllNodeAncestorsGetterImpl<>(new DirectNodeAncestorsGetterImpl<>(nodeDao)))
                         .collect(Collectors.toList()),
                 nodeAnnotationGetter,
                 objectGetter,
-                solrBatchSize)
+                solrBatchSize,
+                solrAutoCommitMillis)
                 ;
     }
 
@@ -69,14 +71,16 @@ public class IndexingProducer {
             Instance<NodeDao<? extends Node>> nodeDaosProvider,
             @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
             DomainObjectGetter objectGetter,
-            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize) {
+            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+            @IntPropertyValue(name = "Solr.AutoCommitMillis", defaultValue = -1) int solrAutoCommitMillis) {
         return (SolrClient solrClient) -> new SolrBasedDomainObjectIndexer(solrClient,
                 nodeDaosProvider.stream()
                         .map(CachedAllNodeAncestorsGetterImpl::new)
                         .collect(Collectors.toList()),
                 nodeAnnotationGetterProvider.get(),
                 objectGetter,
-                solrBatchSize)
+                solrBatchSize,
+                solrAutoCommitMillis)
                 ;
     }
 
