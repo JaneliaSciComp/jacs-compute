@@ -109,6 +109,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                             mr1.putAll(mr2);
                             return mr1;
                         });
+        LOG.debug("Indexing result: {}", result);
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         domainObjectIndexer.commitChanges();
