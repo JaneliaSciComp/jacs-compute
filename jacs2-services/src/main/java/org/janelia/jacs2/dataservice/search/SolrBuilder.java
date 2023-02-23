@@ -55,6 +55,7 @@ public class SolrBuilder {
                     return new ConcurrentUpdateSolrClient.Builder(solrURL)
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
+                            .withSocketTimeout(solrConfig.getSolrSocketTimeoutMillis())
                             .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
                             .alwaysStreamDeletes()
                             .build();
