@@ -15,7 +15,6 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.model.access.cdi.WithCache;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
@@ -113,11 +112,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Added {} objects to the index after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         domainObjectIndexer.commitChanges();
-        LOG.info("Committed {} changes after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
-        if (optimizeIndex || !clearIndex) {
-            // if we started with a fresh index there's no need to optimize
+        if (optimizeIndex) {
             optimize(solrClient);
         }
+        LOG.info("Committed {} changes after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
         LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));
         return result;

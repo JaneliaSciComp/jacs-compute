@@ -40,8 +40,8 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     public static class SolrIndexArgs extends ServiceArgs {
         @Parameter(names = "-clearIndex", arity = 0, description = "Clear index")
         boolean clearIndex = false;
-        @Parameter(names = "-optimizeIndex", arity = 0, description = "Optimize index")
-        boolean optimizeIndex = false;
+        @Parameter(names = "-skipIndexOptimization", arity = 0, description = "Skip index optimization")
+        boolean skipIndexOptimization = false;
         @Parameter(names = "-useParallelDataSource", arity = 0, description = "Parallelize data source")
         boolean useParallelDataSource = false;
         @Parameter(names = "-indexedClassnames", description = "Filter to index only the specified classes. If not defined then it indexes all searchable types.")
@@ -53,6 +53,10 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
 
         SolrIndexArgs() {
             super("Solr index rebuild service.");
+        }
+
+        boolean optimizeIndex() {
+            return !skipIndexOptimization;
         }
     }
 
@@ -123,7 +127,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         } else {
             indexedClassesFilter = indexedClassesPredicate;
         }
-        Map<Class<? extends DomainObject>, Integer> indexedResults = indexBuilderService.indexAllDocuments(args.clearIndex, args.optimizeIndex, args.useParallelDataSource, indexedClassesFilter);
+        Map<Class<? extends DomainObject>, Integer> indexedResults = indexBuilderService.indexAllDocuments(args.clearIndex, args.optimizeIndex(), args.useParallelDataSource, indexedClassesFilter);
         int nDocs = indexedResults.values().stream().reduce(0, Integer::sum);
         logger.info("Completed indexing {} documents", nDocs);
         boolean indexingErrorsFound;
