@@ -111,7 +111,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                         });
         LOG.debug("Indexing result: {}", result);
         int nDocs = result.values().stream().reduce(0, Integer::sum);
-        LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
+        LOG.info("Added {} objects to the index after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         domainObjectIndexer.commitChanges();
         LOG.info("Committed {} changes after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         if (optimizeIndex || !clearIndex) {
