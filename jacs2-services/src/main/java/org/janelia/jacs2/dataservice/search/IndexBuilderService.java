@@ -112,10 +112,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Added {} objects to the index after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         domainObjectIndexer.commitChanges();
+        LOG.info("Committed {} objects to the index after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         if (optimizeIndex) {
             optimize(solrClient);
         }
-        LOG.info("Committed {} changes after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
         LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));
         return result;
