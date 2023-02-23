@@ -126,6 +126,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                                                                               boolean useParallelSource,
                                                                               Map<String, String> mdcContextMap) {
         MDC.setContextMap(mdcContextMap);
+        MDC.put("rootService", mdcContextMap.get("serviceName"));
         MDC.put("serviceName", domainClass.getSimpleName());
         long started = System.currentTimeMillis();
         int indexedDocs = 0;
@@ -135,7 +136,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
             return ImmutablePair.of(domainClass, indexedDocs);
         } finally {
             LOG.info("Completed indexing {} objects of type {} in {}s", indexedDocs, domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);
-            MDC.remove("serviceName");
+            MDC.setContextMap(mdcContextMap);
         }
     }
 
