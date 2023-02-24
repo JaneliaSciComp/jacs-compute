@@ -107,7 +107,7 @@ subprojects {
         }
 
         license {
-            header rootProject.file('LICENSE.md')
+            header rootProject.file('LICENSE')
             exclude "**/*"
         }
 
