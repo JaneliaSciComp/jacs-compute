@@ -111,8 +111,6 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         LOG.debug("Indexing result: {}", result);
         int nDocs = result.values().stream().reduce(0, Integer::sum);
         LOG.info("Added {} objects to the index after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
-        domainObjectIndexer.commitChanges();
-        LOG.info("Committed {} objects to the index after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         if (optimizeIndex) {
             optimize(solrClient);
         }
@@ -133,6 +131,9 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         try {
             LOG.info("Begin indexing objects of type {}", domainClass.getName());
             indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass, useParallelSource));
+            LOG.debug("Begin committing {} indexed objects", indexedDocs);
+            domainObjectIndexer.commitChanges();
+            LOG.debug("Committed {} objects", indexedDocs);
             return ImmutablePair.of(domainClass, indexedDocs);
         } finally {
             LOG.info("Completed indexing {} objects of type {} in {}s", indexedDocs, domainClass.getName(), (System.currentTimeMillis() - started) / 1000.);
