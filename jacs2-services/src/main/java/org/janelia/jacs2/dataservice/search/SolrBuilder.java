@@ -2,7 +2,8 @@ package org.janelia.jacs2.dataservice.search;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateHttp2SolrClient;
+import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +53,12 @@ public class SolrBuilder {
             }
             if (concurrentUpdate) {
                 try {
-                    return new ConcurrentUpdateSolrClient.Builder(solrURL)
+                    Http2SolrClient http2SolrClient = new Http2SolrClient.Builder(solrURL)
+                            .connectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
+                            .build();
+                    return new ConcurrentUpdateHttp2SolrClient.Builder(solrURL, http2SolrClient)
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
-                            .withSocketTimeout(solrConfig.getSolrSocketTimeoutMillis())
-                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
                             .alwaysStreamDeletes()
                             .build();
                 } catch (Exception e) {
