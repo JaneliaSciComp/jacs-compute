@@ -57,22 +57,13 @@ public class SolrBuilder {
                     Http2SolrClient http2Client = new Http2SolrClient.Builder()
                             .connectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
                             .build();
-                    ConcurrentUpdateHttp2SolrClient concurrentClient = new ConcurrentUpdateHttp2SolrClient.Builder(solrURL, http2Client)
+                    return new ConcurrentUpdateSolrClient.Builder(solrURL)
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
+                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
+                            .withConnectionTimeout(solrConfig.getSolrSocketTimeoutMillis())
                             .neverStreamDeletes()
                             .build();
-                    concurrentClient.setPollQueueTime(0);
-                    // ensure it doesn't block where there's nothing to do yet
-                    concurrentClient.blockUntilFinished();
-                    return concurrentClient;
-//                    return new ConcurrentUpdateSolrClient.Builder(solrURL)
-//                            .withQueueSize(solrConfig.getSolrLoaderQueueSize())
-//                            .withThreadCount(solrConfig.getSolrLoaderThreadCount())
-//                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
-//                            .withConnectionTimeout(solrConfig.getSolrSocketTimeoutMillis())
-//                            .neverStreamDeletes()
-//                            .build();
                 } catch (Exception e) {
                     LOG.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params: {}",
                             solrBaseURL, solrCoreName, solrURL, solrConfig);
