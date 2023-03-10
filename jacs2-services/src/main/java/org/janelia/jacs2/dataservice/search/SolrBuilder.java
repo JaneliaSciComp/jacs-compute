@@ -54,9 +54,6 @@ public class SolrBuilder {
             }
             if (concurrentUpdate) {
                 try {
-                    Http2SolrClient http2Client = new Http2SolrClient.Builder()
-                            .connectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
-                            .build();
                     return new ConcurrentUpdateSolrClient.Builder(solrURL)
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
