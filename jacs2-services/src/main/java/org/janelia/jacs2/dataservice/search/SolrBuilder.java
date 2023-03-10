@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.search;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateHttp2SolrClient;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
 import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.slf4j.Logger;
@@ -53,14 +54,25 @@ public class SolrBuilder {
             }
             if (concurrentUpdate) {
                 try {
-                    Http2SolrClient http2SolrClient = new Http2SolrClient.Builder(solrURL)
+                    Http2SolrClient http2Client = new Http2SolrClient.Builder()
                             .connectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
                             .build();
-                    return new ConcurrentUpdateHttp2SolrClient.Builder(solrURL, http2SolrClient)
+                    ConcurrentUpdateHttp2SolrClient concurrentClient = new ConcurrentUpdateHttp2SolrClient.Builder(solrURL, http2Client)
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
-                            .alwaysStreamDeletes()
+                            .neverStreamDeletes()
                             .build();
+                    concurrentClient.setPollQueueTime(0);
+                    // ensure it doesn't block where there's nothing to do yet
+                    concurrentClient.blockUntilFinished();
+                    return concurrentClient;
+//                    return new ConcurrentUpdateSolrClient.Builder(solrURL)
+//                            .withQueueSize(solrConfig.getSolrLoaderQueueSize())
+//                            .withThreadCount(solrConfig.getSolrLoaderThreadCount())
+//                            .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
+//                            .withConnectionTimeout(solrConfig.getSolrSocketTimeoutMillis())
+//                            .neverStreamDeletes()
+//                            .build();
                 } catch (Exception e) {
                     LOG.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params: {}",
                             solrBaseURL, solrCoreName, solrURL, solrConfig);
