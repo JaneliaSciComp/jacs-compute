@@ -58,7 +58,7 @@ public class SolrBuilder {
                             .withQueueSize(solrConfig.getSolrLoaderQueueSize())
                             .withThreadCount(solrConfig.getSolrLoaderThreadCount())
                             .withConnectionTimeout(solrConfig.getSolrConnectionTimeoutMillis())
-                            .withConnectionTimeout(solrConfig.getSolrSocketTimeoutMillis())
+                            .withSocketTimeout(solrConfig.getSolrSocketTimeoutMillis())
                             .neverStreamDeletes()
                             .build();
                 } catch (Exception e) {
