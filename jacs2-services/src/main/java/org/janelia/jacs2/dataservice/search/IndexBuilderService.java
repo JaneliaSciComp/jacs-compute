@@ -82,10 +82,12 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private Map<Class<? extends DomainObject>, Integer> execIndexAllDocuments(boolean clearIndex, boolean optimizeIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
+        LOG.info("!!!!!!! Create SOLR CLIENT");
         SolrClient solrClient = createSolrBuilder()
                 .setSolrCore(solrRebuildCore)
                 .setConcurrentUpdate(true)
                 .build();
+        LOG.info("!!!!!!! Create SOLR CLIENT - DONE !!!!!");
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(solrClient);
         if (clearIndex) {
             domainObjectIndexer.removeIndex();
