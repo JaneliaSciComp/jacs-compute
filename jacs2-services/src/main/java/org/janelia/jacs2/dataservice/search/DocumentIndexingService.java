@@ -42,7 +42,6 @@ public class DocumentIndexingService extends AbstractIndexingServiceSupport {
     public DocumentSearchResults searchIndex(DocumentSearchParams searchParams) {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        LOG.info("!!!!! SEARCH INDEX: {}", searchParams);
         return domainObjectIndexer.searchIndex(searchParams);
     }
 

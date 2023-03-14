@@ -41,8 +41,8 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         super(referenceDomainObjectReadDao, solrConfig, domainObjectIndexerProvider);
     }
 
-    public Map<Class<? extends DomainObject>, Integer> indexAllDocuments(boolean clearIndex, boolean optimizeIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
-        return execIndexAllDocuments(clearIndex, optimizeIndex, useParallelDataSource, domainObjectClassFilter);
+    public Map<Class<? extends DomainObject>, Integer> indexAllDocuments(boolean clearIndex, boolean optimizeIndex, Predicate<Class<?>> domainObjectClassFilter) {
+        return execIndexAllDocuments(clearIndex, optimizeIndex, domainObjectClassFilter);
     }
 
     @SuppressWarnings("unchecked")
@@ -79,15 +79,13 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<Class<? extends DomainObject>, Integer> execIndexAllDocuments(boolean clearIndex, boolean optimizeIndex, boolean useParallelDataSource, Predicate<Class<?>> domainObjectClassFilter) {
+    private Map<Class<? extends DomainObject>, Integer> execIndexAllDocuments(boolean clearIndex, boolean optimizeIndex, Predicate<Class<?>> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
-        LOG.info("!!!!!!! Create SOLR CLIENT");
         SolrClient solrClient = createSolrBuilder()
                 .setSolrCore(solrRebuildCore)
                 .setConcurrentUpdate(true)
                 .build();
-        LOG.info("!!!!!!! Create SOLR CLIENT - DONE !!!!!");
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(solrClient);
         if (clearIndex) {
             domainObjectIndexer.removeIndex();
@@ -100,7 +98,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                 .filter(domainObjectClassFilter)
                 .parallel()
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
-                .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass, useParallelDataSource, mdcContext))
+                .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass, mdcContext))
                 .reduce(new ConcurrentHashMap<>(),
                         (mr, pr) -> {
                             mr.put(pr.getLeft(), pr.getRight());
@@ -123,7 +121,6 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
 
     private Pair<Class<? extends DomainObject>, Integer> indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer,
                                                                               Class<? extends DomainObject> domainClass,
-                                                                              boolean useParallelSource,
                                                                               Map<String, String> mdcContextMap) {
         MDC.setContextMap(mdcContextMap);
         MDC.put("rootService", mdcContextMap.get("serviceName"));
@@ -132,7 +129,8 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         int indexedDocs = 0;
         try {
             LOG.info("Begin indexing objects of type {}", domainClass.getName());
-            indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass, useParallelSource));
+            // no point in using the parallel datasource because in this case it is much slower
+            indexedDocs = domainObjectIndexer.indexDocumentStream(referenceDomainObjectReadDao.streamAllDomainObjects(domainClass, false));
             LOG.debug("Begin committing {} indexed objects", indexedDocs);
             domainObjectIndexer.commitChanges();
             LOG.debug("Committed {} objects", indexedDocs);

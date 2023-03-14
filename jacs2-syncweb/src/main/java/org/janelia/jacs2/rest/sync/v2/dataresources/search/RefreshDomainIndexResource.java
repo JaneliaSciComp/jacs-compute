@@ -93,7 +93,6 @@ public class RefreshDomainIndexResource {
                 Map<Class<? extends DomainObject>, Integer>  indexedDocs = indexBuilderService.indexAllDocuments(
                         clearIndex != null && clearIndex,
                         optimizeIndex != null && optimizeIndex,
-                        false,
                         indexedClassesFilter);
                 asyncResponse.resume(indexedDocs);
             } catch (Exception e) {

@@ -18,4 +18,9 @@ public class ComputationException extends RuntimeException {
         this.jacsServiceData = jacsServiceData;
     }
 
+    public ComputationException(JacsServiceData jacsServiceData, String message, Throwable cause) {
+        super(message, cause);
+        this.jacsServiceData = jacsServiceData;
+    }
+
 }
