@@ -22,7 +22,7 @@ dependencies {
 
         // utilities
         GUAVA_LIB = "com.google.guava:guava:28.1-jre"
-        REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
+        REFLECTIONS_LIB = "org.reflections:reflections:0.10.2"
 
         // Mail
         JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.2"

@@ -94,7 +94,9 @@ public class DomainModelUtils {
     private static Class<? extends BaseEntity> findEntityClass(String entityType) {
         Reflections entityReflections = new Reflections(new ConfigurationBuilder()
                 .setUrls(ClasspathHelper.forPackage("org.janelia"))
-                .filterInputsBy(new FilterBuilder().includePackage(BaseEntity.class).includePackage(DomainObject.class)));
+                .filterInputsBy(new FilterBuilder()
+                        .includePackage(BaseEntity.class.getPackage().getName())
+                        .includePackage(DomainObject.class.getPackage().getName())));
         for (Class<? extends BaseEntity> clazz : entityReflections.getSubTypesOf(BaseEntity.class)) {
             if (clazz.getSimpleName().equals(entityType) || clazz.getName().equals(entityType)) {
                 return clazz;
