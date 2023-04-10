@@ -196,6 +196,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                             legacyDomainDao.updateProperty(syncedRoot.getOwnerKey(), syncedPath.getClass(),
                                     syncedPath.getId(), "existsInStorage", false);
                         } catch (Exception e) {
+                            logger.error("Error updating "+syncedPath, e);
                             throw new ComputationException(jacsServiceData, "Could not update " + syncedPath, e);
                         }
                     }

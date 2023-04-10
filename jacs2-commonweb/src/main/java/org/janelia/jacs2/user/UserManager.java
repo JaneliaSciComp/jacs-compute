@@ -52,7 +52,6 @@ public class UserManager {
                        @AsyncIndex WorkspaceNodeDao workspaceNodeDao,
                        ComputeAccounting computeAccounting,
                        EmailNotificationService emailNotificationService,
-                       WorkstationMailingList workstationMailingList,
                        @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                        @PropertyValue(name = "user.defaultReadGroups") String defaultReadGroups,
                        @BoolPropertyValue(name = "user.newUser.fileStoreCreation") boolean newUserFileStoreCreation,
