@@ -96,6 +96,7 @@ public class SWCService {
                                        String neuronOwnerKey,
                                        List<String> accessUsers,
                                        long firstEntryOffset,
+                                       int length,
                                        boolean orderSWCs) {
         LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
@@ -118,12 +119,13 @@ public class SWCService {
             }
         });
 
-        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, orderSWCs);
+        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, length, orderSWCs);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, TmSample tmSample, TmWorkspace tmWorkspace,
                                        String neuronOwnerKey,
                                        long firstEntryOffset,
+                                       int length,
                                        boolean orderSWCs) {
 
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
@@ -148,7 +150,7 @@ public class SWCService {
 
                     Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
                         AtomicLong offset = new AtomicLong(firstEntryOffset);
-                        int defaultLength = 50000;
+                        int defaultLength = length;
                         TarArchiveInputStream archiveInputStream = null;
                         TarArchiveEntry currentEntry = null;
                         AtomicLong entriesCount = new AtomicLong(0);

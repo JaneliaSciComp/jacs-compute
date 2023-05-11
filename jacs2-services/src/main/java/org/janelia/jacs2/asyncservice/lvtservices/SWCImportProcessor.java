@@ -42,6 +42,8 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         String neuronsOwnerKey;
         @Parameter(names = "-firstSWCFile", description = "The index of the first SWC file to be imported")
         long firsSWCFile = 0;
+        @Parameter(names = "-retrievedFiles", description = "Number of files retrieved at a time")
+        int retrievedFilesSize = 50000;
         @Parameter(names = "-orderSWCs", description = "If set, import SWCs in order", arity = 1)
         boolean orderSWCs = false;
         SWCImportArgs() {
@@ -105,7 +107,9 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
                         args.sampleId, args.workspace,
                         workspaceOwnerKey, neuronOwnerKey,
                         ImmutableList.copyOf(accessUsers),
-                        args.firsSWCFile, args.orderSWCs))
+                        args.firsSWCFile,
+                        args.retrievedFilesSize,
+                        args.orderSWCs))
                 .thenApply(tmWorkspace -> updateServiceResult(jacsServiceData, tmWorkspace.getId()));
     }
 
