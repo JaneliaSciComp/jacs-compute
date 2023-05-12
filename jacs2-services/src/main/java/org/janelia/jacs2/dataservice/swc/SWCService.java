@@ -97,6 +97,7 @@ public class SWCService {
                                        List<String> accessUsers,
                                        long firstEntryOffset,
                                        int length,
+                                       int depth,
                                        boolean orderSWCs) {
         LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
@@ -119,13 +120,14 @@ public class SWCService {
             }
         });
 
-        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, length, orderSWCs);
+        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, length, depth, orderSWCs);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, TmSample tmSample, TmWorkspace tmWorkspace,
                                        String neuronOwnerKey,
                                        long firstEntryOffset,
                                        int length,
+                                       int depth,
                                        boolean orderSWCs) {
 
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
@@ -150,7 +152,6 @@ public class SWCService {
 
                     Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
                         AtomicLong offset = new AtomicLong(firstEntryOffset);
-                        int defaultLength = length;
                         TarArchiveInputStream archiveInputStream = null;
                         TarArchiveEntry currentEntry = null;
                         AtomicLong entriesCount = new AtomicLong(0);
@@ -161,7 +162,7 @@ public class SWCService {
                             try {
                                 for (; ;) {
                                     if (archiveInputStream == null) {
-                                        InputStream swcDataStream = openSWCDataStream(swcStorageFolderURL, offset.get(), defaultLength, orderSWCs);
+                                        InputStream swcDataStream = openSWCDataStream(swcStorageFolderURL, offset.get(), length, depth, orderSWCs);
                                         if (swcDataStream == null) {
                                             totalEntriesCount.addAndGet(entriesCount.get());
                                             if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
@@ -181,7 +182,7 @@ public class SWCService {
                                             LOG.info("Processed a total of {} from {} ({})", totalEntriesCount, swcStorageFolderURL, swcFolderName);
                                             return false;
                                         }
-                                        offset.addAndGet(defaultLength); // prepare the offset for the next set of records
+                                        offset.addAndGet(length); // prepare the offset for the next set of records
                                     }
 
                                     // just in case some folders got through - ignore them
@@ -217,7 +218,7 @@ public class SWCService {
                                     return true; // even if this archive stream is done, there might be others
                                 }
                             } catch (IOException e) {
-                                LOG.error("Error reading or reading from swc archive from {} ({}) offset: {}, length: {}", swcStorageFolderURL, swcFolderName, offset, defaultLength, e);
+                                LOG.error("Error reading or reading from swc archive from {} ({}) offset: {}, length: {}", swcStorageFolderURL, swcFolderName, offset, length, e);
                                 throw new UncheckedIOException(e);
                             }
                         }
@@ -307,9 +308,12 @@ public class SWCService {
         }
     }
 
-    private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, boolean orderSWCs) {
+    private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
         LOG.info("Retrieve entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL);
-        InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, orderSWCs, "\\.swc$", null, null);
+        InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
+                "\\.(swc|zip|tar|tgz|tar.gz)$",
+                null,
+                null);
         if (swcDataStream == null) {
             return null;
         }
