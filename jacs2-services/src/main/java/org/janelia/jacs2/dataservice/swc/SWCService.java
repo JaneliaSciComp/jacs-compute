@@ -103,9 +103,10 @@ public class SWCService {
 
         void close() {
             try {
+                LOG.debug("Close archive input stream {}:{}", streamName, archiveInputStreamOffset);
                 archiveInputStream.close();
             } catch (IOException e) {
-                LOG.error("Error closing archive input stream {}", streamName, e);
+                LOG.error("Error closing archive input stream {}:{}", streamName, archiveInputStreamOffset, e);
             } finally {
                 archiveInputStream = null;
             }
@@ -234,16 +235,19 @@ public class SWCService {
                                 ArchiveInputStreamPosition currentInputStream = archiveInputStreamStack.top();
                                 if (currentInputStream == null) {
                                     // if the stack is empty we are done
+                                    LOG.info("Imported {} from {}", totalEntriesCount.get(), swcStorageFolderURL);
                                     return false;
                                 }
                                 ArchiveEntry currentEntry = currentInputStream.goToNextFileEntry();
                                 // just in case some folders got through - ignore them
                                 if (currentEntry == null) {
                                     // nothing left in the current stream -> close it
+                                    LOG.info("Finished processing {}:{}", currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
                                     currentInputStream.close();
                                     // and try to get the next batch
                                     archiveInputStreamStack.pop();
                                     long offset = currentInputStream.getNextOffset();
+                                    LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
                                     ArchiveInputStreamPosition nextStream = newStream(
                                             swcStorageFolderURL,
                                             openSWCDataStream(swcStorageFolderURL,
@@ -259,6 +263,8 @@ public class SWCService {
                                     }
                                     continue;
                                 } else {
+                                    LOG.info("Process {} from {}:{}",
+                                            currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
                                     InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
                                     ArchiveInputStreamPosition archiveEntryStream = newStream(
                                             swcStorageFolderURL + ":" + currentEntry.getName(),
