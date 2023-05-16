@@ -4,7 +4,6 @@ package org.janelia.jacs2.asyncservice.common;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 class ServiceComputationTask<T> implements Runnable {
 
@@ -23,52 +22,8 @@ class ServiceComputationTask<T> implements Runnable {
         }
     }
 
-    private static class Stack<E> {
-        private static class Node <E> {
-            private final E item;
-            private Node<E> next;
-
-            private Node(E item) {
-                this.item = item;
-            }
-        }
-
-        private AtomicReference<Node<E>> head = new AtomicReference<>();
-
-        void push(E item) {
-            Node<E> newHead = new Node<>(item);
-            Node<E> oldHead;
-            do {
-                oldHead = head.get();
-                newHead.next = oldHead;
-            } while (!head.compareAndSet(oldHead, newHead));
-        }
-
-        E top() {
-            Node<E> headContent = head.get();
-            if (headContent == null) {
-                return null;
-            } else {
-                return headContent.item;
-            }
-        }
-
-        E pop() {
-            Node<E> oldHead;
-            Node<E> newHead;
-            do {
-                oldHead = head.get();
-                if (oldHead == null) {
-                    return null;
-                }
-                newHead = oldHead.next;
-            } while (!head.compareAndSet(oldHead, newHead));
-            return oldHead.item;
-        }
-    }
-
     private final CountDownLatch done = new CountDownLatch(1);
-    private final Stack<ServiceComputation<?>> depStack = new Stack<>();
+    private final ConcurrentStack<ServiceComputation<?>> depStack = new ConcurrentStack<>();
     private ContinuationSupplier<T> resultSupplier;
     private ComputeResult<T> result;
     private volatile boolean canceled;

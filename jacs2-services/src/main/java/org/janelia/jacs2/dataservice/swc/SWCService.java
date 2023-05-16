@@ -1,9 +1,14 @@
 package org.janelia.jacs2.dataservice.swc;
 
 import com.google.common.io.ByteStreams;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ConcurrentStack;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.data.NamedData;
@@ -45,6 +50,67 @@ import java.util.stream.StreamSupport;
 public class SWCService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);
+
+    private static class ArchiveInputStreamPosition {
+        private final String streamName;
+        private ArchiveInputStream archiveInputStream;
+        private final long archiveInputStreamOffset;
+        private volatile long archiveEntriesCount;
+
+        ArchiveInputStreamPosition(String streamName, ArchiveInputStream archiveInputStream, long archiveInputStreamOffset) {
+            this.streamName = streamName;
+            this.archiveInputStream = archiveInputStream;
+            this.archiveInputStreamOffset = archiveInputStreamOffset;
+            archiveEntriesCount = 0L;
+        }
+
+        private synchronized ArchiveEntry nextEntry() {
+            try {
+                ArchiveEntry nextEntry = this.archiveInputStream.getNextEntry();
+                if (nextEntry != null) archiveEntriesCount++;
+                return nextEntry;
+            } catch (IOException e) {
+                LOG.error("Error reading next archive entry from {}", streamName, e);
+                return null;
+            }
+        }
+
+        synchronized ArchiveEntry goToNextFileEntry() {
+            ArchiveEntry currentEntry = nextEntry();
+            for (;
+                 currentEntry != null && currentEntry.isDirectory();
+                 currentEntry = nextEntry()) {
+                // skip directories
+            }
+            return currentEntry;
+        }
+
+        synchronized long getNextOffset() {
+            return archiveInputStreamOffset + archiveEntriesCount;
+        }
+
+        InputStream getCurrentEntryStream(ArchiveEntry archiveEntry) {
+            ByteArrayOutputStream entryStream = new ByteArrayOutputStream();
+            try {
+                ByteStreams.copy(ByteStreams.limit(archiveInputStream, archiveEntry.getSize()), entryStream);
+            } catch (IOException e) {
+                LOG.error("Error reading entry {} ({}bytes) from {}",
+                        archiveEntry.getName(), archiveEntry.getSize(), streamName);
+                return null;
+            }
+            return new ByteArrayInputStream(entryStream.toByteArray());
+        }
+
+        void close() {
+            try {
+                archiveInputStream.close();
+            } catch (IOException e) {
+                LOG.error("Error closing archive input stream {}", streamName, e);
+            } finally {
+                archiveInputStream = null;
+            }
+        }
+    }
 
     private final StorageService storageService;
     private final LegacyDomainDao domainDao;
@@ -96,7 +162,8 @@ public class SWCService {
                                        String neuronOwnerKey,
                                        List<String> accessUsers,
                                        long firstEntryOffset,
-                                       int length,
+                                       long maxSize,
+                                       int batchSize,
                                        int depth,
                                        boolean orderSWCs) {
         LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
@@ -120,13 +187,14 @@ public class SWCService {
             }
         });
 
-        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, length, depth, orderSWCs);
+        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth, orderSWCs);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, TmSample tmSample, TmWorkspace tmWorkspace,
                                        String neuronOwnerKey,
-                                       long firstEntryOffset,
-                                       int length,
+                                       long firstEntry,
+                                       long maxSize,
+                                       int batchSize,
                                        int depth,
                                        boolean orderSWCs) {
 
@@ -150,76 +218,63 @@ public class SWCService {
                     String swcStorageFolderURL = storageService.getEntryURI(vsInfo.getVolumeStorageURI(), swcPath);
                     LOG.info("Retrieve swc content from {} : {}", vsInfo, swcPath);
 
+                    ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack =
+                            initializeStreamStack(swcStorageFolderURL,
+                                    firstEntry,
+                                    Math.min(maxSize - firstEntry, batchSize),
+                                    depth,
+                                    orderSWCs);
                     Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
-                        AtomicLong offset = new AtomicLong(firstEntryOffset);
-                        TarArchiveInputStream archiveInputStream = null;
-                        TarArchiveEntry currentEntry = null;
-                        AtomicLong entriesCount = new AtomicLong(0);
+
                         AtomicLong totalEntriesCount = new AtomicLong(0);
 
                         @Override
                         public boolean tryAdvance(Consumer<? super NamedData<InputStream>> action) {
-                            try {
-                                for (; ;) {
-                                    if (archiveInputStream == null) {
-                                        InputStream swcDataStream = openSWCDataStream(swcStorageFolderURL, offset.get(), length, depth, orderSWCs);
-                                        if (swcDataStream == null) {
-                                            totalEntriesCount.addAndGet(entriesCount.get());
-                                            if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
-                                            entriesCount.set(0L);
-                                            LOG.info("Processed a total of {} from {} ({})", totalEntriesCount, swcStorageFolderURL, swcFolderName);
-                                            return false;
-                                        }
-                                        // the swcDataStream is expected to be a TAR
-                                        archiveInputStream = new TarArchiveInputStream(swcDataStream);
-                                        currentEntry = archiveInputStream.getNextTarEntry(); // retrieve the first entry
-                                        if (currentEntry == null) {
-                                            // if there are no entries then we are done
-                                            archiveInputStream.close();
-                                            totalEntriesCount.addAndGet(entriesCount.get());
-                                            if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
-                                            entriesCount.set(0L);
-                                            LOG.info("Processed a total of {} from {} ({})", totalEntriesCount, swcStorageFolderURL, swcFolderName);
-                                            return false;
-                                        }
-                                        offset.addAndGet(length); // prepare the offset for the next set of records
-                                    }
-
-                                    // just in case some folders got through - ignore them
-                                    for (; currentEntry != null && currentEntry.isDirectory(); currentEntry = archiveInputStream.getNextTarEntry()) {
-                                        // skip directories
-                                    }
-
-                                    if (currentEntry == null) {
-                                        // if it read only directories until it reached the end then close this and move to the next batch
-                                        archiveInputStream.close();
-                                        archiveInputStream = null;
-                                        totalEntriesCount.addAndGet(entriesCount.get());
-                                        if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
-                                        entriesCount.set(0L);
-                                        continue; // try the next set
-                                    }
-                                    // consume the entry
-                                    ByteArrayOutputStream entryStream = new ByteArrayOutputStream();
-                                    ByteStreams.copy(ByteStreams.limit(archiveInputStream, currentEntry.getSize()), entryStream);
-                                    NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), new ByteArrayInputStream(entryStream.toByteArray()));
-                                    entriesCount.incrementAndGet();
-                                    // advance the entry
-                                    currentEntry = archiveInputStream.getNextTarEntry();
-                                    action.accept(entryData);
-                                    if (currentEntry == null) {
-                                        // if this was the last entry from the archive stream close the archive stream
-                                        archiveInputStream.close();
-                                        archiveInputStream = null;
-                                        totalEntriesCount.addAndGet(entriesCount.get());
-                                        if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
-                                        entriesCount.set(0L);
-                                    }
-                                    return true; // even if this archive stream is done, there might be others
+                            for (; ;) {
+                                ArchiveInputStreamPosition currentInputStream = archiveInputStreamStack.top();
+                                if (currentInputStream == null) {
+                                    // if the stack is empty we are done
+                                    return false;
                                 }
-                            } catch (IOException e) {
-                                LOG.error("Error reading or reading from swc archive from {} ({}) offset: {}, length: {}", swcStorageFolderURL, swcFolderName, offset, length, e);
-                                throw new UncheckedIOException(e);
+                                ArchiveEntry currentEntry = currentInputStream.goToNextFileEntry();
+                                // just in case some folders got through - ignore them
+                                if (currentEntry == null) {
+                                    // nothing left in the current stream -> close it
+                                    currentInputStream.close();
+                                    // and try to get the next batch
+                                    archiveInputStreamStack.pop();
+                                    long offset = currentInputStream.getNextOffset();
+                                    ArchiveInputStreamPosition nextStream = newStream(
+                                            swcStorageFolderURL,
+                                            openSWCDataStream(swcStorageFolderURL,
+                                                    offset,
+                                                    Math.min(maxSize - totalEntriesCount.get(), batchSize),
+                                                    depth,
+                                                    orderSWCs),
+                                            offset
+                                    );
+                                    if (nextStream != null) {
+                                        // successfully got the next batch
+                                        archiveInputStreamStack.push(nextStream);
+                                    }
+                                    continue;
+                                } else {
+                                    InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
+                                    ArchiveInputStreamPosition archiveEntryStream = newStream(
+                                            swcStorageFolderURL + ":" + currentEntry.getName(),
+                                            entryStream,
+                                            0L);
+                                    if (archiveEntryStream != null) {
+                                        // the current entry is a zip or tar
+                                        continue;
+                                    } else {
+                                        // this is a regular entry => process it
+                                        NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
+                                        totalEntriesCount.incrementAndGet();
+                                        action.accept(entryData);
+                                        return true;
+                                    }
+                                }
                             }
                         }
 
@@ -308,6 +363,39 @@ public class SWCService {
         }
     }
 
+    private ConcurrentStack<ArchiveInputStreamPosition> initializeStreamStack(String storageURL,
+                                                                              long offset,
+                                                                              long batchSize,
+                                                                              int depth,
+                                                                              boolean orderFlag) {
+        ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack = new ConcurrentStack<>();
+        ArchiveInputStreamPosition archiveInputStream = newStream(
+                storageURL,
+                openSWCDataStream(
+                        storageURL,
+                        offset,
+                        batchSize,
+                        depth,
+                        orderFlag),
+                offset);
+        if (archiveInputStream != null) {
+            archiveInputStreamStack.push(archiveInputStream);
+        }
+        return archiveInputStreamStack;
+    }
+
+    private synchronized ArchiveInputStreamPosition newStream(String streamName, InputStream inputStream, long offset) {
+        return isArchiveStream(inputStream)
+                .map(isArchive -> {
+                    if (isArchive) {
+                        return new ArchiveInputStreamPosition(streamName, asArchiveInputStream(inputStream), offset);
+                    } else {
+                        return null;
+                    }
+                })
+                .orElse(null);
+    }
+
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
         LOG.info("Retrieve entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL);
         InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
@@ -339,10 +427,33 @@ public class SWCService {
                     }
                 }
             });
-            return pipedInputStream;
+            return new BufferedInputStream(pipedInputStream);
         } catch (IOException e) {
             LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
             throw new UncheckedIOException(e);
+        }
+    }
+
+    private Optional<Boolean> isArchiveStream(InputStream inputStream) {
+        if (inputStream == null) {
+            return Optional.empty();
+        } else {
+            try {
+                ArchiveStreamFactory.detect(inputStream);
+                return Optional.of(true);
+            } catch (ArchiveException e) {
+                return Optional.of(false);
+            }
+        }
+    }
+
+    private ArchiveInputStream asArchiveInputStream(InputStream inputStream) {
+        try {
+            return new ArchiveStreamFactory()
+                    .createArchiveInputStream(inputStream);
+        } catch (ArchiveException e) {
+            // this should not happen because the stream should be checked before
+            throw new IllegalArgumentException(e);
         }
     }
 
