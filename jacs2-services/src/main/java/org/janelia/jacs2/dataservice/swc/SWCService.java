@@ -272,6 +272,7 @@ public class SWCService {
                                             0L);
                                     if (archiveEntryStream != null) {
                                         // the current entry is a zip or tar
+                                        archiveInputStreamStack.push(archiveEntryStream);
                                         continue;
                                     } else {
                                         // this is a regular entry => process it
