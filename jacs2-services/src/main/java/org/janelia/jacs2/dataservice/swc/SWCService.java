@@ -242,7 +242,7 @@ public class SWCService {
                                 // just in case some folders got through - ignore them
                                 if (currentEntry == null) {
                                     // nothing left in the current stream -> close it
-                                    LOG.info("Finished processing {}:{}", currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
+                                    LOG.info("Finished processing {} entries from {}:{}", currentInputStream.archiveEntriesCount, currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
                                     currentInputStream.close();
                                     // and try to get the next batch
                                     archiveInputStreamStack.pop();
@@ -263,8 +263,7 @@ public class SWCService {
                                     }
                                     continue;
                                 } else {
-                                    LOG.info("Process {} from {}:{}",
-                                            currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
+                                    LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
                                     InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
                                     ArchiveInputStreamPosition archiveEntryStream = newStream(
                                             swcStorageFolderURL + ":" + currentEntry.getName(),
