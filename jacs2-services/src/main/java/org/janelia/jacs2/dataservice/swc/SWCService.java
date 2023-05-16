@@ -222,7 +222,7 @@ public class SWCService {
                     ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack =
                             initializeStreamStack(swcStorageFolderURL,
                                     firstEntry,
-                                    Math.min(maxSize - firstEntry, batchSize),
+                                    batchSize,
                                     depth,
                                     orderSWCs);
                     Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
@@ -252,7 +252,7 @@ public class SWCService {
                                             swcStorageFolderURL,
                                             openSWCDataStream(swcStorageFolderURL,
                                                     offset,
-                                                    Math.min(maxSize - totalEntriesCount.get(), batchSize),
+                                                    batchSize,
                                                     depth,
                                                     orderSWCs),
                                             offset
@@ -276,9 +276,17 @@ public class SWCService {
                                     } else {
                                         // this is a regular entry => process it
                                         NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
-                                        totalEntriesCount.incrementAndGet();
                                         action.accept(entryData);
-                                        return true;
+                                        long entriesProcessed = totalEntriesCount.incrementAndGet();
+                                        if (maxSize > 0 && entriesProcessed < maxSize) {
+                                            return true;
+                                        } else {
+                                            // close all stacks
+                                            for (ArchiveInputStreamPosition as = archiveInputStreamStack.pop(); as != null; as = archiveInputStreamStack.pop()) {
+                                                as.close();
+                                            }
+                                            return false; // done
+                                        }
                                     }
                                 }
                             }
@@ -403,7 +411,7 @@ public class SWCService {
     }
 
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
-        LOG.info("Retrieve entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL);
+        LOG.info("Retrieve {} entries from {}:{}", length > 0 ? "all" : length, swcStorageFolderURL, offset);
         InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
                 "\\.(swc|zip|tar|tgz|tar.gz)$",
                 null,
