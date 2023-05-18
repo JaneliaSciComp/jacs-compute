@@ -219,95 +219,14 @@ public class SWCService {
                     String swcStorageFolderURL = storageService.getEntryURI(vsInfo.getVolumeStorageURI(), swcPath);
                     LOG.info("Retrieve swc content from {} : {}", vsInfo, swcPath);
 
-                    ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack =
-                            initializeStreamStack(swcStorageFolderURL,
-                                    firstEntry,
-                                    batchSize,
-                                    depth,
-                                    orderSWCs);
-                    Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
-
-                        AtomicLong totalEntriesCount = new AtomicLong(0);
-
-                        @Override
-                        public boolean tryAdvance(Consumer<? super NamedData<InputStream>> action) {
-                            for (; ;) {
-                                ArchiveInputStreamPosition currentInputStream = archiveInputStreamStack.top();
-                                if (currentInputStream == null) {
-                                    // if the stack is empty we are done
-                                    LOG.info("Imported {} from {}", totalEntriesCount.get(), swcStorageFolderURL);
-                                    return false;
-                                }
-                                ArchiveEntry currentEntry = currentInputStream.goToNextFileEntry();
-                                // just in case some folders got through - ignore them
-                                if (currentEntry == null) {
-                                    // nothing left in the current stream -> close it
-                                    LOG.info("Finished processing {} entries from {}:{}", currentInputStream.archiveEntriesCount, currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
-                                    currentInputStream.close();
-                                    // and try to get the next batch
-                                    archiveInputStreamStack.pop();
-                                    long offset = currentInputStream.getNextOffset();
-                                    LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
-                                    ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(
-                                            swcStorageFolderURL,
-                                            openSWCDataStream(swcStorageFolderURL,
-                                                    offset,
-                                                    batchSize,
-                                                    depth,
-                                                    orderSWCs),
-                                            offset
-                                    );
-                                    if (nextStream != null) {
-                                        // successfully got the next batch
-                                        archiveInputStreamStack.push(nextStream);
-                                    }
-                                    continue;
-                                } else {
-                                    LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
-                                    InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
-                                    ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
-                                            swcStorageFolderURL + ":" + currentEntry.getName(),
-                                            entryStream,
-                                            0L);
-                                    if (archiveEntryStream != null) {
-                                        // the current entry is a zip or tar
-                                        archiveInputStreamStack.push(archiveEntryStream);
-                                        continue;
-                                    } else {
-                                        // this is a regular entry => process it
-                                        NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
-                                        action.accept(entryData);
-                                        long entriesProcessed = totalEntriesCount.incrementAndGet();
-                                        if (maxSize > 0 && entriesProcessed < maxSize) {
-                                            return true;
-                                        } else {
-                                            LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.streamName);
-                                            // close all stacks
-                                            for (ArchiveInputStreamPosition as = archiveInputStreamStack.pop(); as != null; as = archiveInputStreamStack.pop()) {
-                                                as.close();
-                                            }
-                                            return false; // done
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        @Override
-                        public Spliterator<NamedData<InputStream>> trySplit() {
-                            return null;
-                        }
-
-                        @Override
-                        public long estimateSize() {
-                            return Long.MAX_VALUE;
-                        }
-
-                        @Override
-                        public int characteristics() {
-                            return ORDERED;
-                        }
-                    };
+                    Spliterator<NamedData<InputStream>> storageContentSupplier = getDataIterator(
+                            swcStorageFolderURL,
+                            firstEntry,
+                            maxSize,
+                            batchSize,
+                            depth,
+                            orderSWCs
+                    );
                     return StreamSupport.stream(storageContentSupplier, true);
                 })
                 .orElseGet(Stream::of)
@@ -397,6 +316,103 @@ public class SWCService {
             archiveInputStreamStack.push(archiveInputStream);
         }
         return archiveInputStreamStack;
+    }
+
+    private Spliterator<NamedData<InputStream>> getDataIterator(String swcStorageFolderURL,
+                                                                long firstEntry,
+                                                                long maxSize,
+                                                                int batchSize,
+                                                                int depth,
+                                                                boolean orderSWCs) {
+        ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack =
+                initializeStreamStack(swcStorageFolderURL,
+                        firstEntry,
+                        batchSize,
+                        depth,
+                        orderSWCs);
+        return new Spliterator<NamedData<InputStream>>() {
+
+            AtomicLong totalEntriesCount = new AtomicLong(0);
+
+            @Override
+            public boolean tryAdvance(Consumer<? super NamedData<InputStream>> action) {
+                for (; ;) {
+                    ArchiveInputStreamPosition currentInputStream = archiveInputStreamStack.top();
+                    if (currentInputStream == null) {
+                        // if the stack is empty we are done
+                        LOG.info("Imported {} from {}", totalEntriesCount.get(), swcStorageFolderURL);
+                        return false;
+                    }
+                    ArchiveEntry currentEntry = currentInputStream.goToNextFileEntry();
+                    // just in case some folders got through - ignore them
+                    if (currentEntry == null) {
+                        // nothing left in the current stream -> close it
+                        LOG.info("Finished processing {} entries from {}:{}", currentInputStream.archiveEntriesCount, currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
+                        currentInputStream.close();
+                        // and try to get the next batch
+                        archiveInputStreamStack.pop();
+                        long offset = currentInputStream.getNextOffset();
+                        LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
+                        ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(
+                                swcStorageFolderURL,
+                                openSWCDataStream(swcStorageFolderURL,
+                                        offset,
+                                        batchSize,
+                                        depth,
+                                        orderSWCs),
+                                offset
+                        );
+                        if (nextStream != null) {
+                            // successfully got the next batch
+                            archiveInputStreamStack.push(nextStream);
+                        }
+                        continue;
+                    } else {
+                        LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
+                        InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
+                        ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
+                                swcStorageFolderURL + ":" + currentEntry.getName(),
+                                entryStream,
+                                0L);
+                        if (archiveEntryStream != null) {
+                            // the current entry is a zip or tar
+                            archiveInputStreamStack.push(archiveEntryStream);
+                        } else {
+                            // this is a regular entry => process it
+                            NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
+                            action.accept(entryData);
+                            long entriesProcessed = totalEntriesCount.incrementAndGet();
+                            if (maxSize > 0 && entriesProcessed < maxSize) {
+                                return true;
+                            } else {
+                                LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.streamName);
+                                // close all stacks
+                                for (ArchiveInputStreamPosition as = archiveInputStreamStack.pop(); as != null; as = archiveInputStreamStack.pop()) {
+                                    as.close();
+                                }
+                                return false; // done
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public Spliterator<NamedData<InputStream>> trySplit() {
+                return null;
+            }
+
+            @Override
+            public long estimateSize() {
+                return maxSize > 0 ? maxSize : Long.MAX_VALUE;
+            }
+
+            @Override
+            public int characteristics() {
+                return ORDERED;
+            }
+        };
+
     }
 
     private synchronized ArchiveInputStreamPosition prepareStreamIfArchive(String streamName, InputStream inputStream, long offset) {
