@@ -1,7 +1,6 @@
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '4.8.0'
 }
 
 mainClassName = 'org.janelia.jacs2.app.SyncServicesApp'
