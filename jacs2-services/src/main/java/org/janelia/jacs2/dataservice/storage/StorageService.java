@@ -227,19 +227,29 @@ public class StorageService {
      * @param storageURI must point to data_content URL of a folder containing files
      * @param offset index of first file to stream
      * @param size number of files to stream
+     * @param depth directory tree depth
      * @param sortedContent sort files before streaming
      * @param filter regex filename filter
      * @param subject subject key (or null)
      * @param authToken authentication token (or null)
      * @return stream of tar
      */
-    public InputStream getStorageFolderContent(String storageURI, long offset, long size, boolean sortedContent, String filter, String subject, String authToken) {
+    public InputStream getStorageFolderContent(String storageURI,
+                                               long offset,
+                                               long size,
+                                               long depth,
+                                               boolean sortedContent,
+                                               String filter,
+                                               String subject,
+                                               String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI)
                     .queryParam("alwaysArchive", true)
                     .queryParam("useNaturalSort", sortedContent)
                     .queryParam("startEntryIndex", offset)
+                    .queryParam("maxDepth", depth)
+                    .queryParam("noSize", true)
                     .queryParam("entryPattern", filter)
                     .queryParam("entriesCount", size);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
