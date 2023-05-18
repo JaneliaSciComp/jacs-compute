@@ -281,6 +281,7 @@ public class SWCService {
                                         if (maxSize > 0 && entriesProcessed < maxSize) {
                                             return true;
                                         } else {
+                                            LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.streamName);
                                             // close all stacks
                                             for (ArchiveInputStreamPosition as = archiveInputStreamStack.pop(); as != null; as = archiveInputStreamStack.pop()) {
                                                 as.close();
