@@ -402,7 +402,7 @@ public class SWCService {
     }
 
     private synchronized ArchiveInputStreamPosition newStream(String streamName, InputStream inputStream, long offset) {
-        return isArchiveStream(inputStream)
+        return isArchiveStream(streamName, inputStream)
                 .map(isArchive -> {
                     if (isArchive) {
                         return new ArchiveInputStreamPosition(streamName, asArchiveInputStream(inputStream), offset);
@@ -451,25 +451,24 @@ public class SWCService {
         }
     }
 
-    private Optional<Boolean> isArchiveStream(InputStream inputStream) {
+    private Optional<Boolean> isArchiveStream(String streamName, InputStream inputStream) {
         if (inputStream == null) {
             return Optional.empty();
         } else {
             String compressor;
             try {
                 compressor = CompressorStreamFactory.detect(inputStream);
+                LOG.debug("{} compression detected for {}", compressor, streamName);
             } catch (CompressorException e) {
                 compressor = null;
             }
             try {
-                if (compressor != null) {
-                    ArchiveStreamFactory.detect(new CompressorStreamFactory()
-                            .createCompressorInputStream(inputStream));
-                } else {
-                    ArchiveStreamFactory.detect(inputStream);
-                }
+                if (compressor == null) {
+                    String archiveSignature = ArchiveStreamFactory.detect(inputStream);
+                    LOG.debug("{} signature detected for {}", archiveSignature, streamName);
+                } // if compressor is set I will automatically assume this is an archived stream
                 return Optional.of(true);
-            } catch (ArchiveException | CompressorException e) {
+            } catch (ArchiveException e) {
                 return Optional.of(false);
             }
         }
