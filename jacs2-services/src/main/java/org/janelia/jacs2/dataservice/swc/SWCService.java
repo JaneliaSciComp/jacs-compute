@@ -7,6 +7,8 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ConcurrentStack;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
@@ -453,10 +455,21 @@ public class SWCService {
         if (inputStream == null) {
             return Optional.empty();
         } else {
+            String compressor;
             try {
-                ArchiveStreamFactory.detect(inputStream);
+                compressor = CompressorStreamFactory.detect(inputStream);
+            } catch (CompressorException e) {
+                compressor = null;
+            }
+            try {
+                if (compressor != null) {
+                    ArchiveStreamFactory.detect(new CompressorStreamFactory()
+                            .createCompressorInputStream(inputStream));
+                } else {
+                    ArchiveStreamFactory.detect(inputStream);
+                }
                 return Optional.of(true);
-            } catch (ArchiveException e) {
+            } catch (ArchiveException | CompressorException e) {
                 return Optional.of(false);
             }
         }
