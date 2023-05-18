@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.hierynomus.license" version "0.15.0"
+    id "com.github.hierynomus.license" version "0.16.1"
 }
 
 allprojects {
@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     group = 'org.janelia.jacs2'
-    version = '9.10.2'
+    version = '9.12.0'
 }
 
 project.ext {
@@ -107,7 +107,7 @@ subprojects {
         }
 
         license {
-            header rootProject.file('LICENSE.md')
+            header rootProject.file('LICENSE')
             exclude "**/*"
         }
 
@@ -116,12 +116,12 @@ subprojects {
             dependencyConfiguration = 'implementation'
         }
 
-        task testJar(type: Jar) {
+        tasks.register('testJar', Jar) {
             from sourceSets.test.output
-            archiveClassifier = "test"
+            archiveClassifier.set("test")
         }
 
-        task integrationTest(type: Test) {
+        tasks.register('integrationTest', Test) {
             testClassesDirs += sourceSets.integrationTest.output.classesDirs
             classpath = sourceSets.integrationTest.runtimeClasspath
         }
@@ -136,6 +136,6 @@ subprojects {
 
 }
 
-task updateWrapper(type: Wrapper) {
-    gradleVersion = "5.1.1"
+tasks.register('updateWrapper', Wrapper) {
+    gradleVersion = "8.0"
 }
