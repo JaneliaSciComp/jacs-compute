@@ -5,8 +5,6 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.lang3.StringUtils;
@@ -250,7 +248,7 @@ public class SWCService {
                                     archiveInputStreamStack.pop();
                                     long offset = currentInputStream.getNextOffset();
                                     LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
-                                    ArchiveInputStreamPosition nextStream = newStream(
+                                    ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(
                                             swcStorageFolderURL,
                                             openSWCDataStream(swcStorageFolderURL,
                                                     offset,
@@ -267,7 +265,7 @@ public class SWCService {
                                 } else {
                                     LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
                                     InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
-                                    ArchiveInputStreamPosition archiveEntryStream = newStream(
+                                    ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
                                             swcStorageFolderURL + ":" + currentEntry.getName(),
                                             entryStream,
                                             0L);
@@ -386,7 +384,7 @@ public class SWCService {
                                                                               int depth,
                                                                               boolean orderFlag) {
         ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack = new ConcurrentStack<>();
-        ArchiveInputStreamPosition archiveInputStream = newStream(
+        ArchiveInputStreamPosition archiveInputStream = prepareStreamIfArchive(
                 storageURL,
                 openSWCDataStream(
                         storageURL,
@@ -401,16 +399,30 @@ public class SWCService {
         return archiveInputStreamStack;
     }
 
-    private synchronized ArchiveInputStreamPosition newStream(String streamName, InputStream inputStream, long offset) {
-        return isArchiveStream(streamName, inputStream)
-                .map(isArchive -> {
-                    if (isArchive) {
-                        return new ArchiveInputStreamPosition(streamName, asArchiveInputStream(inputStream), offset);
-                    } else {
-                        return null;
-                    }
-                })
-                .orElse(null);
+    private synchronized ArchiveInputStreamPosition prepareStreamIfArchive(String streamName, InputStream inputStream, long offset) {
+        if (inputStream == null) {
+            return null;
+        }
+        // check if the stream is compressed
+        InputStream uncompressedInputStream;
+        try {
+            String compressor = CompressorStreamFactory.detect(inputStream);
+            LOG.debug("{} compression detected for {}", compressor, streamName);
+            uncompressedInputStream = new BufferedInputStream(new CompressorStreamFactory()
+                        .createCompressorInputStream(inputStream));
+        } catch (CompressorException e) {
+            // no compression was detected -> use the original stream
+            uncompressedInputStream = inputStream;
+        }
+        try {
+            String archiveSignature = ArchiveStreamFactory.detect(uncompressedInputStream);
+            LOG.debug("{} signature detected for {}", archiveSignature, streamName);
+            ArchiveInputStream  archiveInputStream = new ArchiveStreamFactory()
+                    .createArchiveInputStream(archiveSignature, uncompressedInputStream);
+            return new ArchiveInputStreamPosition(streamName, archiveInputStream, offset);
+        } catch (ArchiveException e) {
+            return null;
+        }
     }
 
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
@@ -448,39 +460,6 @@ public class SWCService {
         } catch (IOException e) {
             LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
             throw new UncheckedIOException(e);
-        }
-    }
-
-    private Optional<Boolean> isArchiveStream(String streamName, InputStream inputStream) {
-        if (inputStream == null) {
-            return Optional.empty();
-        } else {
-            String compressor;
-            try {
-                compressor = CompressorStreamFactory.detect(inputStream);
-                LOG.debug("{} compression detected for {}", compressor, streamName);
-            } catch (CompressorException e) {
-                compressor = null;
-            }
-            try {
-                if (compressor == null) {
-                    String archiveSignature = ArchiveStreamFactory.detect(inputStream);
-                    LOG.debug("{} signature detected for {}", archiveSignature, streamName);
-                } // if compressor is set I will automatically assume this is an archived stream
-                return Optional.of(true);
-            } catch (ArchiveException e) {
-                return Optional.of(false);
-            }
-        }
-    }
-
-    private ArchiveInputStream asArchiveInputStream(InputStream inputStream) {
-        try {
-            return new ArchiveStreamFactory()
-                    .createArchiveInputStream(inputStream);
-        } catch (ArchiveException e) {
-            // this should not happen because the stream should be checked before
-            throw new IllegalArgumentException(e);
         }
     }
 
