@@ -73,6 +73,9 @@ public class HortaDataManager {
         String octreePath = sample.getFiles().get(FileType.LargeVolumeOctree);
         String altPath = sample.getFiles().get(FileType.LargeVolumeZarr);
 
+        log.info("OCTREE PATH:{}",octreePath);
+        log.info("ZARR PATH:{}",altPath);
+
         String samplePath = (octreePath!=null)?octreePath:altPath;
         RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
