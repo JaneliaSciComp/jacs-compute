@@ -227,6 +227,7 @@ public class StorageService {
      * @param storageURI must point to data_content URL of a folder containing files
      * @param offset index of first file to stream
      * @param size number of files to stream
+     * @param depth directory tree depth
      * @param sortedContent sort files before streaming
      * @param filter regex filename filter
      * @param subject subject key (or null)

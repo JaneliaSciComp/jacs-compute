@@ -9,6 +9,7 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.ReverseReference;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
@@ -69,8 +70,13 @@ public class HortaDataManager {
     public TmSample createTmSample(String subjectKey, TmSample sample) throws IOException {
 
         String sampleName = sample.getName();
-        String samplePath = sample.getLargeVolumeOctreeFilepath();
+        String octreePath = sample.getFiles().get(FileType.LargeVolumeOctree);
+        String altPath = sample.getFiles().get(FileType.LargeVolumeZarr);
 
+        log.info("OCTREE PATH:{}",octreePath);
+        log.info("ZARR PATH:{}",altPath);
+
+        String samplePath = (octreePath!=null)?octreePath:altPath;
         RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
@@ -89,30 +95,41 @@ public class HortaDataManager {
             throw new IOException("Error reading transform constants for "+subjectKey+" from "+samplePath);
         }
 
-        final String ktxFullPath;
-        if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
-            log.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
-            ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
-        } else {
-            ktxFullPath = sample.getLargeVolumeKTXFilepath();
+        if (altPath!=null) {
+            boolean altFound = dataStorageLocationFactory.lookupJadeDataLocation(altPath, subjectKey, null)
+                    .map(dl -> true)
+                    .orElseGet(() -> {
+                        log.warn("Could not find any storage for Zarr directory for sample {} at {}", sample.getName(), altPath);
+                        return false;
+                    });
+            sample.setExistsInStorage(altFound);
         }
 
-        // check if the ktx location is accessible
-        boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
-                .map(dl -> true)
-                .orElseGet(() -> {
-                    log.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
-                    return false;
-                })
-                ;
-        if (ktxFound) {
+        if (altPath==null) {
+            final String ktxFullPath;
             if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
-                log.info("Setting KTX data path to {}", ktxFullPath);
-                sample.setLargeVolumeKTXFilepath(ktxFullPath);
+                log.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
+                ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
+            } else {
+                ktxFullPath = sample.getLargeVolumeKTXFilepath();
             }
-        } else {
-            if (StringUtils.isNotBlank(sample.getLargeVolumeKTXFilepath())) {
-                sample.setExistsInStorage(false); // set file system sync to false because ktx directory does not exist
+
+            // check if the ktx location is accessible
+            boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
+                    .map(dl -> true)
+                    .orElseGet(() -> {
+                        log.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
+                        return false;
+                    });
+            if (ktxFound) {
+                if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
+                    log.info("Setting KTX data path to {}", ktxFullPath);
+                    sample.setLargeVolumeKTXFilepath(ktxFullPath);
+                }
+            } else {
+                if (StringUtils.isNotBlank(sample.getLargeVolumeKTXFilepath())) {
+                    sample.setExistsInStorage(false); // set file system sync to false because ktx directory does not exist
+                }
             }
         }
 
