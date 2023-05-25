@@ -150,9 +150,9 @@ class LSFSparkClusterLauncher {
 
                 // Wait for the URI to be written to the log
                 .thenSuspendUntil(
-                        jobInfo -> scanFileForSparkURI(getSparkErrorOutputLogPath(sparkJobName, jobErrorPath).toFile())
-                                .map(Optional::of)
-                                .orElseGet(() -> scanFileForSparkURI(getSparkErrorOutputLogPath(sparkJobName, jobOutputPath).toFile()))
+                        jobInfo -> scanFileForSparkURI(
+                                getSparkMasterOutputLogPath(sparkJobName, jobOutputPath).toFile(),
+                                getSparkMasterErrorLogPath(sparkJobName, jobErrorPath).toFile())
                                 .map(sparkURI -> new SparkClusterInfo(jobInfo.getJobId(), null, sparkURI))
                                 .orElseGet(() -> new SparkClusterInfo(jobInfo.getJobId(), null, null)),
                         sparkClusterInfo -> new ContinuationCond.Cond<>(sparkClusterInfo, StringUtils.isNotBlank(sparkClusterInfo.getMasterURI())),
@@ -289,7 +289,7 @@ class LSFSparkClusterLauncher {
                     sparkHomeDir,
                     jobWorkingPath,
                     getSparkMasterOutputLogPath(jobName, jobOutputPath),
-                    getSparkErrorOutputLogPath(jobName, jobErrorPath),
+                    getSparkMasterErrorLogPath(jobName, jobErrorPath),
                     createNativeSpec(1, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
             );
@@ -354,33 +354,31 @@ class LSFSparkClusterLauncher {
         return outputPath.resolve("M" + jobName + ".out");
     }
 
-    private Path getSparkErrorOutputLogPath(String jobName, Path outputPath) {
+    private Path getSparkMasterErrorLogPath(String jobName, Path outputPath) {
         return outputPath.resolve("M" + jobName + ".err");
     }
 
-    private Optional<String> scanFileForSparkURI(File f) {
-        if (f.exists()) {
-            Pattern p = Pattern.compile("Starting Spark master at (spark://([^:]+):([0-9]+))$");
-            try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
-                for (; ; ) {
-                    String l = reader.readLine();
-                    if (l == null) break;
-                    if (StringUtils.isEmpty(l)) {
-                        continue;
+    private Optional<String> scanFileForSparkURI(File ...fs) {
+        Pattern p = Pattern.compile("Starting Spark master at (spark://([^:]+):([0-9]+))$");
+        for (File f : fs) {
+            if (f.exists()) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
+                    for (String l = reader.readLine(); l != null; l = reader.readLine()) {
+                        if (StringUtils.isBlank(l)) {
+                            continue;
+                        }
+                        Matcher m = p.matcher(l);
+                        if (m.find()) {
+                            String sparkURI = m.group(1);
+                            logger.info("Found spark URI: {} in {}", sparkURI, f);
+                            return Optional.of(sparkURI);
+                        }
                     }
-                    Matcher m = p.matcher(l);
-                    if (m.find()) {
-                        String sparkURI = m.group(1);
-                        logger.info("Found spark URI: {} in {}", sparkURI, f);
-                        return Optional.of(sparkURI);
-                    }
+                } catch (Exception ignore) {
                 }
-            } catch (Exception ignore) {
             }
-            return Optional.empty();
-        } else {
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 
     private JobTemplate createSparkJobTemplate(String jobName,

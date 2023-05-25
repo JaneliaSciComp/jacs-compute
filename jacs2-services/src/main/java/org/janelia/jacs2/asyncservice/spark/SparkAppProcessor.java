@@ -184,6 +184,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                                 runningClusterState.getData().getWorkerJobId())));
                         String appErrors;
                         if (sparkApp != null) {
+                            logger.info("Terminate spark app: {}", runningClusterState.getData().getMasterURI());
                             sparkApp.kill(); // terminate the app just in case it is still running
                         }
                         if (exc != null) {
