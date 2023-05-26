@@ -18,6 +18,7 @@ import org.apache.spark.launcher.SparkLauncher;
 import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobTemplate;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,10 +27,12 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
 
     private final JobManager jobMgr;
     private final String billingInfo;
+    private final String driverLSFSpec;
 
-    LSFSparkDriverRunner(JobManager jobMgr, String billingInfo) {
+    LSFSparkDriverRunner(JobManager jobMgr, String billingInfo, String driverLSFSpec) {
         this.jobMgr = jobMgr;
         this.billingInfo = billingInfo;
+        this.driverLSFSpec = driverLSFSpec;
     }
 
     public LSFJobSparkApp startSparkApp(String appName,
@@ -111,7 +114,7 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
                 appOutputDir,
                 driverOutputPath.toString(),
                 driverErrorPath.toString(),
-                createNativeSpec(nDriverCores, billingInfo, SparkAppResourceHelper.getSparkAppTimeoutInMin(sparkAppResources)),
+                createNativeSpec(nDriverCores, billingInfo, SparkAppResourceHelper.getSparkAppTimeoutInMin(sparkAppResources), sparkAppResources),
                 Collections.emptyMap());
         // Submit driver job
         try {
@@ -153,7 +156,10 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         return jt;
     }
 
-    private List<String> createNativeSpec(int nProcessingSlots, String billingAccount, int sparkClusterTimeoutInMins) {
+    private List<String> createNativeSpec(int nProcessingSlots,
+                                          String billingAccount,
+                                          int sparkClusterTimeoutInMins,
+                                          Map<String, String> jobResources) {
         List<String> spec = new ArrayList<>();
         if (nProcessingSlots > 1) {
             spec.add("-n " + nProcessingSlots);
@@ -163,6 +169,13 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         }
         if (StringUtils.isNotBlank(billingAccount)) {
             spec.add("-P " + billingAccount);
+        }
+        String queue = jobResources.get("gridQueue");
+        if (StringUtils.isNotBlank(queue)) {
+            spec.add("-q "+queue);
+        }
+        if (StringUtils.isNotBlank(driverLSFSpec)) {
+            spec.add(driverLSFSpec);
         }
         return spec;
     }
