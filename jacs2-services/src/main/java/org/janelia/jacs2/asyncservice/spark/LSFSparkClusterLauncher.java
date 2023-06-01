@@ -67,7 +67,6 @@ class LSFSparkClusterLauncher {
     private final long clusterStartTimeoutInMillis;
     private final long clusterIntervalCheckInMillis;
     private final String sparkLSFSpec;
-    private final String sparkDriverLSFSpec;
     private final String startSparkCmd;
     private final String sparkMasterClass;
     private final String sparkWorkerClass;
@@ -82,7 +81,6 @@ class LSFSparkClusterLauncher {
                             @StrPropertyValue(name = "service.spark.sparkMasterClass", defaultValue = "org.apache.spark.deploy.master.Master") String sparkMasterClass,
                             @StrPropertyValue(name = "service.spark.sparkWorkerClass", defaultValue = "org.apache.spark.deploy.worker.Worker") String sparkWorkerClass,
                             @StrPropertyValue(name = "service.spark.lsf.spec", defaultValue = "") String sparkLSFSpec,
-                            @StrPropertyValue(name = "service.spark.driver.lsf.spec", defaultValue = "") String sparkDriverLSFSpec,
                             Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
@@ -90,7 +88,6 @@ class LSFSparkClusterLauncher {
         this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds > 0 ? clusterStartTimeoutInSeconds * 1000L : -1;
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.sparkLSFSpec = sparkLSFSpec;
-        this.sparkDriverLSFSpec = sparkDriverLSFSpec;
         this.startSparkCmd = startSparkCmd;
         this.sparkMasterClass = sparkMasterClass;
         this.sparkWorkerClass = sparkWorkerClass;
@@ -236,7 +233,7 @@ class LSFSparkClusterLauncher {
     }
 
     SparkDriverRunner<? extends SparkApp> getLSFDriverRunner(String billingInfo) {
-        return new LSFSparkDriverRunner(jobMgr, billingInfo, sparkDriverLSFSpec);
+        return new LSFSparkDriverRunner(jobMgr, billingInfo, sparkLSFSpec);
     }
 
     ServiceComputation<SparkClusterInfo> stopCluster(SparkClusterInfo sparkClusterInfo) {
