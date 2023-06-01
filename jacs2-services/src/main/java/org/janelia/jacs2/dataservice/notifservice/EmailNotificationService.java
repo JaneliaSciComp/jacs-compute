@@ -24,17 +24,20 @@ public class EmailNotificationService {
 
     private final boolean disabled;
     private final Properties emailProperties = new Properties();
+    private final String serviceName;
     private final String senderEmail;
     private final String senderPassword;
     private final boolean authRequired;
 
     @Inject
-    public EmailNotificationService(@PropertyValue(name = "service.email.senderEmail") String senderEmail,
+    public EmailNotificationService(@PropertyValue(name = "service.queue.id") String serviceName,
+                                    @PropertyValue(name = "service.email.senderEmail") String senderEmail,
                                     @PropertyValue(name = "service.email.senderPassword") String senderPassword,
                                     @BoolPropertyValue(name = "service.email.authRequired") boolean authRequired,
                                     @BoolPropertyValue(name = "service.email.enableTLS") boolean enableTLS,
                                     @PropertyValue(name = "service.email.smtpHost") String smtpHost,
                                     @IntPropertyValue(name = "service.email.smtpPort", defaultValue = 25) Integer smtpPort) {
+        this.serviceName = serviceName;
         this.senderEmail = senderEmail;
         this.senderPassword = senderPassword;
         this.authRequired = authRequired;
@@ -72,7 +75,12 @@ public class EmailNotificationService {
             emailMessage.setFrom(new InternetAddress(senderEmail));
             emailMessage.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipients));
             emailMessage.setSubject(subject);
-            emailMessage.setText(textMessage);
+            StringBuilder messageBuilder = new StringBuilder();
+            if (StringUtils.isNotBlank(serviceName)) {
+                messageBuilder.append("Sent by: ").append(serviceName).append('\n');
+            }
+            messageBuilder.append(textMessage);
+            emailMessage.setText(messageBuilder.toString());
             Transport.send(emailMessage);
         } catch (Exception e) {
             LOG.warn("Error sending {} to {} from {} using {}", textMessage, recipients, senderEmail, emailProperties);
