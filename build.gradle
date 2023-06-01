@@ -137,5 +137,5 @@ subprojects {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.0"
+    gradleVersion = "8.1.1"
 }
