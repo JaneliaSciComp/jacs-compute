@@ -26,10 +26,12 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
 
     private final JobManager jobMgr;
     private final String billingInfo;
+    private final String lsfSpec;
 
-    LSFSparkDriverRunner(JobManager jobMgr, String billingInfo) {
+    LSFSparkDriverRunner(JobManager jobMgr, String billingInfo, String lsfSpec) {
         this.jobMgr = jobMgr;
         this.billingInfo = billingInfo;
+        this.lsfSpec = lsfSpec;
     }
 
     public LSFJobSparkApp startSparkApp(String appName,
@@ -153,7 +155,9 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         return jt;
     }
 
-    private List<String> createNativeSpec(int nProcessingSlots, String billingAccount, int sparkClusterTimeoutInMins) {
+    private List<String> createNativeSpec(int nProcessingSlots,
+                                          String billingAccount,
+                                          int sparkClusterTimeoutInMins) {
         List<String> spec = new ArrayList<>();
         if (nProcessingSlots > 1) {
             spec.add("-n " + nProcessingSlots);
@@ -163,6 +167,9 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         }
         if (StringUtils.isNotBlank(billingAccount)) {
             spec.add("-P " + billingAccount);
+        }
+        if (StringUtils.isNotBlank(lsfSpec)) {
+            spec.add(lsfSpec);
         }
         return spec;
     }
