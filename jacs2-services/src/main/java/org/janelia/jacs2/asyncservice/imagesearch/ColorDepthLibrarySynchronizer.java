@@ -783,6 +783,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         );
         boolean isANewLibrary = library.getId() == null;
         // dereference the library first from all mips
+        logger.info("Remove all current mips from {}", libraryIdentifier);
         colorDepthImageDao.removeAllMipsFromLibrary(libraryIdentifier);
         AtomicInteger counter = new AtomicInteger();
         long updatedMips = publishedLines.stream()
@@ -815,6 +816,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private long addLibraryToMipsBySampleRefs(String libraryIdentifier, Set<Reference> sampleRefs) {
         Map<String, Set<Reference>> publishedSamplesGroupedByObjective = annotationDao.findAnnotationsByTargets(sampleRefs).stream()
                 .map(a -> ImmutablePair.of(getPublishedObjective(a.getName()), a.getTarget()))
+                // filter out samples that do not have a "Publish<Objective>ToWeb" annotation
                 .filter(sampleWithObjective -> StringUtils.isNotBlank(sampleWithObjective.getLeft()))
                 .collect(Collectors.groupingBy(
                         ImmutablePair::getLeft,
