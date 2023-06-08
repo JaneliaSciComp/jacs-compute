@@ -814,6 +814,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private long addLibraryToMipsBySampleRefs(String libraryIdentifier, Set<Reference> sampleRefs) {
+        // group samples by published objectives
         Map<String, Set<Reference>> publishedSamplesGroupedByObjective = annotationDao.findAnnotationsByTargets(sampleRefs).stream()
                 .map(a -> ImmutablePair.of(getPublishedObjective(a.getName()), a.getTarget()))
                 // filter out samples that do not have a "Publish<Objective>ToWeb" annotation
