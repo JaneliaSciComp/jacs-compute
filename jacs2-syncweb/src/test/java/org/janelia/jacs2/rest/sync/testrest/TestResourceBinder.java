@@ -18,6 +18,7 @@ import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacs2.cdi.qualifier.HortaSharedData;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
@@ -26,6 +27,7 @@ import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.user.UserManager;
+import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.*;
@@ -74,6 +76,7 @@ public class TestResourceBinder extends AbstractBinder {
         // it must both be annotated in the producer and qualified with the proper annotation instance in the binder
         ApplicationProperties applicationPropertiesAnnotation = getAnnotation(ApplicationProperties.class, "getApplicationConfig");
         AsyncIndex asyncIndexAnnotation = getAnnotation(AsyncIndex.class, "getDatasetSearchableDao");
+        HortaSharedData hortaSharedAnnotation = getAnnotation(HortaSharedData.class, "getMessageSender");
 
         bind(dependenciesProducer.getLogger()).to(Logger.class);
         bind(dependenciesProducer.getApplicationConfig()).to(ApplicationConfig.class).qualifiedBy(applicationPropertiesAnnotation);
@@ -118,6 +121,7 @@ public class TestResourceBinder extends AbstractBinder {
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})
                 .in(Singleton.class);
         bind(dependenciesProducer.getHortaDataManager()).to(HortaDataManager.class);
+        bind(dependenciesProducer.getMessageSender()).to(MessageSender.class).qualifiedBy(hortaSharedAnnotation);
     }
 
     private <A extends Annotation> A getAnnotation(Class<A> annotationClass, String exampleMethodName, Class<?>... exampleMethodParameterTypes) {
