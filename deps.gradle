@@ -107,6 +107,7 @@ dependencies {
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
         JACS_MESSAGING_VERSION = "2.5.0"
         JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
+        JACS_MESSAGING_BROKER_LIB = "org.janelia.jacs-messaging:jacs-messaging-broker:${JACS_MESSAGING_VERSION}"
         JACS_STORAGE_VERSION = "1.19.0.RELEASE"
         JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:${JACS_STORAGE_VERSION}"
 
