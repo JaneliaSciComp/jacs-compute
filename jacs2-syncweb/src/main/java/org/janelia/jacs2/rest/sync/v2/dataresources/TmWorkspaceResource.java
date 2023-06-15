@@ -277,8 +277,16 @@ public class TmWorkspaceResource {
             LOG.info("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         } else {
-            TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace);
-            return newNeuron;
+            try {
+                TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace);
+                return newNeuron;
+            } catch (SecurityException e) {
+                LOG.error("Permission error trying to create neuron {} in workspace {}", neuron, workspace, e);
+                throw new WebApplicationException(e.getMessage(), Response.Status.FORBIDDEN);
+            } catch (Exception e) {
+                LOG.error("General error trying to create neuron {} in workspace {}", neuron, workspace, e);
+                throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+            }
         }
     }
 
