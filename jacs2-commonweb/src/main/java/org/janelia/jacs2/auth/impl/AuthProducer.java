@@ -35,6 +35,7 @@ public class AuthProducer {
                                 @PropertyValue(name = "LDAP.TimeOut") Integer ldapTimeout,
                                 @PropertyValue(name = "LDAP.AttributeFirstName") String firstNameAttr,
                                 @PropertyValue(name = "LDAP.AttributeLastName") String lastNameAttr,
+                                @PropertyValue(name = "LDAP.AttributeName") String nameAttr,
                                 @PropertyValue(name = "LDAP.AttributeEmail") String emailAttr,
                                 @PropertyValue(name = "LDAP.AttributeDistinguishedName") String dnAttr
                                 ) {
@@ -44,6 +45,6 @@ public class AuthProducer {
         }
         return new LDAPAuthProvider(ldapUrl, ldapSearchBase,
                 ldapSearchFilter, ldapBindDN, ldapBindCredentials, ldapTimeout,
-                firstNameAttr, lastNameAttr, emailAttr, dnAttr);
+                firstNameAttr, lastNameAttr, nameAttr, emailAttr, dnAttr);
     }
 }

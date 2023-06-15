@@ -37,16 +37,19 @@ public class LDAPAuthProvider implements AuthProvider {
 
     private final String firstNameAttr;
     private final String lastNameAttr;
+    private final String nameAttr;
     private final String emailAttr;
     private final String dnAttr;
 
     LDAPAuthProvider(String url, String searchBase, String searchFilter,
                      String bindDN, String bindCredentials, Integer timeout,
-                     String firstNameAttr, String lastNameAttr, String emailAttr, String dnAttr) {
+                     String firstNameAttr, String lastNameAttr,
+                     String nameAttr, String emailAttr, String dnAttr) {
 
         this.searchFilter = searchFilter;
         this.firstNameAttr = firstNameAttr;
         this.lastNameAttr = lastNameAttr;
+        this.nameAttr = nameAttr;
         this.emailAttr = emailAttr;
         this.dnAttr = dnAttr;
 
@@ -173,8 +176,9 @@ public class LDAPAuthProvider implements AuthProvider {
                 }
                 Entry entry = cursor.get();
                 User newUser = new User();
-                newUser.setName(username);
-                newUser.setKey("user:" + username);
+                String unameFromLDAPEntry = getOptionalLdapStringAttribute(entry, nameAttr);
+                newUser.setName(StringUtils.defaultIfBlank(unameFromLDAPEntry, username));
+                newUser.setKey("user:" + newUser.getName());
                 newUser.setEmail(getOptionalLdapStringAttribute(entry, emailAttr));
                 newUser.setFullName(entry.get(firstNameAttr).getString() + " " + entry.get(lastNameAttr).getString());
                 ldapUser = new LdapUser(getLdapStringAttribute(entry, dnAttr), newUser);
