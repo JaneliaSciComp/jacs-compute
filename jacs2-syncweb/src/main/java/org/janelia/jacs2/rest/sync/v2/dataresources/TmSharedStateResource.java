@@ -146,7 +146,7 @@ public class TmSharedStateResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron/ownership")
     public Response changeOwnership(DomainQuery query,
-                                              String targetUser) {
+                                    @ApiParam @QueryParam("targetUser") final String targetUser) {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
 
