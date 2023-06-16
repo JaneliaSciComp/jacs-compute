@@ -86,17 +86,6 @@ public class HortaDataManager {
             throw new IOException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for "+subjectKey);
         }
 
-        boolean transformFound = getConstants(rvl)
-                .map(constants -> {
-                    populateConstants(sample, constants);
-                    log.info("Found {} levels in octree", sample.getNumImageryLevels());
-                    return true;
-                })
-                .orElse(false);
-        if (!transformFound) {
-            throw new IOException("Error reading transform constants for "+subjectKey+" from "+samplePath);
-        }
-
         if (altPath!=null) {
             boolean altFound = dataStorageLocationFactory.lookupJadeDataLocation(altPath, subjectKey, null)
                     .map(dl -> true)
@@ -108,6 +97,17 @@ public class HortaDataManager {
         }
 
         if (altPath==null) {
+            boolean transformFound = getConstants(rvl)
+                    .map(constants -> {
+                        populateConstants(sample, constants);
+                        log.info("Found {} levels in octree", sample.getNumImageryLevels());
+                        return true;
+                    })
+                    .orElse(false);
+            if (!transformFound) {
+                throw new IOException("Error reading transform constants for "+subjectKey+" from "+samplePath);
+            }
+
             final String ktxFullPath;
             if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
                 log.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
