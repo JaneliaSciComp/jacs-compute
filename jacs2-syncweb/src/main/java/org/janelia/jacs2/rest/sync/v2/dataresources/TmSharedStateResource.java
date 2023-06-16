@@ -74,7 +74,7 @@ public class TmSharedStateResource {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
 
         String subjectKey = query.getSubjectKey();
-        LOG.info("createTmNeuron({}, {})", subjectKey, neuron);
+        LOG.info("createTmNeuron({}, workspaceId={}, name={})", subjectKey, neuron.getWorkspaceId(), neuron.getName());
         TmWorkspace workspace = getWorkspace(subjectKey, neuron.getWorkspaceId());
 
         try {
@@ -93,7 +93,7 @@ public class TmSharedStateResource {
                     .build();
         }
         finally {
-            LOG.trace("Finish createTmNeuron({}, {})", subjectKey, neuron);
+            LOG.trace("Finish createTmNeuron({}, workspaceId={}, name={})", subjectKey, neuron.getWorkspaceId(), neuron.getName());
         }
     }
 

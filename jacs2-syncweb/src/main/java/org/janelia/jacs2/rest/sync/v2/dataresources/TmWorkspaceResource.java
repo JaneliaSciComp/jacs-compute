@@ -304,11 +304,10 @@ public class TmWorkspaceResource {
     public TmNeuronMetadata updateTmNeuron(DomainQuery query) {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
+        LOG.info("updateTmNeuron({}, neuron={})", subjectKey, neuron);
 
-        LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
-        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron,
-                subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
+        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey);
         return updatedNeuron;
     }
 
