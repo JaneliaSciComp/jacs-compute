@@ -76,7 +76,7 @@ public class HortaDataManager {
         log.info("OCTREE PATH:{}",octreePath);
         log.info("ZARR PATH:{}",altPath);
 
-        String samplePath = (octreePath.trim().length()==0)?octreePath:altPath;
+        String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
 
         log.info("SAMPLE PATH:{}",samplePath);
         RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
