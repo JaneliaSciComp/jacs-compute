@@ -256,60 +256,60 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "Creates a new neuron",
-            notes = "Creates a neuron in the given workspace"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created a TmNeuron", response = TmNeuronMetadata.class),
-            @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
-    })
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/workspace/neuron")
-    public TmNeuronMetadata createTmNeuron(DomainQuery query) {
-        TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
+//    @ApiOperation(value = "Creates a new neuron",
+//            notes = "Creates a neuron in the given workspace"
+//    )
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successfully created a TmNeuron", response = TmNeuronMetadata.class),
+//            @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
+//    })
+//    @PUT
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Path("/workspace/neuron")
+//    public TmNeuronMetadata createTmNeuron(DomainQuery query) {
+//        TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
+//
+//        String subjectKey = query.getSubjectKey();
+//        LOG.info("createTmNeuron({}, {})", subjectKey, neuron);
+//        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
+//        if (workspace == null) {
+//            LOG.info("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
+//            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+//        } else {
+//            try {
+//                TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace);
+//                return newNeuron;
+//            } catch (SecurityException e) {
+//                LOG.error("Permission error trying to create neuron {} in workspace {}", neuron, workspace, e);
+//                throw new WebApplicationException(e.getMessage(), Response.Status.FORBIDDEN);
+//            } catch (Exception e) {
+//                LOG.error("General error trying to create neuron {} in workspace {}", neuron, workspace, e);
+//                throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+//            }
+//        }
+//    }
 
-        String subjectKey = query.getSubjectKey();
-        LOG.info("createTmNeuron({}, {})", subjectKey, neuron);
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
-        if (workspace == null) {
-            LOG.info("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
-            throw new WebApplicationException(Response.Status.BAD_REQUEST);
-        } else {
-            try {
-                TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace);
-                return newNeuron;
-            } catch (SecurityException e) {
-                LOG.error("Permission error trying to create neuron {} in workspace {}", neuron, workspace, e);
-                throw new WebApplicationException(e.getMessage(), Response.Status.FORBIDDEN);
-            } catch (Exception e) {
-                LOG.error("General error trying to create neuron {} in workspace {}", neuron, workspace, e);
-                throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
-            }
-        }
-    }
-
-    @ApiOperation(value = "Updates existing neurons",
-            notes = "Updates a neuron"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated TmNeurons", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
-    })
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/workspace/neuron")
-    public TmNeuronMetadata updateTmNeuron(DomainQuery query) {
-        TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
-        String subjectKey = query.getSubjectKey();
-        LOG.info("updateTmNeuron({}, neuron={})", subjectKey, neuron);
-
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
-        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey);
-        return updatedNeuron;
-    }
+//    @ApiOperation(value = "Updates existing neurons",
+//            notes = "Updates a neuron"
+//    )
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successfully updated TmNeurons", response = List.class),
+//            @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
+//    })
+//    @POST
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Path("/workspace/neuron")
+//    public TmNeuronMetadata updateTmNeuron(DomainQuery query) {
+//        TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
+//        String subjectKey = query.getSubjectKey();
+//        LOG.info("updateTmNeuron({}, neuron={})", subjectKey, neuron);
+//
+//        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
+//        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey);
+//        return updatedNeuron;
+//    }
 
     @ApiOperation(value = "Gets neuron metadata given a neuronId",
             notes = "Returns a list of neurons given their ids"
@@ -372,23 +372,23 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "Removes an existing neuron",
-            notes = "Removes the neuron by its id"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully removed a TmNeuron"),
-            @ApiResponse(code = 500, message = "Error occurred while removing a TmNeuron")
-    })
-    @DELETE
-    @Path("/workspace/neuron")
-    public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                               @ApiParam @QueryParam("isLarge") final Boolean isLarge,
-                               @ApiParam @QueryParam("neuronId") final Long neuronId) {
-        LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
-        tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, workspace, subjectKey);
-    }
+//    @ApiOperation(value = "Removes an existing neuron",
+//            notes = "Removes the neuron by its id"
+//    )
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successfully removed a TmNeuron"),
+//            @ApiResponse(code = 500, message = "Error occurred while removing a TmNeuron")
+//    })
+//    @DELETE
+//    @Path("/workspace/neuron")
+//    public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+//                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+//                               @ApiParam @QueryParam("isLarge") final Boolean isLarge,
+//                               @ApiParam @QueryParam("neuronId") final Long neuronId) {
+//        LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
+//        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+//        tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, workspace, subjectKey);
+//    }
 
     @ApiOperation(value = "Add or remove tags",
             notes = "Add or remove the given tags to a list of neurons"
