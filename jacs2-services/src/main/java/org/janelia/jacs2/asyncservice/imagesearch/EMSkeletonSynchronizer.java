@@ -186,65 +186,71 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         }
 
         Path swcDir = libraryDir.toPath().resolve("swc");
-        logger.info("Checking for SWC files in {}", swcDir);
+        if (Files.exists(swcDir)) {
+            logger.info("Checking for SWC files in {}", swcDir);
+            FileUtils.lookupFiles(
+                            swcDir, 1, "glob:**/*.swc")
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(file -> {
+                        foundSwc++;
+                        Pattern pattern = emSkeletonRegexPattern();
+                        Matcher matcher = pattern.matcher(file.getName());
+                        if (matcher.matches()) {
+                            Long bodyId = Long.valueOf(matcher.group(1));
+                            EMBody emBody = emBodyByBodyId.get(bodyId);
 
-        FileUtils.lookupFiles(
-                swcDir, 1, "glob:**/*.swc")
-                .map(Path::toFile)
-                .filter(File::isFile)
-                .forEach(file -> {
-                    foundSwc++;
-                    Pattern pattern = emSkeletonRegexPattern();
-                    Matcher matcher = pattern.matcher(file.getName());
-                    if (matcher.matches()) {
-                        Long bodyId = Long.valueOf(matcher.group(1));
-                        EMBody emBody = emBodyByBodyId.get(bodyId);
-
-                        if (emBody != null) {
-                            // Update CDM on EMBody for easy visualization in the Workstation
-                            emBody.getFiles().put(FileType.SkeletonSWC, file.getAbsolutePath());
-                            emBodyDao.replace(emBody);
-                            updatedSwc++;
-                        } else {
-                            logger.warn("  Could not find body with id {} in {} for {}/{}",
-                                    bodyId, emDataSet.getDataSetIdentifier(), alignmentSpace, libraryIdentifier);
+                            if (emBody != null) {
+                                // Update CDM on EMBody for easy visualization in the Workstation
+                                emBody.getFiles().put(FileType.SkeletonSWC, file.getAbsolutePath());
+                                emBodyDao.replace(emBody);
+                                updatedSwc++;
+                            } else {
+                                logger.warn("  Could not find body with id {} in {} for {}/{}",
+                                        bodyId, emDataSet.getDataSetIdentifier(), alignmentSpace, libraryIdentifier);
+                            }
                         }
-                    }
-                    else {
-                        logger.warn("  Could not extract body id from filename: {}", file.getName());
-                    }
-                });
+                        else {
+                            logger.warn("  Could not extract body id from filename: {}", file.getName());
+                        }
+                    });
+        } else {
+            logger.info("No swc folder found for {} in {}", libraryIdentifier, libraryDir);
+        }
 
 
         Path objDir = libraryDir.toPath().resolve("obj");
-        logger.info("Checking for OBJ files in {}", objDir);
+        if (Files.exists(objDir)) {
+            logger.info("Checking for OBJ files in {}", objDir);
+            FileUtils.lookupFiles(
+                            objDir, 1, "glob:**/*.obj")
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(file -> {
+                        foundObj++;
+                        Pattern pattern = emSkeletonRegexPattern();
+                        Matcher matcher = pattern.matcher(file.getName());
+                        if (matcher.matches()) {
+                            Long bodyId = Long.valueOf(matcher.group(1));
+                            EMBody emBody = emBodyByBodyId.get(bodyId);
 
-        FileUtils.lookupFiles(
-                objDir, 1, "glob:**/*.obj")
-                .map(Path::toFile)
-                .filter(File::isFile)
-                .forEach(file -> {
-                    foundObj++;
-                    Pattern pattern = emSkeletonRegexPattern();
-                    Matcher matcher = pattern.matcher(file.getName());
-                    if (matcher.matches()) {
-                        Long bodyId = Long.valueOf(matcher.group(1));
-                        EMBody emBody = emBodyByBodyId.get(bodyId);
-
-                        if (emBody != null) {
-                            // Update CDM on EMBody for easy visualization in the Workstation
-                            emBody.getFiles().put(FileType.SkeletonOBJ, file.getAbsolutePath());
-                            emBodyDao.replace(emBody);
-                            updatedObj++;
-                        } else {
-                            logger.warn("  Could not find body with id {} in {} for {}/{}",
-                                    bodyId, emDataSet.getDataSetIdentifier(), alignmentSpace, libraryIdentifier);
+                            if (emBody != null) {
+                                // Update CDM on EMBody for easy visualization in the Workstation
+                                emBody.getFiles().put(FileType.SkeletonOBJ, file.getAbsolutePath());
+                                emBodyDao.replace(emBody);
+                                updatedObj++;
+                            } else {
+                                logger.warn("  Could not find body with id {} in {} for {}/{}",
+                                        bodyId, emDataSet.getDataSetIdentifier(), alignmentSpace, libraryIdentifier);
+                            }
                         }
-                    }
-                    else {
-                        logger.warn("  Could not extract body id from filename: {}", file.getName());
-                    }
-                });
+                        else {
+                            logger.warn("  Could not extract body id from filename: {}", file.getName());
+                        }
+                    });
+        } else {
+            logger.info("No obj folder found for {} in {}", libraryIdentifier, libraryDir);
+        }
     }
 
     /**
