@@ -219,18 +219,20 @@ public class TmWorkspaceResource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                             @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                                             @ApiParam @QueryParam("offset") final Long offsetParam,
-                                                             @ApiParam @QueryParam("length") final Integer lengthParam) {
+                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+                                        @ApiParam @QueryParam("offset") final Long offsetParam,
+                                        @ApiParam @QueryParam("length") final Integer lengthParam,
+                                        @ApiParam @QueryParam("length") final Boolean fragsParam) {
         LOG.debug("getWorkspaceNeurons({}, {}, {})", workspaceId, offsetParam, lengthParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return null;
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
+        boolean filterFrags = fragsParam == null ? false : fragsParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
         try {
             Iterator<TmNeuronMetadata> foo = tmNeuronMetadataDao.streamWorkspaceNeurons(workspace,
-                    subjectKey, offset, length).iterator();
+                    subjectKey, offset, length, filterFrags).iterator();
             ObjectMapper mapper = new ObjectMapper();
 
             StreamingOutput stream = new StreamingOutput() {
@@ -341,7 +343,7 @@ public class TmWorkspaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/neurons/totals")
     public Long getWorkspaceNeuronCount(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                      @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
+                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getNeuronCountsForWorkspace({}, neuronIds={}, workspace={})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getNeuronCountsForWorkspace(workspace, subjectKey);

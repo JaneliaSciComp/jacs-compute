@@ -173,7 +173,13 @@ public class HortaDataManager {
 
     public TmSample updateSample(String subjectKey, TmSample tmSample) {
 
-        String samplePath = tmSample.getLargeVolumeOctreeFilepath();
+        String octreePath = tmSample.getFiles().get(FileType.LargeVolumeOctree);
+        String altPath = tmSample.getFiles().get(FileType.LargeVolumeZarr);
+
+        log.info("OCTREE PATH:{}",octreePath);
+        log.info("ZARR PATH:{}",altPath);
+
+        String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
         log.info("Verifying sample path {} for sample {}", samplePath, tmSample);
 
         boolean samplePathFound = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
@@ -183,36 +189,37 @@ public class HortaDataManager {
             tmSample.setExistsInStorage(false);
         }
 
-        String ktxFullPath;
-        if (StringUtils.isBlank(tmSample.getLargeVolumeKTXFilepath())) {
-            ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
-        } else {
-            ktxFullPath = tmSample.getLargeVolumeKTXFilepath();
-        }
-        // check if the ktx location is accessible
-        boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
-                .map(dl -> true)
-                .orElseGet(() -> {
-                    log.warn("Could not find any storage for KTX directory {} for sample {}", ktxFullPath, tmSample);
-                    return false;
-                })
-                ;
-        if (!ktxFound) {
-            tmSample.setExistsInStorage(false);
-        }
+        if (altPath==null) {
+            String ktxFullPath;
 
-        String acquisitionPath = tmSample.getAcquisitionFilepath();
-        if (StringUtils.isNotBlank(acquisitionPath)) {
-            // for update only check the acquisition path if set - don't try to read the tile yaml file
-            boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+            if (StringUtils.isBlank(tmSample.getLargeVolumeKTXFilepath())) {
+                ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
+            } else {
+                ktxFullPath = tmSample.getLargeVolumeKTXFilepath();
+            }
+            // check if the ktx location is accessible
+            boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
                     .map(dl -> true)
                     .orElseGet(() -> {
-                        log.warn("Could not find any storage for acquisition path for sample {} at {}", tmSample.getName(), acquisitionPath);
+                        log.warn("Could not find any storage for KTX directory {} for sample {}", ktxFullPath, tmSample);
                         return false;
-                    })
-                    ;
-            if (!acquisitionPathFound) {
+                    });
+            if (!ktxFound) {
                 tmSample.setExistsInStorage(false);
+            }
+
+            String acquisitionPath = tmSample.getAcquisitionFilepath();
+            if (StringUtils.isNotBlank(acquisitionPath)) {
+                // for update only check the acquisition path if set - don't try to read the tile yaml file
+                boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+                        .map(dl -> true)
+                        .orElseGet(() -> {
+                            log.warn("Could not find any storage for acquisition path for sample {} at {}", tmSample.getName(), acquisitionPath);
+                            return false;
+                        });
+                if (!acquisitionPathFound) {
+                    tmSample.setExistsInStorage(false);
+                }
             }
         }
         return tmSampleDao.updateTmSample(subjectKey, tmSample);
