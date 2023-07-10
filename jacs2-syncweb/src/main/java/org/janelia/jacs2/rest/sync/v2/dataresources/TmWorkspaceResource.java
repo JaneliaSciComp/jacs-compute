@@ -15,6 +15,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -251,6 +252,37 @@ public class TmWorkspaceResource {
                 }
             };
             return Response.ok(stream).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error retrieving raw tile file info for sample "))
+                    .build();
+        }
+    }
+
+    @ApiOperation(value = "Gets fragment bounding boxes for a workspace",
+            notes = "Returns a list of 3D Bounding Boxes contained in a given workspace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully fetched bounding boxes", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the bounding boxes")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Path("/workspace/boundingboxes")
+    public Response getWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
+        LOG.debug("getWorkspaceBoundingBoxes({}, {}, {})", workspaceId);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        if (workspace==null)
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Unable to find workspace"))
+                    .build();
+        try {
+            List<BoundingBox3d> boundingBoxList = tmWorkspaceDao.getWorkspaceBoundingBoxes(workspace.getId());
+            return Response.ok()
+                    .entity(new GenericEntity<List<BoundingBox3d>>(boundingBoxList){})
+                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error retrieving raw tile file info for sample "))
