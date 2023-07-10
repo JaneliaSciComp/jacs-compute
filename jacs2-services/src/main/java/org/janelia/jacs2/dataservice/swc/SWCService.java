@@ -581,6 +581,7 @@ public class SWCService {
         }
 
         BoundingBox3d box = new BoundingBox3d(min, max);
+        box.setDomainId(neuron.getId());
         return box;
     }
 
