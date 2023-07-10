@@ -259,6 +259,39 @@ public class TmWorkspaceResource {
         }
     }
 
+    @ApiOperation(value = "loads fragments into a workspace",
+            notes = "saves a list of 3D Bounding Boxes into a given workspace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully saved bounding boxes", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while saving the bounding boxes")
+    })
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Path("/workspace/boundingboxes")
+    public Response saveWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+                                              @ApiParam final List<BoundingBox3d> boxes) {
+        LOG.debug("getWorkspaceBoundingBoxes({}, {}, {})", workspaceId);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        if (workspace==null)
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Unable to find workspace"))
+                    .build();
+        try {
+            tmWorkspaceDao.saveWorkspaceBoundingBoxes(workspace, boxes);
+            workspace.setContainsFragments(true);
+            tmWorkspaceDao.updateTmWorkspace(subjectKey, workspace);
+            return Response.ok()
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error saving bounding box info for workspace "))
+                    .build();
+        }
+    }
+
     @ApiOperation(value = "Gets fragment bounding boxes for a workspace",
             notes = "Returns a list of 3D Bounding Boxes contained in a given workspace"
     )
