@@ -251,7 +251,15 @@ public class SWCService {
                     }
                 });
         if (markAsFragments && boundingBoxes.size()>0) {
-            tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+            try {
+                tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                tmWorkspace.setContainsFragments(true);
+                tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+            } catch (Exception e) {
+                LOG.error("Error updating workspace to store fragments flag for workspace {}", tmWorkspace.getId(), e);
+            }
+
+
         }
         return tmWorkspace;
     }
