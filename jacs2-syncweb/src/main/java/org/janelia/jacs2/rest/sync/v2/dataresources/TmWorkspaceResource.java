@@ -383,12 +383,13 @@ public class TmWorkspaceResource {
             @ApiResponse(code = 200, message = "Successfully fetched neuron metadata", response = List.class),
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
-    @GET
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                                      @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
+                                                      List<Long> neuronIds) {
         LOG.info("getNeuronMetadata({}, neuronIds={}, workspace={})", subjectKey, neuronIds, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getTmNeuronMetadataByNeuronIds(workspace,
