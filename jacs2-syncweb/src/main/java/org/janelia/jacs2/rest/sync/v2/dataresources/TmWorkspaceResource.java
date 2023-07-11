@@ -299,7 +299,6 @@ public class TmWorkspaceResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the bounding boxes")
     })
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/boundingboxes")
     public Response getWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
