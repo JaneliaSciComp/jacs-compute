@@ -223,13 +223,13 @@ public class TmWorkspaceResource {
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                         @ApiParam @QueryParam("offset") final Long offsetParam,
                                         @ApiParam @QueryParam("length") final Integer lengthParam,
-                                        @ApiParam @QueryParam("length") final Boolean fragsParam) {
-        LOG.debug("getWorkspaceNeurons({}, {}, {})", workspaceId, offsetParam, lengthParam);
+                                        @ApiParam @QueryParam("frags") final Boolean fragsParam) {
+        long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
+        boolean filterFrags = fragsParam == null ? false : fragsParam;
+        LOG.debug("getWorkspaceNeurons(workspaceID - {}, offset - {}, length - {}, frags - {})", workspaceId, offset, lengthParam, fragsParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return null;
-        long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
-        boolean filterFrags = fragsParam == null ? false : fragsParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
         try {
             Iterator<TmNeuronMetadata> foo = tmNeuronMetadataDao.streamWorkspaceNeurons(workspace,
