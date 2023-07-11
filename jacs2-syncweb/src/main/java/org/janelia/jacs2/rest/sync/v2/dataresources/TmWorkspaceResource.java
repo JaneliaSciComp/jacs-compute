@@ -272,7 +272,7 @@ public class TmWorkspaceResource {
     public Response saveWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                               List<BoundingBox3d> boxes) {
-        LOG.debug("getWorkspaceBoundingBoxes({}, {}, {})", workspaceId);
+        LOG.debug("saveWorkspaceBoundingBoxes({}, {}, {})", workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return Response.status(Response.Status.NOT_FOUND)
