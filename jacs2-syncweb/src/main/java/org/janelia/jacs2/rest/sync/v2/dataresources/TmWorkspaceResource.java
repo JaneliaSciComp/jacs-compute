@@ -268,7 +268,6 @@ public class TmWorkspaceResource {
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("/workspace/boundingboxes")
     public Response saveWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
@@ -301,7 +300,7 @@ public class TmWorkspaceResource {
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/boundingboxes")
     public Response getWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
