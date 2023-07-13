@@ -241,10 +241,11 @@ public class SWCService {
                             neuronOwnerKey, tmWorkspace, externalToInternalConverter, markAsFragments);
                     try {
                         LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
-                        tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         if (markAsFragments) {
+                            neuronMetadata.setFragment(true);
                             boundingBoxes.add(calcBoundingBox(neuronMetadata));
                         }
+                        tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);
