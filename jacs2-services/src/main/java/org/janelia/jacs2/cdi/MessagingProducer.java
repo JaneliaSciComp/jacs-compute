@@ -1,6 +1,7 @@
 package org.janelia.jacs2.cdi;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.HortaSharedData;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.messaging.core.ConnectionManager;
 import org.janelia.messaging.core.MessageConnection;
@@ -49,9 +50,24 @@ public class MessagingProducer {
             LOG.info("Create message sender connected to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
             messageSender.connectTo(asyncIndexingExchange, asyncIndexingRoutingKey);
         } else {
-            LOG.warn("Created an unconnected sender since no message exchange was provided");
+            LOG.warn("Created an unconnected sender since Messaging.AsyncIndexingExchange is not set.");
         }
         return messageSender;
     }
 
+    @HortaSharedData
+    @ApplicationScoped
+    @Produces
+    public MessageSender createHortaMessageSender(MessageConnection messageConnection,
+                                                     @PropertyValue(name = "Messaging.HortaSharedDataExchange") String asyncIndexingExchange,
+                                                     @PropertyValue(name = "Messaging.HortaSharedDataRoutingKey") String asyncIndexingRoutingKey) {
+        MessageSender messageSender = new MessageSenderImpl(messageConnection);
+        if (StringUtils.isNotBlank(asyncIndexingExchange)) {
+            LOG.info("Create message sender connected to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
+            messageSender.connectTo(asyncIndexingExchange, asyncIndexingRoutingKey);
+        } else {
+            LOG.warn("Created an unconnected sender since Messaging.HortaSharedDataExchange is not set.");
+        }
+        return messageSender;
+    }
 }

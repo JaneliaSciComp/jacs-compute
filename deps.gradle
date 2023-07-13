@@ -101,12 +101,13 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.2.0"
-        JACS_MODEL_VERSION = "2.70.1"
+        JACS_MODEL_VERSION = "2.74.7"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
         JACS_MESSAGING_VERSION = "2.5.0"
         JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
+        JACS_MESSAGING_BROKER_LIB = "org.janelia.jacs-messaging:jacs-messaging-broker:${JACS_MESSAGING_VERSION}"
         JACS_STORAGE_VERSION = "1.19.0.RELEASE"
         JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:${JACS_STORAGE_VERSION}"
 

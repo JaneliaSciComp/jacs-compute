@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ConcurrentStack;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
@@ -166,7 +167,8 @@ public class SWCService {
                                        long maxSize,
                                        int batchSize,
                                        int depth,
-                                       boolean orderSWCs) {
+                                       boolean orderSWCs,
+                                       boolean markAsFragments) {
         LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
@@ -188,7 +190,8 @@ public class SWCService {
             }
         });
 
-        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth, orderSWCs);
+        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth,
+                orderSWCs, markAsFragments);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, TmSample tmSample, TmWorkspace tmWorkspace,
@@ -197,10 +200,11 @@ public class SWCService {
                                        long maxSize,
                                        int batchSize,
                                        int depth,
-                                       boolean orderSWCs) {
+                                       boolean orderSWCs,
+                                       boolean markAsFragments) {
 
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
-
+        List<BoundingBox3d> boundingBoxes = new ArrayList<>();
         LOG.info("Lookup SWC folder {}", swcFolderName);
         storageService.findStorageVolumes(swcFolderName, null, null)
                 .stream().findFirst()
@@ -234,15 +238,30 @@ public class SWCService {
                     LOG.debug("Read swcEntry {} from {}", swcEntry.getName(), swcFolderName);
                     InputStream swcStream = swcEntry.getData();
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, null,
-                            neuronOwnerKey, tmWorkspace, externalToInternalConverter);
+                            neuronOwnerKey, tmWorkspace, externalToInternalConverter, markAsFragments);
                     try {
                         LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
+                        if (markAsFragments) {
+                            neuronMetadata.setFragment(true);
+                            boundingBoxes.add(calcBoundingBox(neuronMetadata));
+                        }
                         tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);
                     }
                 });
+        if (markAsFragments && boundingBoxes.size()>0) {
+            try {
+                tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                tmWorkspace.setContainsFragments(true);
+                tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+            } catch (Exception e) {
+                LOG.error("Error updating workspace to store fragments flag for workspace {}", tmWorkspace.getId(), e);
+            }
+
+
+        }
         return tmWorkspace;
     }
 
@@ -287,7 +306,7 @@ public class SWCService {
 
         try (InputStream swcStream = jadeStorage.getContent(storageLocation, swcFilepath)) {
             TmNeuronMetadata neuronMetadata = importSWCFile(swcFilename, swcStream, neuronName,
-                    neuronOwnerKey, tmWorkspace, externalToInternalConverter);
+                    neuronOwnerKey, tmWorkspace, externalToInternalConverter, false);
             LOG.debug("Imported neuron {} from {} into {}", neuronMetadata.getName(), swcFilename, tmWorkspace);
             return tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
         }
@@ -495,7 +514,7 @@ public class SWCService {
 
     private TmNeuronMetadata importSWCFile(String swcEntryName, InputStream swcStream, String neuronName,
                                            String neuronOwnerKey, TmWorkspace tmWorkspace,
-                                           VectorOperator externalToInternalConverter) {
+                                           VectorOperator externalToInternalConverter, boolean isFragment) {
 
         SWCData swcData = swcReader.readSWCStream(swcEntryName, swcStream);
 
@@ -507,6 +526,7 @@ public class SWCService {
         neuronMetadata.setOwnerKey(neuronOwnerKey);
         neuronMetadata.setReaders(tmWorkspace.getReaders());
         neuronMetadata.setWriters(tmWorkspace.getWriters());
+        neuronMetadata.setFragment(isFragment);
 
         Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
         Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
@@ -539,6 +559,31 @@ public class SWCService {
             neuronMetadata.setColor(color);
         }
         return neuronMetadata;
+    }
+
+    private BoundingBox3d calcBoundingBox (TmNeuronMetadata neuron) {
+        double[] min = new double[]{1000000,1000000,1000000};
+        double[] max = new double[]{0,0,0};
+        Iterator<TmGeoAnnotation> iter = neuron.getGeoAnnotationMap().values().iterator();
+        while (iter.hasNext()) {
+            TmGeoAnnotation point = iter.next();
+            if (min[0]>point.getX())
+                min[0] = point.getX();
+            if (max[0]<point.getX())
+                max[0] = point.getX();
+            if (min[1]>point.getY())
+                min[1] = point.getY();
+            if (max[1]<point.getY())
+                max[1] = point.getY();
+            if (min[2]>point.getZ())
+                min[2] = point.getZ();
+            if (max[2]<point.getZ())
+                max[2] = point.getZ();
+        }
+
+        BoundingBox3d box = new BoundingBox3d(min, max);
+        box.setDomainId(neuron.getId());
+        return box;
     }
 
 }

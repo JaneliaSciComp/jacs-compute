@@ -15,6 +15,7 @@ import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacs2.cdi.qualifier.HortaSharedData;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
@@ -24,6 +25,7 @@ import org.janelia.jacs2.dataservice.search.IndexBuilderService;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.user.UserManager;
+import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.*;
@@ -86,6 +88,7 @@ public class TestResourceDependenciesProducer {
     private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
     private UserManager userManager = mock(UserManager.class);
     private HortaDataManager hortaDataManager = mock(HortaDataManager.class);
+    private MessageSender messageSender = mock(MessageSender.class);
 
     @Produces
     public Logger getLogger() {
@@ -314,5 +317,11 @@ public class TestResourceDependenciesProducer {
     @Produces
     public HortaDataManager getHortaDataManager() {
         return hortaDataManager;
+    }
+
+    @HortaSharedData
+    @Produces
+    public MessageSender getMessageSender() {
+        return messageSender;
     }
 }

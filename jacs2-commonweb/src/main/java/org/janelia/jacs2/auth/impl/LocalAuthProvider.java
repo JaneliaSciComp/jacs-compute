@@ -47,8 +47,9 @@ public class LocalAuthProvider implements AuthProvider {
     @Override
     public User generateUserInfo(String username) {
         User user = new User();
-        user.setName(username);
-        user.setKey("user:"+username);
+        String lcUsername = username.toLowerCase();
+        user.setName(lcUsername);
+        user.setKey("user:"+lcUsername);
         return user;
     }
 }
