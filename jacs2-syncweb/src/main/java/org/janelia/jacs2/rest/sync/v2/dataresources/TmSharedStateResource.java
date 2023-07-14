@@ -111,7 +111,7 @@ public class TmSharedStateResource {
     public Response updateTmNeuron(DomainQuery query) {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
-        LOG.info("updateTmNeuron({}, neuron={})", subjectKey, neuron);
+        LOG.info("updateTmNeuron({}, workspaceId={}, neuronId={})", subjectKey, neuron.getWorkspaceId(), neuron.getId());
 
         try {
             TmWorkspace workspace = getWorkspace(subjectKey, neuron.getWorkspaceId());
@@ -150,7 +150,7 @@ public class TmSharedStateResource {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
 
-        LOG.info("changeOwnership({}, neuronId={}, target={})", subjectKey, neuron.getId(), targetUser);
+        LOG.info("changeOwnership({}, workspaceId={}, neuronId={}, target={})", subjectKey, neuron.getWorkspaceId(), neuron.getId(), targetUser);
 
         try {
             // Update the owner
@@ -196,7 +196,8 @@ public class TmSharedStateResource {
                                @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                @ApiParam @QueryParam("isLarge") final Boolean isLarge,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
-        LOG.debug("removeTmNeuron({}, neuronId={}, workspaceId={})", subjectKey, neuronId, workspaceId);
+
+        LOG.debug("removeTmNeuron({}, workspaceId={}, neuronId={})", subjectKey, workspaceId, neuronId);
 
         try {
             TmWorkspace workspace = getWorkspace(subjectKey, workspaceId);
