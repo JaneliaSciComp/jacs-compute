@@ -78,30 +78,32 @@ public class TmWorkspaceResource {
     @Inject
     private HortaDataManager hortaDataManager;
 
-    @ApiOperation(value = "Gets all the Workspaces a user can read",
-            notes = "Returns all the Workspaces which are visible to the current user."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    code = 200, message = "Successfully got all workspaces",
-                    response = Workspace.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting workspaces")
-    })
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/workspaces")
-    public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
-        LOG.trace("Start getAllWorkspace({})", subjectKey);
-        try {
-            return legacyWorkspaceDao.getWorkspaces(subjectKey);
-        } catch (Exception e) {
-            LOG.error("Error occurred getting default workspace for {}", subjectKey, e);
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-        } finally {
-            LOG.trace("Finished getAllWorkspace({})", subjectKey);
-        }
-    }
+    // TODO: this doesn't seem to belong here, but I'm just commenting it until we can verify
+    //       (with the 9.14 release) that nothing is actually calling this.
+//    @ApiOperation(value = "Gets all the Workspaces a user can read",
+//            notes = "Returns all the Workspaces which are visible to the current user."
+//    )
+//    @ApiResponses(value = {
+//            @ApiResponse(
+//                    code = 200, message = "Successfully got all workspaces",
+//                    response = Workspace.class,
+//                    responseContainer = "List"),
+//            @ApiResponse(code = 500, message = "Internal Server Error getting workspaces")
+//    })
+//    @GET
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Path("/workspaces")
+//    public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
+//        LOG.info("getAllWorkspace({})", subjectKey);
+//        try {
+//            return legacyWorkspaceDao.getWorkspaces(subjectKey);
+//        } catch (Exception e) {
+//            LOG.error("Error occurred getting default workspace for {}", subjectKey, e);
+//            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+//        } finally {
+//            LOG.trace("Finished getAllWorkspace({})", subjectKey);
+//        }
+//    }
 
     @ApiOperation(value = "Gets a list of TM Workspaces",
             notes = "Returns a list of all the TM Workspaces that are accessible by the current user"
@@ -118,7 +120,7 @@ public class TmWorkspaceResource {
                                              @ApiParam @QueryParam("sampleId") Long sampleId,
                                              @ApiParam @QueryParam("offset") Long offsetParam,
                                              @ApiParam @QueryParam("length") Integer lengthParam) {
-        LOG.trace("getTmWorkspaces({}, sampleId={}, offset={}, length={})", subjectKey, sampleId, offsetParam, lengthParam);
+        LOG.info("getTmWorkspaces({}, sampleId={}, offset={}, length={})", subjectKey, sampleId, offsetParam, lengthParam);
         if (sampleId == null) {
             long offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
@@ -140,7 +142,7 @@ public class TmWorkspaceResource {
     @Path("/workspace/{workspaceId}")
     public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                       @ApiParam @PathParam("workspaceId") Long workspaceId) {
-        LOG.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
+        LOG.info("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         return tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
     }
 
@@ -156,7 +158,7 @@ public class TmWorkspaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace")
     public TmWorkspace createTmWorkspace(DomainQuery query) {
-        LOG.trace("createTmWorkspace({})", query);
+        LOG.info("createTmWorkspace({})", query);
         return tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
@@ -172,7 +174,7 @@ public class TmWorkspaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/copy")
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
-        LOG.debug("copyTmWorkspace({})", query);
+        LOG.info("copyTmWorkspace({})", query);
         return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
     }
 
@@ -188,7 +190,7 @@ public class TmWorkspaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace")
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
-        LOG.debug("updateTmWorkspace({})", query);
+        LOG.info("updateTmWorkspace({})", query);
         return tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
@@ -203,7 +205,7 @@ public class TmWorkspaceResource {
     @Path("/workspace")
     public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
+        LOG.info("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         hortaDataManager.removeWorkspace(subjectKey, workspace);
     }
@@ -226,7 +228,7 @@ public class TmWorkspaceResource {
                                         @ApiParam @QueryParam("frags") final Boolean fragsParam) {
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         boolean filterFrags = fragsParam == null ? false : fragsParam;
-        LOG.debug("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={}, frags={})",
+        LOG.info("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={}, frags={})",
                 subjectKey, workspaceId, offset, lengthParam, fragsParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
@@ -273,7 +275,7 @@ public class TmWorkspaceResource {
     public Response saveWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                               List<BoundingBox3d> boxes) {
-        LOG.debug("saveWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
+        LOG.info("saveWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return Response.status(Response.Status.NOT_FOUND)
@@ -304,7 +306,7 @@ public class TmWorkspaceResource {
     @Path("/workspace/boundingboxes")
     public Response getWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.debug("getWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
+        LOG.info("getWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return Response.status(Response.Status.NOT_FOUND)
@@ -336,7 +338,7 @@ public class TmWorkspaceResource {
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                                       List<Long> neuronIds) {
-        LOG.info("getNeuronMetadata({}, workspaceId={}, neuronIds={})", subjectKey, workspaceId, DomainUtils.abbr(neuronIds));
+        LOG.info("getWorkspaceNeurons({}, workspaceId={}, neuronIds={})", subjectKey, workspaceId, DomainUtils.abbr(neuronIds));
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getTmNeuronMetadataByNeuronIds(workspace,
                 neuronIds);
@@ -354,7 +356,7 @@ public class TmWorkspaceResource {
     @Path("/neurons/totals")
     public Long getWorkspaceNeuronCount(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.info("getNeuronCountsForWorkspace({}, workspaceId={})", subjectKey, workspaceId);
+        LOG.info("getWorkspaceNeuronCount({}, workspaceId={})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getNeuronCountsForWorkspace(workspace, subjectKey);
     }
@@ -373,7 +375,7 @@ public class TmWorkspaceResource {
     public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                        @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
-        LOG.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
+        LOG.info("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (bulkNeuronStyleUpdate.getVisible() == null && !StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
             LOG.warn("Cannot have both visible and colorhex unset");
@@ -402,7 +404,7 @@ public class TmWorkspaceResource {
                                   @ApiParam final List<Long> neuronIds) {
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
-        LOG.debug("addNeuronTag({}, tags={}, tagState={}, workspaceId={}, neuronIds={})",
+        LOG.info("addNeuronTag({}, tags={}, tagState={}, workspaceId={}, neuronIds={})",
                 subjectKey, DomainUtils.abbr(tagList), tagState, workspaceId, DomainUtils.abbr(neuronIds));
         if (neuronIds.isEmpty()) {
             LOG.warn("Neuron IDs cannot be empty");

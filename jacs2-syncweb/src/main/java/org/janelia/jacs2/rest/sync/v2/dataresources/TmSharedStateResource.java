@@ -197,16 +197,20 @@ public class TmSharedStateResource {
                                @ApiParam @QueryParam("isLarge") final Boolean isLarge,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
 
-        LOG.debug("removeTmNeuron({}, workspaceId={}, neuronId={})", subjectKey, workspaceId, neuronId);
+        LOG.info("removeTmNeuron({}, workspaceId={}, neuronId={})", subjectKey, workspaceId, neuronId);
 
         try {
             TmWorkspace workspace = getWorkspace(subjectKey, workspaceId);
             // TODO: remove unnecessary arguments to this function since we are fetching the neuron here
             TmNeuronMetadata neuron = tmNeuronMetadataDao.getTmNeuronMetadata(subjectKey, workspace, neuronId);
-            tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, workspace, subjectKey);
+            if (!tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, workspace, subjectKey)) {
+                LOG.error("Error removing TM neuron {} in workspace {}: removeTmNeuron returned false", neuronId, workspaceId);
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity(new ErrorResponse("Error removing neuron " + neuronId))
+                        .build();
+            }
             // Notify other users
-            sendMessage(subjectKey, neuron, NeuronMessageType.NEURON_DELETE,
-                    null);
+            sendMessage(subjectKey, neuron, NeuronMessageType.NEURON_DELETE, null);
             return Response.ok().build();
         }
         catch (Exception e) {
