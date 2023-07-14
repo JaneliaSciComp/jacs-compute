@@ -118,7 +118,7 @@ public class TmWorkspaceResource {
                                              @ApiParam @QueryParam("sampleId") Long sampleId,
                                              @ApiParam @QueryParam("offset") Long offsetParam,
                                              @ApiParam @QueryParam("length") Integer lengthParam) {
-        LOG.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
+        LOG.trace("getTmWorkspaces({}, sampleId={}, offset={}, length={})", subjectKey, sampleId, offsetParam, lengthParam);
         if (sampleId == null) {
             long offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
@@ -226,7 +226,8 @@ public class TmWorkspaceResource {
                                         @ApiParam @QueryParam("frags") final Boolean fragsParam) {
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         boolean filterFrags = fragsParam == null ? false : fragsParam;
-        LOG.debug("getWorkspaceNeurons(workspaceID - {}, offset - {}, length - {}, frags - {})", workspaceId, offset, lengthParam, fragsParam);
+        LOG.debug("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={}, frags={})",
+                subjectKey, workspaceId, offset, lengthParam, fragsParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return null;
@@ -272,7 +273,7 @@ public class TmWorkspaceResource {
     public Response saveWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                               List<BoundingBox3d> boxes) {
-        LOG.debug("saveWorkspaceBoundingBoxes({}, {}, {})", workspaceId);
+        LOG.debug("saveWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return Response.status(Response.Status.NOT_FOUND)
@@ -303,7 +304,7 @@ public class TmWorkspaceResource {
     @Path("/workspace/boundingboxes")
     public Response getWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.debug("getWorkspaceBoundingBoxes({}, {}, {})", workspaceId);
+        LOG.debug("getWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return Response.status(Response.Status.NOT_FOUND)
@@ -390,7 +391,7 @@ public class TmWorkspaceResource {
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                                       List<Long> neuronIds) {
-        LOG.info("getNeuronMetadata({}, neuronIds={}, workspace={})", subjectKey, neuronIds, workspaceId);
+        LOG.info("getNeuronMetadata({}, workspaceId={}, neuronIds={})", subjectKey, workspaceId, DomainUtils.abbr(neuronIds));
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getTmNeuronMetadataByNeuronIds(workspace,
                 neuronIds);
@@ -408,7 +409,7 @@ public class TmWorkspaceResource {
     @Path("/neurons/totals")
     public Long getWorkspaceNeuronCount(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.info("getNeuronCountsForWorkspace({}, neuronIds={}, workspace={})", subjectKey, workspaceId);
+        LOG.info("getNeuronCountsForWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getNeuronCountsForWorkspace(workspace, subjectKey);
     }
@@ -474,8 +475,8 @@ public class TmWorkspaceResource {
                                   @ApiParam final List<Long> neuronIds) {
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
-        LOG.debug("addNeuronTag({}, neuronIds={}, tag={}, tagState={})",
-                subjectKey, DomainUtils.abbr(neuronIds), DomainUtils.abbr(tagList), tagState);
+        LOG.debug("addNeuronTag({}, tags={}, tagState={}, workspaceId={}, neuronIds={})",
+                subjectKey, DomainUtils.abbr(tagList), tagState, workspaceId, DomainUtils.abbr(neuronIds));
         if (neuronIds.isEmpty()) {
             LOG.warn("Neuron IDs cannot be empty");
             return Response.status(Response.Status.BAD_REQUEST).build();
