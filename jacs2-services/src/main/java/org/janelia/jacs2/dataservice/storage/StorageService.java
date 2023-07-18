@@ -263,7 +263,7 @@ public class StorageService {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            httpclient.close();
+//!!!!!            httpclient.close();
         }
     }
 
