@@ -1,5 +1,31 @@
 package org.janelia.jacs2.dataservice.swc;
 
+import java.awt.Color;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.inject.Inject;
+
 import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -11,7 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ConcurrentStack;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
@@ -23,6 +48,7 @@ import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
@@ -34,19 +60,6 @@ import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.awt.*;
-import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class SWCService {
 
@@ -469,39 +482,39 @@ public class SWCService {
         if (swcDataStream == null) {
             return null;
         }
-        try {
-            return new ByteArrayInputStream(ByteStreams.toByteArray(swcDataStream));
-        } catch (IOException e) {
-            LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
-            throw new UncheckedIOException(e);
-        }
 //        try {
-//            PipedOutputStream pipedOutputStream = new PipedOutputStream();
-//            PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
-//
-//            executorService.submit(() -> {
-//                try {
-//                    long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
-//                    pipedOutputStream.flush();
-//                    LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
-//                } catch (IOException e) {
-//                    LOG.error("Error copying {} bytes from {} starting at {}", length, swcStorageFolderURL, offset, e);
-//                } finally {
-//                    try {
-//                        swcDataStream.close();
-//                    } catch (IOException ignore) {
-//                    }
-//                    try {
-//                        pipedOutputStream.close();
-//                    } catch (IOException ignore) {
-//                    }
-//                }
-//            });
-//            return new BufferedInputStream(pipedInputStream);
+//            return new ByteArrayInputStream(ByteStreams.toByteArray(swcDataStream));
 //        } catch (IOException e) {
 //            LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
 //            throw new UncheckedIOException(e);
 //        }
+        try {
+            PipedOutputStream pipedOutputStream = new PipedOutputStream();
+            PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
+
+            executorService.submit(() -> {
+                try {
+                    long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
+                    pipedOutputStream.flush();
+                    LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
+                } catch (IOException e) {
+                    LOG.error("Error copying {} bytes from {} starting at {}", length, swcStorageFolderURL, offset, e);
+                } finally {
+                    try {
+                        swcDataStream.close();
+                    } catch (IOException ignore) {
+                    }
+                    try {
+                        pipedOutputStream.close();
+                    } catch (IOException ignore) {
+                    }
+                }
+            });
+            return new BufferedInputStream(pipedInputStream);
+        } catch (IOException e) {
+            LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
+            throw new UncheckedIOException(e);
+        }
     }
 
     private TmWorkspace createWorkspace(String swcFolderName, Long sampleId, String workspaceNameParam) {

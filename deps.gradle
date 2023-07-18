@@ -18,7 +18,7 @@ dependencies {
         LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
 
         // utilities
-        GUAVA_LIB = "com.google.guava:guava:28.1-jre"
+        GUAVA_LIB = "com.google.guava:guava:32.0.0-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // Mail
