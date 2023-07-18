@@ -398,7 +398,6 @@ public class SWCService {
                             // successfully got the next batch
                             archiveInputStreamStack.push(nextStream);
                         }
-                        continue;
                     } else {
                         LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
                         InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
@@ -475,36 +474,36 @@ public class SWCService {
 
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
         LOG.info("Retrieve {} entries from {}:{}", length > 0 ? "all" : length, swcStorageFolderURL, offset);
-//        try {
+        InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
+                "\\.(swc|zip|tar|tgz|tar.gz)$",
+                null,
+                null);
+        if (swcDataStream == null) {
+            return null;
+        }
+
+        //        try {
 //            return new ByteArrayInputStream(ByteStreams.toByteArray(swcDataStream));
 //        } catch (IOException e) {
 //            LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
 //            throw new UncheckedIOException(e);
 //        }
+
         try {
             PipedOutputStream pipedOutputStream = new PipedOutputStream();
             PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
 
             executorService.submit(() -> {
-                InputStream swcDataStream = null;
                 try {
-                    swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
-                            "\\.(swc|zip|tar|tgz|tar.gz)$",
-                            null,
-                            null);
-                    if (swcDataStream != null) {
-                        long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
-                        pipedOutputStream.flush();
-                        LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
-                    }
+                    long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
+                    pipedOutputStream.flush();
+                    LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
                 } catch (IOException e) {
                     LOG.error("Error copying {} bytes from {} starting at {}", length, swcStorageFolderURL, offset, e);
                 } finally {
-                    if (swcDataStream != null) {
-                        try {
-                            swcDataStream.close();
-                        } catch (IOException ignore) {
-                        }
+                    try {
+                        swcDataStream.close();
+                    } catch (IOException ignore) {
                     }
                     try {
                         pipedOutputStream.close();
