@@ -470,32 +470,38 @@ public class SWCService {
             return null;
         }
         try {
-            PipedOutputStream pipedOutputStream = new PipedOutputStream();
-            PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
-
-            executorService.submit(() -> {
-                try {
-                    long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
-                    pipedOutputStream.flush();
-                    LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
-                } catch (IOException e) {
-                    LOG.error("Error copying {} bytes from {} starting at {}", length, swcStorageFolderURL, offset, e);
-                } finally {
-                    try {
-                        swcDataStream.close();
-                    } catch (IOException ignore) {
-                    }
-                    try {
-                        pipedOutputStream.close();
-                    } catch (IOException ignore) {
-                    }
-                }
-            });
-            return new BufferedInputStream(pipedInputStream);
+            return new ByteArrayInputStream(ByteStreams.toByteArray(swcDataStream));
         } catch (IOException e) {
             LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
             throw new UncheckedIOException(e);
         }
+//        try {
+//            PipedOutputStream pipedOutputStream = new PipedOutputStream();
+//            PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
+//
+//            executorService.submit(() -> {
+//                try {
+//                    long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
+//                    pipedOutputStream.flush();
+//                    LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
+//                } catch (IOException e) {
+//                    LOG.error("Error copying {} bytes from {} starting at {}", length, swcStorageFolderURL, offset, e);
+//                } finally {
+//                    try {
+//                        swcDataStream.close();
+//                    } catch (IOException ignore) {
+//                    }
+//                    try {
+//                        pipedOutputStream.close();
+//                    } catch (IOException ignore) {
+//                    }
+//                }
+//            });
+//            return new BufferedInputStream(pipedInputStream);
+//        } catch (IOException e) {
+//            LOG.error("Error retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL, e);
+//            throw new UncheckedIOException(e);
+//        }
     }
 
     private TmWorkspace createWorkspace(String swcFolderName, Long sampleId, String workspaceNameParam) {

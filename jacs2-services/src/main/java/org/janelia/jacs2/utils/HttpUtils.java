@@ -28,7 +28,6 @@ public class HttpUtils {
         return ClientBuilder.newBuilder()
                 .withConfig(clientConfig)
                 .sslContext(sslContext)
-                .readTimeout(7200L, TimeUnit.SECONDS)
                 .hostnameVerifier((s, sslSession) -> true)
                 .register(MultiPartFeature.class)
                 .build();
