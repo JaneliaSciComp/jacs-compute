@@ -14,6 +14,7 @@ import javax.ws.rs.client.ClientBuilder;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 
 public class HttpUtils {
 
@@ -27,6 +28,7 @@ public class HttpUtils {
         return ClientBuilder.newBuilder()
                 .withConfig(clientConfig)
                 .sslContext(sslContext)
+                .readTimeout(7200L, TimeUnit.SECONDS)
                 .hostnameVerifier((s, sslSession) -> true)
                 .register(MultiPartFeature.class)
                 .build();
