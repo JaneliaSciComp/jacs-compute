@@ -413,7 +413,7 @@ public class SWCService {
                             NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
                             action.accept(entryData);
                             long entriesProcessed = totalEntriesCount.incrementAndGet();
-                            if (maxSize <=0 || maxSize > 0 && entriesProcessed < maxSize) {
+                            if (maxSize <=0 || entriesProcessed < maxSize) {
                                 return true;
                             } else {
                                 LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.streamName);
