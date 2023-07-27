@@ -259,7 +259,6 @@ public class SWCService {
                         }
                         TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         if (markAsFragments && createdNeuron!=null) {
-                            neuronMetadata.initNeuronData();
                             BoundingBox3d box = calcBoundingBox(createdNeuron);
                             if (box!=null)
                                 boundingBoxes.add(box);
