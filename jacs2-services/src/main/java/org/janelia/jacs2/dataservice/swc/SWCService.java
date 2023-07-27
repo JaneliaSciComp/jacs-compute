@@ -581,7 +581,7 @@ public class SWCService {
     private BoundingBox3d calcBoundingBox (TmNeuronMetadata neuron) {
         double[] min = new double[]{1000000,1000000,1000000};
         double[] max = new double[]{0,0,0};
-        if (neuron.getGeoAnnotationMap()==null)
+        if (neuron==null || neuron.getGeoAnnotationMap()==null)
             return null;
         Iterator<TmGeoAnnotation> iter = neuron.getGeoAnnotationMap().values().iterator();
         while (iter.hasNext()) {
