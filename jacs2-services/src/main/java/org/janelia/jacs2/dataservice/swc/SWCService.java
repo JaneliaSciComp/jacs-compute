@@ -259,7 +259,9 @@ public class SWCService {
                         }
                         TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         if (markAsFragments) {
-                            boundingBoxes.add(calcBoundingBox(createdNeuron));
+                            BoundingBox3d box = calcBoundingBox(createdNeuron);
+                            if (box!=null)
+                                boundingBoxes.add(box);
                         }
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
@@ -579,6 +581,8 @@ public class SWCService {
     private BoundingBox3d calcBoundingBox (TmNeuronMetadata neuron) {
         double[] min = new double[]{1000000,1000000,1000000};
         double[] max = new double[]{0,0,0};
+        if (neuron.getGeoAnnotationMap()==null)
+            return null;
         Iterator<TmGeoAnnotation> iter = neuron.getGeoAnnotationMap().values().iterator();
         while (iter.hasNext()) {
             TmGeoAnnotation point = iter.next();
