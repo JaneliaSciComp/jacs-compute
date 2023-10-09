@@ -48,6 +48,7 @@ import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
@@ -287,8 +288,10 @@ public class SWCService {
      * conversion matrix.
      */
     public VectorOperator getExternalToInternalConverter(TmSample tmSample) {
-
         String sampleFilepath = tmSample.getLargeVolumeOctreeFilepath();
+        String altPath = tmSample.getFiles().get(FileType.LargeVolumeZarr);
+        if (altPath!=null && altPath.length()>0)
+            return null;
         RenderedVolumeLocation volumeLocation = dataStorageLocationFactory.asRenderedVolumeLocation(dataStorageLocationFactory.getDataLocationWithLocalCheck(sampleFilepath, tmSample.getOwnerKey(), null));
         RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(volumeLocation)
                 .orElseThrow(() -> {
@@ -552,11 +555,19 @@ public class SWCService {
         for (SWCNode node : swcData.getNodeList()) {
             // Internal points, as seen in annotations, are same as external
             // points in SWC: represented as voxels. --LLF
-            double[] internalPoint = externalToInternalConverter.apply(new double[] {
-                    node.getX() + externalOffset[0],
-                    node.getY() + externalOffset[1],
-                    node.getZ() + externalOffset[2]
-            });
+            double[] internalPoint;
+            if (externalToInternalConverter!=null) {
+                internalPoint = externalToInternalConverter.apply(new double[] {
+                        node.getX() + externalOffset[0],
+                        node.getY() + externalOffset[1],
+                        node.getZ() + externalOffset[2]
+                });
+            } else {
+                internalPoint = new double[] {
+                                node.getX(),
+                                node.getY(),
+                                node.getZ()};
+            }
             TmGeoAnnotation unserializedAnnotation = new TmGeoAnnotation(
                     new Long(node.getIndex()), null, neuronMetadata.getId(),
                     internalPoint[0], internalPoint[1], internalPoint[2], node.getRadius(),
