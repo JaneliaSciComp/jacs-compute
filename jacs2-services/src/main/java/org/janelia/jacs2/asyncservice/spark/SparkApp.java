@@ -5,7 +5,7 @@ public interface SparkApp {
     boolean isDone();
     String getStatus();
     String getErrors();
-    void kill();
+    void kill(String reason);
 
     default boolean hasErrors() {
         String errors = getErrors();

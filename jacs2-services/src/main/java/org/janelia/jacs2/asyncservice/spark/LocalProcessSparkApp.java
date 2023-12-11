@@ -35,7 +35,7 @@ public class LocalProcessSparkApp extends AbstractSparkApp {
     }
 
     @Override
-    public void kill() {
+    public void kill(String reason) {
         if (appHandle != null) {
             appHandle.kill();
         }

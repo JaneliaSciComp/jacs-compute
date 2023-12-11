@@ -1,11 +1,13 @@
 package org.janelia.jacs2.asyncservice.common.cluster;
 
+import org.janelia.cluster.JobCmdFlag;
 import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMetadata;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
+import org.janelia.cluster.lsf.LSFTerminateAndMarkAsDone;
 import org.janelia.jacs2.asyncservice.common.ExeJobHandler;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
@@ -173,7 +175,11 @@ public class LsfJavaExeJobHandler implements ExeJobHandler {
         terminated = true;
         if (!done) {
             try {
-                jobMgr.killJob(jobId);
+                if (failed) {
+                    jobMgr.killJob(jobId);
+                } else {
+                    jobMgr.killJob(jobId, new LSFTerminateAndMarkAsDone());
+                }
             } catch (Exception e) {
                 LOG.warn("Error while terminating job {}", jobId, e);
             } finally {

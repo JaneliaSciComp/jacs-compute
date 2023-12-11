@@ -25,7 +25,6 @@ import javax.inject.Inject;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.cluster.JobFuture;
@@ -33,6 +32,7 @@ import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
+import org.janelia.cluster.lsf.LSFTerminateAndMarkAsDone;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -245,7 +245,7 @@ class LSFSparkClusterLauncher {
                 .thenApply(clusterInfo -> {
                     try {
                         logger.info("Kill spark worker job {}", clusterInfo.getWorkerJobId());
-                        jobMgr.killJob(clusterInfo.getWorkerJobId());
+                        jobMgr.killJob(clusterInfo.getWorkerJobId(), new LSFTerminateAndMarkAsDone());
                     } catch (Exception e) {
                         logger.error("Error stopping spark worker job {}", clusterInfo.getWorkerJobId(), e);
                     }
@@ -259,7 +259,7 @@ class LSFSparkClusterLauncher {
                 .thenApply(clusterInfo -> {
                     try {
                         logger.info("Kill spark master job {}", clusterInfo.getMasterJobId());
-                        jobMgr.killJob(clusterInfo.getMasterJobId());
+                        jobMgr.killJob(clusterInfo.getMasterJobId(), new LSFTerminateAndMarkAsDone());
                     } catch (Exception e) {
                         logger.error("Error stopping spark master job {}", clusterInfo.getMasterJobId(), e);
                     }

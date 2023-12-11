@@ -1,8 +1,10 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
+import org.janelia.cluster.lsf.LSFTerminateWithReason;
 
 public class LSFJobSparkApp extends AbstractSparkApp {
     private final JobManager jobManager;
@@ -60,10 +62,10 @@ public class LSFJobSparkApp extends AbstractSparkApp {
     }
 
     @Override
-    public void kill() {
+    public void kill(String reason) {
         if (driverJobId != null) {
             try {
-                jobManager.killJob(driverJobId);
+                jobManager.killJob(driverJobId, new LSFTerminateWithReason(reason));
             } catch (Exception ignore) {
             }
         }
