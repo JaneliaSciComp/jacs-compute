@@ -52,6 +52,8 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         boolean orderSWCs = false;
         @Parameter(names = "-markAsFragments", description = "If set, mark all neurons as fragments and precompute bounding boxes", arity = 1)
         boolean markAsFragments = false;
+        @Parameter(names = "-appendToExisting", description = "If set, look for existing workspace and append fragments", arity = 1)
+        boolean appendToExisting = false;
         SWCImportArgs() {
             super("Service that imports an SWC file into a workspace");
         }
@@ -118,7 +120,8 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
                         args.batchSize,
                         args.recurseDepth,
                         args.orderSWCs,
-                        args.markAsFragments))
+                        args.markAsFragments,
+                        args.appendToExisting))
                 .thenApply(tmWorkspace -> updateServiceResult(jacsServiceData, tmWorkspace.getId()));
     }
 
