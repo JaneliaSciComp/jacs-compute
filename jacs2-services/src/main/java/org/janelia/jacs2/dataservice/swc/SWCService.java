@@ -182,30 +182,50 @@ public class SWCService {
                                        int batchSize,
                                        int depth,
                                        boolean orderSWCs,
-                                       boolean markAsFragments) {
+                                       boolean markAsFragments,
+                                       boolean appendToExisting) {
         LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
         }
-        TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
-        LOG.info("Created workspace {} for SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", tmWorkspace, swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
-        accessUsers.forEach(accessUserKey -> {
-            try {
-                domainDao.setPermissions(workspaceOwnerKey, TmWorkspace.class.getName(), tmWorkspace.getId(), accessUserKey, true, true, true);
-            } catch (Exception e) {
-                LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
+
+        TmWorkspace tmWorkspace;
+        if (!appendToExisting) {
+            TmWorkspace workspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
+            LOG.info("Created workspace {} for SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", workspace, swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
+
+            accessUsers.forEach(accessUserKey -> {
+                try {
+                    domainDao.setPermissions(workspaceOwnerKey, TmWorkspace.class.getName(), workspace.getId(), accessUserKey, true, true, true);
+                } catch (Exception e) {
+                    LOG.error("Error giving permission on {} to {}", workspace, accessUserKey, e);
+                }
+                try {
+                    domainDao.setPermissions(tmSample.getOwnerKey(), TmSample.class.getName(), tmSample.getId(), accessUserKey, true, true, true);
+                } catch (Exception e) {
+                    LOG.error("Error giving permission on {} to {}", workspace, accessUserKey, e);
+                }
+            });
+            tmWorkspace = workspace;
+        } else {
+            List<TmWorkspace> workspacesList = tmWorkspaceDao.getTmWorkspacesForSample(workspaceOwnerKey, sampleId);
+            tmWorkspace = null;
+            for (TmWorkspace workspace: workspacesList) {
+                if (workspace.getName().equals(workspaceName)) {
+                    tmWorkspace = workspace;
+                    break;
+                }
             }
-            try {
-                domainDao.setPermissions(tmSample.getOwnerKey(), TmSample.class.getName(), tmSample.getId(), accessUserKey, true, true, true);
-            } catch (Exception e) {
-                LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
+            if (tmWorkspace == null) {
+                LOG.error("Workspace name {} doesn't match with any workspaces associated with Sample Id {}", workspaceName, sampleId);
+                throw new IllegalArgumentException("Workspace " + workspaceName + " either does not exist or is not accessible");
             }
-        });
+        }
 
         return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth,
-                orderSWCs, markAsFragments);
+                orderSWCs, markAsFragments, appendToExisting);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, TmSample tmSample, TmWorkspace tmWorkspace,
@@ -215,7 +235,8 @@ public class SWCService {
                                        int batchSize,
                                        int depth,
                                        boolean orderSWCs,
-                                       boolean markAsFragments) {
+                                       boolean markAsFragments,
+                                       boolean appendToExisting) {
 
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
         List<BoundingBox3d> boundingBoxes = new ArrayList<>();
@@ -251,18 +272,22 @@ public class SWCService {
                 .forEach(swcEntry ->{
                     LOG.debug("Read swcEntry {} from {}", swcEntry.getName(), swcFolderName);
                     InputStream swcStream = swcEntry.getData();
+                    long startTime = System.currentTimeMillis();
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, null,
                             neuronOwnerKey, tmWorkspace, externalToInternalConverter, markAsFragments);
-                    try {
+                   try {
                         LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
                         if (markAsFragments) {
                             neuronMetadata.setFragment(true);
                         }
                         TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
+                        long endTime = System.currentTimeMillis();
+                        LOG.info("Loading neuron with name {} took {} ms", neuronMetadata.getName(), endTime-startTime);
+
                         if (markAsFragments && createdNeuron!=null) {
-                            BoundingBox3d box = calcBoundingBox(createdNeuron);
-                            if (box!=null)
-                                boundingBoxes.add(box);
+                           BoundingBox3d box = calcBoundingBox(createdNeuron);
+                           if (box!=null)
+                               boundingBoxes.add(box);
                         }
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
@@ -271,9 +296,21 @@ public class SWCService {
                 });
         if (markAsFragments && boundingBoxes.size()>0) {
             try {
-                tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
-                tmWorkspace.setContainsFragments(true);
-                tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+                if (!appendToExisting) {
+                    tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                    tmWorkspace.setContainsFragments(true);
+                    tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+                } else {
+                    List<BoundingBox3d> existingBoundingBoxes = tmWorkspaceDao.getWorkspaceBoundingBoxes(tmWorkspace.getId());
+                    if (existingBoundingBoxes==null) {
+                        tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                        tmWorkspace.setContainsFragments(true);
+                        tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+                    } else {
+                        boundingBoxes.addAll(existingBoundingBoxes);
+                        tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                    }
+                }
             } catch (Exception e) {
                 LOG.error("Error updating workspace to store fragments flag for workspace {}", tmWorkspace.getId(), e);
             }
