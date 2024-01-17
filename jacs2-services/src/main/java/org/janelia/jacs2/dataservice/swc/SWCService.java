@@ -45,6 +45,7 @@ import org.janelia.jacsstorage.clients.api.StorageLocation;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.IdGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
@@ -65,6 +66,7 @@ import org.slf4j.LoggerFactory;
 public class SWCService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);
+    TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
 
     private static class ArchiveInputStreamPosition {
         private final String streamName;
@@ -280,9 +282,10 @@ public class SWCService {
                         if (markAsFragments) {
                             neuronMetadata.setFragment(true);
                         }
-                        TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
+                        neuronMetadata.setId(createNewId());
+                       TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         long endTime = System.currentTimeMillis();
-                        LOG.info("Loading neuron with name {} took {} ms", neuronMetadata.getName(), endTime-startTime);
+                        LOG.info("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(),createdNeuron.getName(), endTime-startTime);
 
                         if (markAsFragments && createdNeuron!=null) {
                            BoundingBox3d box = calcBoundingBox(createdNeuron);
@@ -318,6 +321,10 @@ public class SWCService {
 
         }
         return tmWorkspace;
+    }
+
+    Long createNewId() {
+        return timebasedIdentifierGenerator.generateIdList(1).get(0);
     }
 
     /**
@@ -627,7 +634,7 @@ public class SWCService {
     }
 
     private BoundingBox3d calcBoundingBox (TmNeuronMetadata neuron) {
-        double[] min = new double[]{1000000,1000000,1000000};
+        double[] min = new double[]{1000000000,1000000000,1000000000};
         double[] max = new double[]{0,0,0};
         if (neuron.getNeuronData()==null || neuron.getGeoAnnotationMap()==null)
             return null;
@@ -646,6 +653,9 @@ public class SWCService {
                 min[2] = point.getZ();
             if (max[2]<point.getZ())
                 max[2] = point.getZ();
+        }
+        if (min[0]>max[0] || min[1]>max[1] || min[2]>max[2]) {
+            return null;
         }
 
         BoundingBox3d box = new BoundingBox3d(min, max);
