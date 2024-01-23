@@ -282,7 +282,6 @@ public class SWCService {
                         if (markAsFragments) {
                             neuronMetadata.setFragment(true);
                         }
-                        neuronMetadata.setId(createNewId());
                        TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         long endTime = System.currentTimeMillis();
                         LOG.info("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(),createdNeuron.getName(), endTime-startTime);
