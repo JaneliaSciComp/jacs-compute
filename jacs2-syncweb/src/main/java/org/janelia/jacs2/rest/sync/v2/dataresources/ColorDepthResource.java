@@ -1,6 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
@@ -51,7 +54,9 @@ import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithNeuronsBuilder;
+import org.janelia.model.domain.sample.LineRelease;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.workspace.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -270,6 +275,7 @@ public class ColorDepthResource {
                             .collect(Collectors.toSet()),
                     s -> s.setObjectiveSamples(Collections.emptyList())); // clean up objective samples to reduce the bandwidth
 
+            Map<Reference, Set<String>> sampleReleases = retrieveReleaseNamesBySampleRef(indexedCDMIPSamples.keySet());
             Map<Reference, EMBody> indexedCDMIPBodies = retrieveDomainObjectsByRefs(
                     cdmList.stream()
                             .map(ColorDepthImage::getEmBodyRef)
@@ -286,6 +292,7 @@ public class ColorDepthResource {
                             updateCDMIPSample(
                                     cdmList,
                                     indexedCDMIPSamples,
+                                    sampleReleases,
                                     indexedCDMIPBodies,
                                     indexedEMDataSets)) {
                     })
@@ -318,6 +325,7 @@ public class ColorDepthResource {
 
     private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList,
                                                     Map<Reference, Sample> samplesIndexedByRef,
+                                                    Map<Reference, Set<String>> sampleReleaseNames,
                                                     Map<Reference, EMBody> emBodiesIndexedByRef,
                                                     Map<Reference, EMDataSet> emDataSetsIndexedByRef) {
         long start = System.currentTimeMillis();
@@ -328,6 +336,7 @@ public class ColorDepthResource {
                     .map(cdmip -> new ColorDepthImageWithNeuronsBuilder(cdmip)
                             .withLMSample(samplesIndexedByRef.get(cdmip.getSampleRef()))
                             .withEMBody(emBodiesIndexedByRef.get(cdmip.getEmBodyRef()))
+                            .withReleaseNames(sampleReleaseNames.get(cdmip.getSampleRef()))
                             .build())
                     .collect(Collectors.toList())
                     ;
@@ -416,5 +425,20 @@ public class ColorDepthResource {
                     ImmutableSet.copyOf(sampleRefsForDatasets),
                     ImmutableSet.copyOf(sampleRefsForReleases)));
         }
+    }
+
+    private Map<Reference, Set<String>> retrieveReleaseNamesBySampleRef(Collection<Reference> sampleRefs) {
+        if (CollectionUtils.isEmpty(sampleRefs)) {
+            return Collections.emptyMap();
+        }
+        List<? extends Node> releaseNodes = lineReleaseDao.getNodeDirectAncestorsForCollection(sampleRefs);
+        return releaseNodes.stream()
+                .map(n -> (LineRelease) n)
+                .flatMap(lr -> lr.getChildren().stream().map(r -> Pair.of(r, lr.getName())))
+                .filter(p -> sampleRefs.contains(p.getLeft()))
+                .collect(Collectors.groupingBy(
+                        Pair::getLeft,
+                        Collectors.mapping(Pair::getRight, Collectors.toSet())))
+                ;
     }
 }
