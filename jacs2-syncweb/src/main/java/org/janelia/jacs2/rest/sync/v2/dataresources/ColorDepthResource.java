@@ -390,6 +390,7 @@ public class ColorDepthResource {
             return params.stream()
                     .filter(StringUtils::isNotBlank)
                     .flatMap(param -> Splitter.on(',').trimResults().omitEmptyStrings().splitToList(param).stream())
+                    .map(s -> s.replaceAll("^\"|\"$", ""))
                     .collect(Collectors.toList())
                     ;
         }
@@ -410,7 +411,7 @@ public class ColorDepthResource {
             return lineReleaseDao.findReleasesByName(releases).stream()
                     .flatMap(r -> r.getChildren().stream())
                     .collect(Collectors.toList());
-        } else if (CollectionUtils.isEmpty(datasets)) {
+        } else if (CollectionUtils.isEmpty(releases)) {
             return sampleDao.findMatchingSample(null, datasets, null, null, 0, -1).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
