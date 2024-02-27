@@ -436,7 +436,7 @@ public class TmWorkspaceResource {
                                    @ApiParam @QueryParam("workspaceId") Long workspaceId,
                                    @ApiParam @QueryParam("neuronId") Long neuronId,
                                    @ApiParam @QueryParam("activity") TmOperation.Activity activity,
-                                   @ApiParam @QueryParam("neuronId") Long elapsedTime,
+                                   @ApiParam @QueryParam("elapsedTime") Long elapsedTime,
                                    @ApiParam @QueryParam("timestamp") String timestamp) {
         try {
             DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
