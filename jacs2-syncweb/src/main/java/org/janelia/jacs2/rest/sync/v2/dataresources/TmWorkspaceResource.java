@@ -1,6 +1,8 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -31,6 +33,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.models.Operation;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.rest.ErrorResponse;
@@ -416,5 +419,36 @@ public class TmWorkspaceResource {
         }
         tmNeuronMetadataDao.updateNeuronTagsForNeurons(workspace, neuronIds, tagList, tagState, subjectKey);
         return Response.ok("DONE").build();
+    }
+
+
+    @ApiOperation(value = "Creates an TM Operation log for an operation performed during neuron tracing",
+            notes = "Stores the operation log in the TmOperation table for future analysis"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully created an operation log"),
+            @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/operation/log")
+    public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
+                                   @ApiParam @QueryParam("workspaceId") Long workspaceId,
+                                   @ApiParam @QueryParam("neuronId") Long neuronId,
+                                   @ApiParam @QueryParam("activity") TmOperation.Activity activity,
+                                   @ApiParam @QueryParam("neuronId") Long elapsedTime,
+                                   @ApiParam @QueryParam("timestamp") String timestamp) {
+        try {
+            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
+            Date timestampDate = null;
+            if (timestamp!=null) {
+                timestampDate = format.parse(timestamp);
+            }
+            tmNeuronMetadataDao.createOperationLog(workspaceId,neuronId, activity, timestampDate, elapsedTime, subjectKey);
+        } catch (Exception e) {
+            LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
+                    activity,timestamp);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 }
