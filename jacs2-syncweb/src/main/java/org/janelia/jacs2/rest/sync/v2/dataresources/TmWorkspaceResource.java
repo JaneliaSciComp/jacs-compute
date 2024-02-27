@@ -429,7 +429,7 @@ public class TmWorkspaceResource {
             @ApiResponse(code = 200, message = "Successfully created an operation log"),
             @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
     })
-    @POST
+    @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/operation/log")
     public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
