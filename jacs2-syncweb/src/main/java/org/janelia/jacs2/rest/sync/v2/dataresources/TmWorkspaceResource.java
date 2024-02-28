@@ -433,6 +433,7 @@ public class TmWorkspaceResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/operation/log")
     public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
+                                   @ApiParam @QueryParam("sampleId") Long sampleId,
                                    @ApiParam @QueryParam("workspaceId") Long workspaceId,
                                    @ApiParam @QueryParam("neuronId") Long neuronId,
                                    @ApiParam @QueryParam("activity") TmOperation.Activity activity,
@@ -444,7 +445,7 @@ public class TmWorkspaceResource {
             if (timestamp!=null) {
                 timestampDate = format.parse(timestamp);
             }
-            tmNeuronMetadataDao.createOperationLog(workspaceId,neuronId, activity, timestampDate, elapsedTime, subjectKey);
+            tmNeuronMetadataDao.createOperationLog(sampleId, workspaceId,neuronId, activity, timestampDate, elapsedTime, subjectKey);
         } catch (Exception e) {
             LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
                     activity,timestamp);
