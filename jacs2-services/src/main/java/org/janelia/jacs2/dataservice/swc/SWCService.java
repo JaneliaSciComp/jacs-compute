@@ -196,9 +196,6 @@ public class SWCService {
         TmWorkspace tmWorkspace;
         if (!appendToExisting) {
             TmWorkspace workspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
-            if (neuronOwnerKey!=null)
-                workspace.setTracingGroup(neuronOwnerKey);
-            tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, workspace);
             LOG.info("Created workspace {} for SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", workspace, swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
 
             accessUsers.forEach(accessUserKey -> {
@@ -213,7 +210,6 @@ public class SWCService {
                     LOG.error("Error giving permission on {} to {}", workspace, accessUserKey, e);
                 }
             });
-            tmWorkspace = workspace;
         }
         List<TmWorkspace> workspacesList = tmWorkspaceDao.getTmWorkspacesForSample(workspaceOwnerKey, sampleId);
         tmWorkspace = null;
@@ -227,6 +223,9 @@ public class SWCService {
             LOG.error("Workspace name {} doesn't match with any workspaces associated with Sample Id {}", workspaceName, sampleId);
             throw new IllegalArgumentException("Workspace " + workspaceName + " either does not exist or is not accessible");
         }
+        if (neuronOwnerKey!=null)
+            tmWorkspace.setTracingGroup(neuronOwnerKey);
+        tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
 
         return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth,
                 orderSWCs, markAsFragments, appendToExisting);
