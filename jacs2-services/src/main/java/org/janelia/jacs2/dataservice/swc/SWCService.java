@@ -213,19 +213,18 @@ public class SWCService {
                 }
             });
             tmWorkspace = workspace;
-        } else {
-            List<TmWorkspace> workspacesList = tmWorkspaceDao.getTmWorkspacesForSample(workspaceOwnerKey, sampleId);
-            tmWorkspace = null;
-            for (TmWorkspace workspace: workspacesList) {
-                if (workspace.getName().equals(workspaceName)) {
-                    tmWorkspace = workspace;
-                    break;
-                }
+        }
+        List<TmWorkspace> workspacesList = tmWorkspaceDao.getTmWorkspacesForSample(workspaceOwnerKey, sampleId);
+        tmWorkspace = null;
+        for (TmWorkspace workspace: workspacesList) {
+            if (workspace.getName().equals(workspaceName)) {
+                tmWorkspace = workspace;
+                break;
             }
-            if (tmWorkspace == null) {
-                LOG.error("Workspace name {} doesn't match with any workspaces associated with Sample Id {}", workspaceName, sampleId);
-                throw new IllegalArgumentException("Workspace " + workspaceName + " either does not exist or is not accessible");
-            }
+        }
+        if (tmWorkspace == null) {
+            LOG.error("Workspace name {} doesn't match with any workspaces associated with Sample Id {}", workspaceName, sampleId);
+            throw new IllegalArgumentException("Workspace " + workspaceName + " either does not exist or is not accessible");
         }
 
         return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth,
