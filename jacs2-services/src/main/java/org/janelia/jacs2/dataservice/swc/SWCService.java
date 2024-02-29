@@ -655,6 +655,8 @@ public class SWCService {
                 max[2] = point.getZ();
         }
         if (min[0]>max[0] || min[1]>max[1] || min[2]>max[2]) {
+            LOG.info("Error creating {}, points of bounding box are incorrect ({},{},{}) - ({},{},{})",
+                    neuron.getName(), min[0], min[1], min[2], max[0], max[1], max[2]);
             return null;
         }
 
