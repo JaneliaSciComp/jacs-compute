@@ -196,6 +196,8 @@ public class SWCService {
         TmWorkspace tmWorkspace;
         if (!appendToExisting) {
             TmWorkspace workspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
+            if (neuronOwnerKey!=null)
+                workspace.setTracingGroup(neuronOwnerKey);
             LOG.info("Created workspace {} for SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", workspace, swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
 
             accessUsers.forEach(accessUserKey -> {
