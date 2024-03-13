@@ -284,6 +284,10 @@ public class SWCService {
                             neuronMetadata.setFragment(true);
                         }
                        TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
+		       if (createdNeuron.isLargeNeuron()) {
+                           createdNeuron = tmNeuronMetadataDao.getTmNeuronMetadata(neuronOwnerKey,tmWorkspace, createdNeuron.getId());
+                            Long endTime = System.currentTimeMillis();
+                        }
                         long endTime = System.currentTimeMillis();
                         LOG.info("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(),createdNeuron.getName(), endTime-startTime);
 
@@ -291,13 +295,19 @@ public class SWCService {
                            BoundingBox3d box = calcBoundingBox(createdNeuron);
                            if (box!=null)
                                boundingBoxes.add(box);
-                        }
+			   else {
+			       LOG.info("PROBLEM: CREATING BOUNDING BOX FOR {}",createdNeuron.getName());
+			   }
+                        } else {
+			   LOG.info("PROBLEM CREATING NEURON FOR {}",neuronMetadata.getName());
+			}
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);
                     }
                 });
         if (markAsFragments && boundingBoxes.size()>0) {
+	    LOG.info("Bounding Box Size : {}", boundingBoxes.size());
             try {
                 if (!appendToExisting) {
                     tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
@@ -636,8 +646,10 @@ public class SWCService {
     private BoundingBox3d calcBoundingBox (TmNeuronMetadata neuron) {
         double[] min = new double[]{1000000000,1000000000,1000000000};
         double[] max = new double[]{0,0,0};
-        if (neuron.getNeuronData()==null || neuron.getGeoAnnotationMap()==null)
+        if (neuron.getNeuronData()==null || neuron.getGeoAnnotationMap()==null) {
+	    LOG.info("PROBLEM: No neuron data");
             return null;
+	}
         Iterator<TmGeoAnnotation> iter = neuron.getGeoAnnotationMap().values().iterator();
         while (iter.hasNext()) {
             TmGeoAnnotation point = iter.next();
