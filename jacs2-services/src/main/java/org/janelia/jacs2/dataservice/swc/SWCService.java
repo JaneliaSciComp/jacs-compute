@@ -194,9 +194,11 @@ public class SWCService {
         }
 
         TmWorkspace tmWorkspace;
+        Long newWorkspaceId = null; // this gets set if a new workspace is created for this import
         if (!appendToExisting) {
             TmWorkspace workspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
             LOG.info("Created workspace {} for SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", workspace, swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
+            newWorkspaceId = workspace.getId();
 
             accessUsers.forEach(accessUserKey -> {
                 try {
@@ -214,7 +216,10 @@ public class SWCService {
         List<TmWorkspace> workspacesList = tmWorkspaceDao.getTmWorkspacesForSample(workspaceOwnerKey, sampleId);
         tmWorkspace = null;
         for (TmWorkspace workspace: workspacesList) {
-            if (workspace.getName().equals(workspaceName)) {
+            if ((newWorkspaceId == null && workspace.getName().equals(workspaceName)) ||
+                (newWorkspaceId != null && newWorkspaceId.equals(workspace.getId()))) {
+                // this is to make sure that even if the name is duplicated it picks up
+                // the new workspace created for this import
                 tmWorkspace = workspace;
                 break;
             }
@@ -231,7 +236,9 @@ public class SWCService {
                 orderSWCs, markAsFragments, appendToExisting);
     }
 
-    public TmWorkspace importSWCFolder(String swcFolderName, TmSample tmSample, TmWorkspace tmWorkspace,
+    public TmWorkspace importSWCFolder(String swcFolderName,
+                                       TmSample tmSample,
+                                       TmWorkspace tmWorkspace,
                                        String neuronOwnerKey,
                                        long firstEntry,
                                        long maxSize,
@@ -356,7 +363,7 @@ public class SWCService {
      * @param externalToInternalConverter
      */
     public TmNeuronMetadata importSWC(String swcFilepath, TmWorkspace tmWorkspace,
-                                 String neuronName, String neuronOwnerKey, VectorOperator externalToInternalConverter) {
+                                      String neuronName, String neuronOwnerKey, VectorOperator externalToInternalConverter) {
 
         Path swcPath = Paths.get(swcFilepath);
         String swcFilename = swcPath.getFileName().toString();
@@ -434,21 +441,25 @@ public class SWCService {
                         currentInputStream.close();
                         // and try to get the next batch
                         archiveInputStreamStack.pop();
-                        long offset = currentInputStream.getNextOffset();
-                        LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
-                        ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(
-                                swcStorageFolderURL,
-                                openSWCDataStream(swcStorageFolderURL,
-                                        offset,
-                                        batchSize,
-                                        depth,
-                                        orderSWCs),
-                                offset
-                        );
-                        if (nextStream != null) {
-                            // successfully got the next batch
-                            archiveInputStreamStack.push(nextStream);
-                        }
+                        ArchiveInputStreamPosition parentInputStream = archiveInputStreamStack.top();
+                        if (parentInputStream == null) {
+                            // I am at the top level - then fetch the next batch
+                            long offset = currentInputStream.getNextOffset();
+                            LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
+                            ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(
+                                    swcStorageFolderURL,
+                                    openSWCDataStream(swcStorageFolderURL,
+                                            offset,
+                                            batchSize,
+                                            depth,
+                                            orderSWCs),
+                                    offset
+                            );
+                            if (nextStream != null) {
+                                // successfully got the next batch
+                                archiveInputStreamStack.push(nextStream);
+                            }
+                        } // otherwise continue processing entries from the parent because the parent was an archive
                     } else {
                         LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
                         InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
@@ -524,7 +535,7 @@ public class SWCService {
     }
 
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
-        LOG.info("Retrieve {} entries from {}:{}", length > 0 ? "all" : length, swcStorageFolderURL, offset);
+        LOG.info("Retrieve {} entries from {}:{}", length <= 0 ? "all" : length, swcStorageFolderURL, offset);
         InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
                 "\\.(swc|zip|tar|tgz|tar.gz)$",
                 null,
@@ -579,7 +590,7 @@ public class SWCService {
     private TmNeuronMetadata importSWCFile(String swcEntryName, InputStream swcStream, String neuronName,
                                            String neuronOwnerKey, TmWorkspace tmWorkspace,
                                            VectorOperator externalToInternalConverter, boolean isFragment) {
-
+        LOG.debug("Read {} from the SWC stream", swcEntryName);
         SWCData swcData = swcReader.readSWCStream(swcEntryName, swcStream);
 
         // externalOffset is because Vaa3d cannot handle large coordinates in swc

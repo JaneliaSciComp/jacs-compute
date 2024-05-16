@@ -252,6 +252,7 @@ public class StorageService {
                     .queryParam("noSize", true)
                     .queryParam("entryPattern", filter)
                     .queryParam("entriesCount", size);
+            LOG.debug("Get content: {}", target);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
