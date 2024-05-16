@@ -267,7 +267,6 @@ public class SWCService {
                     }
                     String swcStorageFolderURL = storageService.getEntryURI(vsInfo.getVolumeStorageURI(), swcPath);
                     LOG.info("Retrieve swc content from {} : {}", vsInfo, swcPath);
-
                     Spliterator<NamedData<InputStream>> storageContentSupplier = getDataIterator(
                             swcStorageFolderURL,
                             firstEntry,
@@ -461,7 +460,8 @@ public class SWCService {
                             }
                         } // otherwise continue processing entries from the parent because the parent was an archive
                     } else {
-                        LOG.debug("Process {} from {}:{}", currentEntry.getName(), swcStorageFolderURL, currentInputStream.archiveInputStreamOffset);
+                        LOG.debug("Process {} from {}:{}", currentEntry.getName(),
+                                currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
                         InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
                         ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
                                 swcStorageFolderURL + ":" + currentEntry.getName(),
