@@ -92,6 +92,10 @@ public class SWCService {
             }
         }
 
+        String getStreamName() {
+            return streamName;
+        }
+
         synchronized ArchiveEntry goToNextFileEntry() {
             ArchiveEntry currentEntry = nextEntry();
             for (;
@@ -181,7 +185,7 @@ public class SWCService {
                                        List<String> accessUsers,
                                        long firstEntryOffset,
                                        long maxSize,
-                                       int batchSize,
+                                       int getBatchSize,
                                        int depth,
                                        boolean orderSWCs,
                                        boolean markAsFragments,
@@ -232,7 +236,7 @@ public class SWCService {
             tmWorkspace.setTracingGroup(neuronOwnerKey);
         tmWorkspaceDao.updateTmWorkspace(workspaceOwnerKey, tmWorkspace);
 
-        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, batchSize, depth,
+        return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, getBatchSize, depth,
                 orderSWCs, markAsFragments, appendToExisting);
     }
 
@@ -242,7 +246,7 @@ public class SWCService {
                                        String neuronOwnerKey,
                                        long firstEntry,
                                        long maxSize,
-                                       int batchSize,
+                                       int getBatchSize,
                                        int depth,
                                        boolean orderSWCs,
                                        boolean markAsFragments,
@@ -271,7 +275,7 @@ public class SWCService {
                             swcStorageFolderURL,
                             firstEntry,
                             maxSize,
-                            batchSize,
+                            getBatchSize,
                             depth,
                             orderSWCs
                     );
@@ -388,16 +392,16 @@ public class SWCService {
 
     private ConcurrentStack<ArchiveInputStreamPosition> initializeStreamStack(String storageURL,
                                                                               long offset,
-                                                                              long batchSize,
+                                                                              long getBatchSize,
                                                                               int depth,
                                                                               boolean orderFlag) {
         ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack = new ConcurrentStack<>();
         ArchiveInputStreamPosition archiveInputStream = prepareStreamIfArchive(
-                storageURL,
+                storageURL + ":" + offset,
                 openSWCDataStream(
                         storageURL,
                         offset,
-                        batchSize,
+                        getBatchSize,
                         depth,
                         orderFlag),
                 offset);
@@ -410,13 +414,13 @@ public class SWCService {
     private Spliterator<NamedData<InputStream>> getDataIterator(String swcStorageFolderURL,
                                                                 long firstEntry,
                                                                 long maxSize,
-                                                                int batchSize,
+                                                                int getBatchSize,
                                                                 int depth,
                                                                 boolean orderSWCs) {
         ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack =
                 initializeStreamStack(swcStorageFolderURL,
                         firstEntry,
-                        batchSize,
+                        getBatchSize,
                         depth,
                         orderSWCs);
         return new Spliterator<NamedData<InputStream>>() {
@@ -436,7 +440,7 @@ public class SWCService {
                     // just in case some folders got through - ignore them
                     if (currentEntry == null) {
                         // nothing left in the current stream -> close it
-                        LOG.info("Finished processing {} entries from {}:{}", currentInputStream.archiveEntriesCount, currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
+                        LOG.info("Finished processing {} entries from {}", currentInputStream.archiveEntriesCount, currentInputStream.getStreamName());
                         currentInputStream.close();
                         // and try to get the next batch
                         archiveInputStreamStack.pop();
@@ -446,10 +450,10 @@ public class SWCService {
                             long offset = currentInputStream.getNextOffset();
                             LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
                             ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(
-                                    swcStorageFolderURL,
+                                    swcStorageFolderURL + ":" + offset,
                                     openSWCDataStream(swcStorageFolderURL,
                                             offset,
-                                            batchSize,
+                                            getBatchSize,
                                             depth,
                                             orderSWCs),
                                     offset
@@ -460,11 +464,10 @@ public class SWCService {
                             }
                         } // otherwise continue processing entries from the parent because the parent was an archive
                     } else {
-                        LOG.debug("Process {} from {}:{}", currentEntry.getName(),
-                                currentInputStream.streamName, currentInputStream.archiveInputStreamOffset);
+                        LOG.debug("Process {} from {}", currentEntry.getName(), currentInputStream.getStreamName());
                         InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
                         ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
-                                swcStorageFolderURL + ":" + currentEntry.getName(),
+                                currentInputStream.getStreamName() + ":" + currentEntry.getName(),
                                 entryStream,
                                 0L);
                         if (archiveEntryStream != null) {
@@ -478,7 +481,7 @@ public class SWCService {
                             if (maxSize <=0 || entriesProcessed < maxSize) {
                                 return true;
                             } else {
-                                LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.streamName);
+                                LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.getStreamName());
                                 // close all stacks
                                 for (ArchiveInputStreamPosition as = archiveInputStreamStack.pop(); as != null; as = archiveInputStreamStack.pop()) {
                                     as.close();

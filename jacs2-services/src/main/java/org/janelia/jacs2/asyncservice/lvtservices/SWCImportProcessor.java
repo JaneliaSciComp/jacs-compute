@@ -111,7 +111,8 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         }
         accessUsers.remove(workspaceOwnerKey); // if the neuron owner and the workspace owner are the same there's no need for this
         return computationFactory
-                .newCompletedComputation(swcService.importSWCFolder(args.swcDirName,
+                .newCompletedComputation(swcService.importSWCFolder(
+                        args.swcDirName,
                         args.sampleId, args.workspace,
                         workspaceOwnerKey, neuronOwnerKey,
                         ImmutableList.copyOf(accessUsers),
