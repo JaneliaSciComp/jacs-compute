@@ -293,11 +293,11 @@ public class SWCService {
                         if (markAsFragments) {
                             neuronMetadata.setFragment(true);
                         }
-                       TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
+                        TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         long endTime = System.currentTimeMillis();
                         LOG.info("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(),createdNeuron.getName(), endTime-startTime);
 
-                        if (markAsFragments && createdNeuron!=null) {
+                        if (markAsFragments) {
                            BoundingBox3d box = calcBoundingBox(createdNeuron);
                            if (box!=null)
                                boundingBoxes.add(box);
@@ -327,8 +327,6 @@ public class SWCService {
             } catch (Exception e) {
                 LOG.error("Error updating workspace to store fragments flag for workspace {}", tmWorkspace.getId(), e);
             }
-
-
         }
         return tmWorkspace;
     }
