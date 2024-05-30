@@ -452,4 +452,34 @@ public class TmWorkspaceResource {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-}
+
+    @ApiOperation(value = "gets Operation logs based off username, workspace or timestamp range",
+            notes = "returns a list of operation logs based off the query"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully retrieved operation logs"),
+            @ApiResponse(code = 500, message = "Error occurred while getting the operation logs")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/operation/log/search")
+    public  List<TmOperation> getOperationLog(@ApiParam @QueryParam("username") String subjectKey,
+                                                @ApiParam @QueryParam("workspaceId") Long workspaceId,
+                                                @ApiParam @QueryParam("neuronId") Long neuronId,
+                                                @ApiParam @QueryParam("startTime") String startTime,
+                                                @ApiParam @QueryParam("endTime") String endTime) {
+        try {
+            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
+            Date startTimeDate = null, endTimeDate = null;
+            if (startTime!=null) {
+                startTimeDate = format.parse(startTime);
+            }
+            if (endTime!=null) {
+                endTimeDate = format.parse(endTime);
+            }
+            return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startTimeDate, endTimeDate);
+        } catch (Exception e) {
+            LOG.error("Error occurred getting operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId, startTime, endTime);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }}
