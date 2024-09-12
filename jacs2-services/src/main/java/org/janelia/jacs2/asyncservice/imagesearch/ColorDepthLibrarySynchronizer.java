@@ -53,6 +53,7 @@ import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.flyem.EMBody;
@@ -864,6 +865,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
         return lineReleases.stream()
                 .filter(lr -> StringUtils.isNotBlank(lr.getTargetWebsite()))
+                .filter(lr -> DomainUtils.hasReadAccess(lr, "group:flylight"))
                 .collect(Collectors.groupingBy(groupBy, Collectors.toList()));
     }
 

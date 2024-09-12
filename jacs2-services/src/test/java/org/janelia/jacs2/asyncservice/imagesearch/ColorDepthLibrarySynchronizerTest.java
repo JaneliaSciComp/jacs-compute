@@ -733,6 +733,7 @@ public class ColorDepthLibrarySynchronizerTest {
         LineRelease lr = new LineRelease();
         lr.setId(id);
         lr.setTargetWebsite(site);
+        lr.addReaders(Collections.singleton("group:flylight"));
         sampleRefs.forEach(lr::addChild);
         return lr;
     }
