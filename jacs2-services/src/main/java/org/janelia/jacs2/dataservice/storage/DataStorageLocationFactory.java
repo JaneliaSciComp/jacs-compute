@@ -18,7 +18,6 @@ import org.janelia.rendering.FileBasedRenderedVolumeLocation;
 import org.janelia.rendering.JADEBasedDataLocation;
 import org.janelia.rendering.JADEBasedRenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.utils.ClientProxy;
 import org.janelia.rendering.utils.HttpClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public class DataStorageLocationFactory {
     public Optional<? extends DataLocation> lookupJadeDataLocation(String dataPath, String subjectKey, String authToken) {
         Preconditions.checkArgument(StringUtils.isNotBlank(dataPath));
         LOG.debug("lookupJadeDataLocation {}", dataPath);
-        return storageService.lookupDataStorage(null, null, null, dataPath, subjectKey, authToken).stream()
+        return storageService.lookupDataBundle(null, null, null, dataPath, subjectKey, authToken).stream()
                 .map(dsInfo -> new JADEBasedDataLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider))
                 .filter(dataLocation -> {
                     if (dataPath.startsWith("/")) {
@@ -84,8 +83,8 @@ public class DataStorageLocationFactory {
                     String renderedVolumePath;
                     if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
                         renderedVolumePath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(dataPath)).toString();
-                    } else if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
-                        renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(dataPath)).toString();
+                    } else if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageRootLocation(), "/"))) {
+                        renderedVolumePath = Paths.get(vsInfo.getStorageRootLocation()).relativize(Paths.get(dataPath)).toString();
                     } else {
                         // the only other option is that the dataPath is actually the root volume path
                         renderedVolumePath = "";

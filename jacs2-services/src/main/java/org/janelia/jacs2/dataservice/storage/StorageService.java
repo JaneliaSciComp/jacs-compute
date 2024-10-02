@@ -18,6 +18,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
@@ -32,8 +33,8 @@ public class StorageService {
     private final String storageServiceApiKey;
 
     @Inject
-    public StorageService(@PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
-                          @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
+    StorageService(@PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
+                   @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
         this.masterStorageServiceURL = masterStorageServiceURL;
         this.storageServiceApiKey = storageServiceApiKey;
     }
@@ -53,7 +54,8 @@ public class StorageService {
                 LOG.warn("Request {} returned status {} while trying to retrieved the quota for {} on {}", target, responseStatus, userKey, volumeName);
                 throw new IllegalStateException("Request " + target.getUri() + " returned an invalid response while trying to get the quota for " + userKey + " on " + volumeName);
             } else {
-                List<QuotaUsage> quotaReport = response.readEntity(new GenericType<List<QuotaUsage>>(){});
+                List<QuotaUsage> quotaReport = response.readEntity(new GenericType<List<QuotaUsage>>() {
+                });
                 return quotaReport.stream().findFirst();
             }
         } catch (IllegalStateException e) {
@@ -65,7 +67,7 @@ public class StorageService {
         }
     }
 
-    public List<DataStorageInfo> lookupDataStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    List<DataStorageInfo> lookupDataBundle(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target;
@@ -116,7 +118,8 @@ public class StorageService {
                 ;
                 throw new IllegalStateException(messageBuilder.toString());
             } else {
-                PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
+                PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>() {
+                });
                 return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
@@ -130,14 +133,23 @@ public class StorageService {
 
     public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
         return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken).stream()
-                .filter(vsInfo -> storagePath.equals(vsInfo.getStorageVirtualPath())
-                        || storagePath.equals(vsInfo.getBaseStorageRootDir())
-                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
-                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/")))
+                .filter(storageVolume -> {
+                    if ("S3".equals(storageVolume.getStorageType()) &&
+                            (StringUtils.startsWith(storagePath, "https://") ||
+                                    StringUtils.startsWith(storagePath, "s3://"))) {
+                        return true;
+                    } else {
+                        // the storagePath must match volume's physical root location or volume's binding
+                        return storagePath.equals(storageVolume.getStorageVirtualPath())
+                                || storagePath.equals(storageVolume.getStorageRootLocation())
+                                || storagePath.startsWith(StringUtils.appendIfMissing(storageVolume.getStorageVirtualPath(), "/"))
+                                || storagePath.startsWith(StringUtils.appendIfMissing(storageVolume.getStorageRootLocation(), "/"));
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
-    public List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    private List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -162,7 +174,8 @@ public class StorageService {
                 LOG.error("Lookup storage volume request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
                 return Collections.emptyList();
             } else {
-                PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
+                PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>() {
+                });
                 return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
@@ -224,14 +237,15 @@ public class StorageService {
 
     /**
      * Tar the given files paginated with the offset/size, and then stream the tar file.
-     * @param storageURI must point to data_content URL of a folder containing files
-     * @param offset index of first file to stream
-     * @param size number of files to stream
-     * @param depth directory tree depth
+     *
+     * @param storageURI    must point to data_content URL of a folder containing files
+     * @param offset        index of first file to stream
+     * @param size          number of files to stream
+     * @param depth         directory tree depth
      * @param sortedContent sort files before streaming
-     * @param filter regex filename filter
-     * @param subject subject key (or null)
-     * @param authToken authentication token (or null)
+     * @param filter        regex filename filter
+     * @param subject       subject key (or null)
+     * @param authToken     authentication token (or null)
      * @return stream of tar
      */
     public InputStream getStorageFolderContent(String storageURI,
@@ -273,7 +287,7 @@ public class StorageService {
         try {
             WebTarget target = httpclient
                     .target(storageURI).path("data_content")
-                    .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024*1024)
+                    .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024 * 1024)
                     .property(ClientProperties.REQUEST_ENTITY_PROCESSING, "CHUNKED")
                     .path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
@@ -281,7 +295,8 @@ public class StorageService {
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
-                JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
+                JsonNode storageNode = response.readEntity(new GenericType<JsonNode>() {
+                });
                 return extractStorageNodeFromJson(storageURI, entryLocationUrl, null, storageNode);
             } else {
                 LOG.warn("Put content using {} return status {}", target, response.getStatus());
@@ -326,7 +341,8 @@ public class StorageService {
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
-            List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
+            List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>() {
+            });
             return storageCotent.stream()
                     .map(content -> extractStorageNodeFromJson(storageURI, null, storagePath, content))
                     .collect(Collectors.toList());
@@ -374,11 +390,9 @@ public class StorageService {
             Response response = requestBuilder.head();
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return true;
-            }
-            else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 return false;
-            }
-            else {
+            } else {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
         } catch (IllegalStateException e) {
@@ -399,8 +413,7 @@ public class StorageService {
             Response response = requestBuilder.head();
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return response.getLength();
-            }
-            else {
+            } else {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
         } catch (IllegalStateException e) {

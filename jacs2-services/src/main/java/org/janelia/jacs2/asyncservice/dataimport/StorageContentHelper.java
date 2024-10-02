@@ -42,8 +42,8 @@ public class StorageContentHelper {
                     String relativeStoragePath;
                     if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getStorageVirtualPath(), "/"))) {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(storagePath)).toString();
-                    } else if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getBaseStorageRootDir(), "/"))) {
-                        relativeStoragePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(storagePath)).toString();
+                    } else if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getStorageRootLocation(), "/"))) {
+                        relativeStoragePath = Paths.get(jadeStorageVolume.getStorageRootLocation()).relativize(Paths.get(storagePath)).toString();
                     } else {
                         relativeStoragePath = "";
                     }

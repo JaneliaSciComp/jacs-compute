@@ -262,8 +262,8 @@ public class SWCService {
                     String swcPath;
                     if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
                         swcPath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(swcFolderName)).toString();
-                    } else if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
-                        swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
+                    } else if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageRootLocation(), "/"))) {
+                        swcPath = Paths.get(vsInfo.getStorageRootLocation()).relativize(Paths.get(swcFolderName)).toString();
                     } else {
                         // the only other option is that the dataPath is actually the root volume path
                         // this may actually be an anomaly
