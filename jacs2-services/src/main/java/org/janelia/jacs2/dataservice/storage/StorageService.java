@@ -141,9 +141,9 @@ public class StorageService {
                     } else {
                         // the storagePath must match volume's physical root location or volume's binding
                         return storagePath.equals(storageVolume.getStorageVirtualPath())
-                                || storagePath.equals(storageVolume.getStorageRootLocation())
+                                || storagePath.equals(storageVolume.getBaseStorageRootDir())
                                 || storagePath.startsWith(StringUtils.appendIfMissing(storageVolume.getStorageVirtualPath(), "/"))
-                                || storagePath.startsWith(StringUtils.appendIfMissing(storageVolume.getStorageRootLocation(), "/"));
+                                || storagePath.startsWith(StringUtils.appendIfMissing(storageVolume.getBaseStorageRootDir(), "/"));
                     }
                 })
                 .collect(Collectors.toList());

@@ -83,8 +83,8 @@ public class DataStorageLocationFactory {
                     String renderedVolumePath;
                     if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
                         renderedVolumePath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(dataPath)).toString();
-                    } else if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageRootLocation(), "/"))) {
-                        renderedVolumePath = Paths.get(vsInfo.getStorageRootLocation()).relativize(Paths.get(dataPath)).toString();
+                    } else if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
+                        renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(dataPath)).toString();
                     } else {
                         // the only other option is that the dataPath is actually the root volume path
                         renderedVolumePath = "";
