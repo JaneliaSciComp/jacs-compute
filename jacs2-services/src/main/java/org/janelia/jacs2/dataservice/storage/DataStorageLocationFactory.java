@@ -81,10 +81,14 @@ public class DataStorageLocationFactory {
         return storageService.findStorageVolumes(dataPath, subjectKey, authToken).stream()
                 .map(vsInfo -> {
                     String renderedVolumePath;
-                    if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
+                    if (vsInfo.getStorageVirtualPath() != null && dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
                         renderedVolumePath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(dataPath)).toString();
-                    } else if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
+                    } else if (vsInfo.getBaseStorageRootDir() != null && dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
                         renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(dataPath)).toString();
+                    } else if ("S3".equals(vsInfo.getStorageType())) {
+                        // S3 volumes may have null root dir - in that case renderedVolume
+                        // is located at the same path as the one used for searching the volume, i.e. dataPath
+                        renderedVolumePath = dataPath;
                     } else {
                         // the only other option is that the dataPath is actually the root volume path
                         renderedVolumePath = "";
