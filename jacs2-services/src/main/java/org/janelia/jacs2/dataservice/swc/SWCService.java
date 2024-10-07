@@ -260,10 +260,12 @@ public class SWCService {
                 .map(vsInfo -> {
                     LOG.info("Found {} for SWC folder {}", vsInfo, swcFolderName);
                     String swcPath;
-                    if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
+                    if (StringUtils.startsWith(swcFolderName, StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
                         swcPath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(swcFolderName)).toString();
-                    } else if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
+                    } else if (StringUtils.startsWith(swcFolderName, StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
+                    } else if (StringUtils.equals(vsInfo.getStorageType(), "S3")) {
+                        swcPath = swcFolderName;
                     } else {
                         // the only other option is that the dataPath is actually the root volume path
                         // this may actually be an anomaly
@@ -625,7 +627,7 @@ public class SWCService {
                                 node.getZ()};
             }
             TmGeoAnnotation unserializedAnnotation = new TmGeoAnnotation(
-                    new Long(node.getIndex()), null, neuronMetadata.getId(),
+                    Long.valueOf(node.getIndex()), null, neuronMetadata.getId(),
                     internalPoint[0], internalPoint[1], internalPoint[2], node.getRadius(),
                     now, now
             );

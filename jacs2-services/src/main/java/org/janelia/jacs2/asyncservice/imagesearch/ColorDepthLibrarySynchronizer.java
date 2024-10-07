@@ -899,7 +899,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     Pattern pattern = emSkeletonRegexPattern();
                     Matcher matcher = pattern.matcher(file.getName());
                     if (matcher.matches()) {
-                        Long bodyId = new Long(matcher.group(1));
+                        Long bodyId = Long.valueOf(matcher.group(1));
                         EMBody emBody = emBodyByBodyId.get(bodyId);
 
                         if (emBody!=null) {
