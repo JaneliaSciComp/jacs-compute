@@ -7,12 +7,14 @@ import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +29,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.model.access.domain.dao.SummaryDao;
 import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.report.DiskUsageSummary;
@@ -65,14 +68,16 @@ public class DataSummaryResource {
 
     @ApiOperation(value = "Returns a disk usage summary for a given user")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got disk uage summary", response= DiskUsageSummary.class),
-            @ApiResponse( code = 500, message = "Internal Server Error getting disk usage summary" )
+            @ApiResponse(code = 200, message = "Successfully got disk uage summary", response = DiskUsageSummary.class),
+            @ApiResponse(code = 500, message = "Internal Server Error getting disk usage summary")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("summary/disk")
     public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
-                                        @ApiParam @QueryParam("subjectKey") String subjectKey) {
+                                        @ApiParam @QueryParam("subjectKey") String subjectKey,
+                                        @HeaderParam("AccessKey") String accessKey,
+                                        @HeaderParam("SecretKey") String secretKey) {
         LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
         try {
             String volumeName;
@@ -86,18 +91,23 @@ public class DataSummaryResource {
                 // This is for external installations which do not have Janelia's disk quota system.
                 return Response.ok(new DiskUsageSummary()).build();
             }
-            return storageService.fetchQuotaForUser(volumeName, subjectKey)
+            return storageService.fetchQuotaForUser(
+                    volumeName,
+                    subjectKey,
+                    new JadeStorageAttributes()
+                            .setAttributeValue("AccessKey", accessKey)
+                            .setAttributeValue("SecretKey", secretKey))
                     .map(quotaUsage -> {
-                        DiskUsageSummary summary = new DiskUsageSummary();
-                        BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
-                        Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
-                        summary.setUserDataSetsTB(tb);
-                        summary.setQuotaUsage(quotaUsage);
-                        return summary;
-                    })
+                DiskUsageSummary summary = new DiskUsageSummary();
+                BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
+                Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
+                summary.setUserDataSetsTB(tb);
+                summary.setQuotaUsage(quotaUsage);
+                return summary;
+            })
                     .map(diskUsageSummary -> Response.ok(diskUsageSummary).build())
                     .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST).build())
-                    ;
+            ;
         } finally {
             LOG.trace("Finished getDataSummary({})", subjectKey);
         }
@@ -105,8 +115,8 @@ public class DataSummaryResource {
 
     @ApiOperation(value = "Returns a database summary for a given user")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got data summary", response=DatabaseSummary.class),
-            @ApiResponse( code = 500, message = "Internal Server Error getting data summary" )
+            @ApiResponse(code = 200, message = "Successfully got data summary", response = DatabaseSummary.class),
+            @ApiResponse(code = 500, message = "Internal Server Error getting data summary")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)

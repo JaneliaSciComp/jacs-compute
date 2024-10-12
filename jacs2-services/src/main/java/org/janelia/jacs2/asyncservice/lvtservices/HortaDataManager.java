@@ -1,14 +1,25 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
-import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
-import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
@@ -20,20 +31,12 @@ import org.janelia.rendering.ymlrepr.RawVolData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.stream.Collectors;
-
 public class HortaDataManager {
 
     private static final Logger log = LoggerFactory.getLogger(HortaDataManager.class);
 
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
-    private final TmNeuronMetadataDao tmNeuronMetadataDao;
     private final TmMappedNeuronDao tmMappedNeuronDao;
     private final RenderedVolumeLoader renderedVolumeLoader;
     private final DataStorageLocationFactory dataStorageLocationFactory;
@@ -41,13 +44,11 @@ public class HortaDataManager {
     @Inject
     public HortaDataManager(@AsyncIndex TmSampleDao tmSampleDao,
                             @AsyncIndex TmWorkspaceDao tmWorkspaceDao,
-                            TmNeuronMetadataDao tmNeuronMetadataDao,
                             @AsyncIndex TmMappedNeuronDao tmMappedNeuronDao,
                             RenderedVolumeLoader renderedVolumeLoader,
                             DataStorageLocationFactory dataStorageLocationFactory) {
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
-        this.tmNeuronMetadataDao = tmNeuronMetadataDao;
         this.tmMappedNeuronDao = tmMappedNeuronDao;
         this.renderedVolumeLoader = renderedVolumeLoader;
         this.dataStorageLocationFactory = dataStorageLocationFactory;
@@ -78,8 +79,9 @@ public class HortaDataManager {
 
         String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
 
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes().setFromMap(sample.getStorageAttributes());
         log.info("SAMPLE PATH:{}",samplePath);
-        RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
+        RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null, storageAttributes)
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
         if (rvl == null) {
@@ -87,7 +89,7 @@ public class HortaDataManager {
         }
 
         if (altPath!=null) {
-            boolean altFound = dataStorageLocationFactory.lookupJadeDataLocation(altPath, subjectKey, null)
+            boolean altFound = dataStorageLocationFactory.lookupJadeDataLocation(altPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
                         log.warn("Could not find any storage for Zarr directory for sample {} at {}", sample.getName(), altPath);
@@ -117,7 +119,7 @@ public class HortaDataManager {
             }
 
             // check if the ktx location is accessible
-            boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
+            boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
                         log.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
@@ -149,7 +151,7 @@ public class HortaDataManager {
         }
 
         if (StringUtils.isNotBlank(acquisitionPath)) {
-            boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+            boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
                         log.warn("Could not find any storage for acquisition path for sample {} at {}", sample.getName(), acquisitionPath);
@@ -179,10 +181,11 @@ public class HortaDataManager {
         log.info("OCTREE PATH:{}",octreePath);
         log.info("ZARR PATH:{}",altPath);
 
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes().setFromMap(tmSample.getStorageAttributes());
         String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
         log.info("Verifying sample path {} for sample {}", samplePath, tmSample);
 
-        boolean samplePathFound = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
+        boolean samplePathFound = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null, storageAttributes)
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .flatMap(this::getConstants).isPresent();
         if (!samplePathFound) {
@@ -198,7 +201,7 @@ public class HortaDataManager {
                 ktxFullPath = tmSample.getLargeVolumeKTXFilepath();
             }
             // check if the ktx location is accessible
-            boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
+            boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
                         log.warn("Could not find any storage for KTX directory {} for sample {}", ktxFullPath, tmSample);
@@ -211,7 +214,7 @@ public class HortaDataManager {
             String acquisitionPath = tmSample.getAcquisitionFilepath();
             if (StringUtils.isNotBlank(acquisitionPath)) {
                 // for update only check the acquisition path if set - don't try to read the tile yaml file
-                boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+                boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null, storageAttributes)
                         .map(dl -> true)
                         .orElseGet(() -> {
                             log.warn("Could not find any storage for acquisition path for sample {} at {}", tmSample.getName(), acquisitionPath);
@@ -225,8 +228,8 @@ public class HortaDataManager {
         return tmSampleDao.updateTmSample(subjectKey, tmSample);
     }
 
-    public Optional<Map<String, Object>> getSampleConstants(String subjectKey, String samplePath) {
-        return dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
+    public Optional<Map<String, Object>> getSampleConstants(String subjectKey, String samplePath, JadeStorageAttributes storageAttributes) {
+        return dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null, storageAttributes)
                 .flatMap(this::getConstants);
     }
 

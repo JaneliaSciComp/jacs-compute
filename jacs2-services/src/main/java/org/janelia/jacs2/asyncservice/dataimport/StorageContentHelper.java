@@ -1,14 +1,10 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
-import org.janelia.jacs2.dataservice.storage.StoragePathURI;
-import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,12 +14,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
+import org.janelia.jacsstorage.clients.api.StorageEntryInfo;
+import org.janelia.jacsstorage.clients.api.StoragePathURI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Helper class for downloading/uploading content to JADE.
- *
- * @deprecated use org.janelia.jacsstorage.clients.api.JadeStorageService
  */
-@Deprecated
+//@Deprecated
 public class StorageContentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
@@ -34,9 +37,9 @@ public class StorageContentHelper {
         this.storageService = storageService;
     }
 
-    public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
+    public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
         LOG.info("Lookup storage for {}", storagePath);
-        return storageService.findStorageVolumes(storagePath, ownerKey, authToken)
+        return storageService.findStorageVolumes(storagePath, ownerKey, authToken, storageOptions)
                 .stream().findFirst()
                 .map(jadeStorageVolume -> {
                     String relativeStoragePath;
@@ -62,13 +65,13 @@ public class StorageContentHelper {
                 });
     }
 
-    public List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
-        return listContent(storageURL, storagePath, -1, ownerKey, authToken);
+    public List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
+        return listContent(storageURL, storagePath, -1, ownerKey, authToken, storageOptions);
     }
 
-    public List<ContentStack> listContent(String storageURL, String storagePath, int depth, String ownerKey, String authToken) {
+    public List<ContentStack> listContent(String storageURL, String storagePath, int depth, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
         LOG.debug("List content of {} from {}", storagePath, storageURL);
-        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, depth, 0, -1).stream()
+        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, depth, 0, -1, storageOptions).stream()
                 .map(entry -> {
                     StorageContentInfo storageContentInfo = new StorageContentInfo();
                     storageContentInfo.setRemoteInfo(entry);
@@ -85,9 +88,10 @@ public class StorageContentHelper {
      * @param downloadLocation
      * @param ownerKey
      * @param authToken
+     * @param storageOptions
      * @return
      */
-    List<ContentStack> downloadUnreachableContent(List<ContentStack> contentList, Path downloadLocation, String ownerKey, String authToken) {
+    List<ContentStack> downloadUnreachableContent(List<ContentStack> contentList, Path downloadLocation, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
         return contentList.stream()
                 .peek(contentEntry -> {
                     try {
@@ -102,7 +106,7 @@ public class StorageContentHelper {
                                 // no local copy found - so download it
                                 Files.createDirectories(entryFullPath.getParent());
                                 Files.copy(
-                                        storageService.getStorageContent(contentEntry.getMainRep().getRemoteInfo().getEntryURL(), ownerKey, authToken),
+                                        storageService.getStorageContent(contentEntry.getMainRep().getRemoteInfo().getEntryURL(), ownerKey, authToken, storageOptions),
                                         entryFullPath,
                                         StandardCopyOption.REPLACE_EXISTING);
                             }
@@ -129,8 +133,8 @@ public class StorageContentHelper {
         }
     }
 
-    void removeRemoteContent(String storageURL, String storagePath, String ownerKey, String authToken) {
-        storageService.removeStorageContent(storageURL, storagePath, ownerKey, authToken);
+    void removeRemoteContent(String storageURL, String storagePath, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
+        storageService.removeStorageContent(storageURL, storagePath, ownerKey, authToken, storageOptions);
     }
 
     List<ContentStack> removeLocalContent(List<ContentStack> contentList) {
@@ -160,9 +164,10 @@ public class StorageContentHelper {
      * @param storagePath
      * @param ownerKey
      * @param authToken
+     * @param storageOptions
      * @return
      */
-    List<ContentStack> copyContent(List<ContentStack> contentList, String storageURL, String storagePath, String ownerKey, String authToken) {
+    List<ContentStack> copyContent(List<ContentStack> contentList, String storageURL, String storagePath, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
         return contentList
                 .stream()
                 .peek(contentEntry -> {
@@ -170,14 +175,14 @@ public class StorageContentHelper {
                     // if entryURL is there it means that we already have the content on the specified storage
                     // we transfer it only if the content is a file and is not already on the storage
                     if (sci.getRemoteInfo().isNotCollection() && sci.getRemoteInfo().getEntryURL() != null) {
-                        copyContent(sci, storageURL, storagePath, ownerKey, authToken);
+                        copyContent(sci, storageURL, storagePath, ownerKey, authToken, storageOptions);
                     }
                 })
                 .collect(Collectors.toList());
     }
 
-    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String storagePathParam, String ownerKey, String authToken) {
-        InputStream inputStream = storageService.getStorageContent(storageContentInfo.getRemoteInfo().getEntryURL(), ownerKey, authToken);
+    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String storagePathParam, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
+        InputStream inputStream = storageService.getStorageContent(storageContentInfo.getRemoteInfo().getEntryURL(), ownerKey, authToken, storageOptions);
         try {
             if (inputStream != null) {
                 LOG.info("Copy {} to {} {}", storageContentInfo, storageURL, storagePathParam);
@@ -187,6 +192,7 @@ public class StorageContentHelper {
                         storagePath + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
                         ownerKey,
                         authToken,
+                        storageOptions,
                         inputStream
                 ));
             }
@@ -208,21 +214,22 @@ public class StorageContentHelper {
      * @param storageURL
      * @param ownerKey
      * @param authToken
+     * @param storageOptions
      * @return
      */
-    List<ContentStack> uploadContent(List<ContentStack> contentList, String storageURL, String ownerKey, String authToken) {
+    List<ContentStack> uploadContent(List<ContentStack> contentList, String storageURL, String ownerKey, String authToken, JadeStorageAttributes storageOptions) {
         LOG.info("Upload content stack {} to {} for {}", contentList, storageURL, ownerKey);
         return contentList.stream()
                 .peek(contentEntry -> {
                     Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
                             .filter(sci -> sci.getRemoteInfo().getEntryURL() == null) // only upload the ones that don't have a storageEntryURL, i.e., not there yet
-                            .forEach(sci -> uploadContent(sci, storageURL, ownerKey, authToken));
+                            .forEach(sci -> uploadContent(sci, storageURL, ownerKey, authToken, storageOptions));
                 })
                 .collect(Collectors.toList())
                 ;
     }
 
-    private void uploadContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
+    private void uploadContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken, JadeStorageAttributes storageOptions) {
         Path localPath = Paths.get(storageContentInfo.getLocalBasePath()).resolve(storageContentInfo.getLocalRelativePath());
         InputStream inputStream = openLocalContent(localPath);
         try {
@@ -233,6 +240,7 @@ public class StorageContentHelper {
                         storageContentInfo.getRemoteInfo().getEntryRelativePath(),
                         subjectKey,
                         authToken,
+                        storageOptions,
                         inputStream
                 ));
             }

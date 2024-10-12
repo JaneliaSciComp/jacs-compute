@@ -52,6 +52,9 @@ public class AsyncServiceResource {
         services.forEach((service) -> {
             service.setAuthKey(authenticatedSubjectKey);
             service.setOwnerKey(authorizedSubjectKey);
+            for (String requestHeader : containerRequestContext.getHeaders().keySet()) {
+                service.addDictionaryArg(requestHeader, containerRequestContext.getHeaderString(requestHeader));
+            }
         }); // update the owner for all submitted services
         List<JacsServiceData> newServices = jacsServiceEngine.submitMultipleServices(services);
         return Response
@@ -83,6 +86,9 @@ public class AsyncServiceResource {
             si.setOwnerKey(authenticatedSubjectKey);
         }
         si.setName(serviceName);
+        for (String requestHeader : containerRequestContext.getHeaders().keySet()) {
+            si.addDictionaryArg(requestHeader, containerRequestContext.getHeaderString(requestHeader));
+        }
         JacsServiceData newJacsServiceData = jacsServiceEngine.submitSingleService(si);
         return Response
                 .created(UriBuilder.fromMethod(ServiceInfoResource.class, "getServiceInfo").build(newJacsServiceData.getId()))

@@ -12,13 +12,13 @@ import com.google.common.base.Preconditions;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
+import org.janelia.jacsstorage.clients.api.rendering.JadeBasedDataLocation;
+import org.janelia.jacsstorage.clients.api.rendering.JadeBasedRenderedVolumeLocation;
 import org.janelia.rendering.DataLocation;
 import org.janelia.rendering.FileBasedDataLocation;
 import org.janelia.rendering.FileBasedRenderedVolumeLocation;
-import org.janelia.rendering.JADEBasedDataLocation;
-import org.janelia.rendering.JADEBasedRenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.utils.HttpClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,24 +26,21 @@ public class DataStorageLocationFactory {
     private final static Logger LOG = LoggerFactory.getLogger(DataStorageLocationFactory.class);
 
     private final StorageService storageService;
-    private final HttpClientProvider httpClientProvider;
     private final String storageServiceApiKey;
 
     @Inject
     public DataStorageLocationFactory(StorageService storageService,
-                                      HttpClientProvider httpClientProvider,
                                       @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
         this.storageService = storageService;
-        this.httpClientProvider = httpClientProvider;
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public DataLocation getDataLocationWithLocalCheck(String dataPath, String subjectKey, String authToken) {
+    public DataLocation getDataLocationWithLocalCheck(String dataPath, String subjectKey, String authToken,JadeStorageAttributes storageAttributes) {
         Path sampleLocalPath = Paths.get(dataPath);
         if (Files.exists(sampleLocalPath)) {
             return new FileBasedRenderedVolumeLocation(Paths.get(dataPath), Function.identity());
         } else {
-            return lookupJadeDataLocation(dataPath, subjectKey, authToken)
+            return lookupJadeDataLocation(dataPath, subjectKey, authToken, storageAttributes)
                     .orElseThrow(() -> {
                         LOG.info("No storage location could be found for {}", dataPath);
                         return new IllegalArgumentException("No storage location could be found for  " + dataPath);
@@ -51,11 +48,11 @@ public class DataStorageLocationFactory {
         }
     }
 
-    public Optional<? extends DataLocation> lookupJadeDataLocation(String dataPath, String subjectKey, String authToken) {
+    public Optional<? extends DataLocation> lookupJadeDataLocation(String dataPath, String subjectKey, String authToken, JadeStorageAttributes storageAttributes) {
         Preconditions.checkArgument(StringUtils.isNotBlank(dataPath));
         LOG.debug("lookupJadeDataLocation {}", dataPath);
-        return storageService.lookupDataBundle(null, null, null, dataPath, subjectKey, authToken).stream()
-                .map(dsInfo -> new JADEBasedDataLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider))
+        return storageService.lookupDataBundle(null, null, null, dataPath, subjectKey, authToken, storageAttributes).stream()
+                .map(dsInfo -> new JadeBasedDataLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, storageAttributes))
                 .filter(dataLocation -> {
                     if (dataPath.startsWith("/")) {
                         return dataLocation.checkContentAtAbsolutePath(dataPath);
@@ -65,7 +62,7 @@ public class DataStorageLocationFactory {
                 })
                 .findFirst()
                 .map(Optional::of)
-                .orElseGet(() -> searchStorageVolumes(dataPath, subjectKey, authToken))
+                .orElseGet(() -> searchStorageVolumes(dataPath, subjectKey, authToken, storageAttributes))
                 ;
     }
 
@@ -76,9 +73,9 @@ public class DataStorageLocationFactory {
      * @param authToken
      * @return
      */
-    private Optional<JADEBasedDataLocation> searchStorageVolumes(String dataPath, String subjectKey, String authToken) {
+    private Optional<JadeBasedDataLocation> searchStorageVolumes(String dataPath, String subjectKey, String authToken, JadeStorageAttributes storageAttributes) {
         LOG.debug("searchStorageVolumes {}", dataPath);
-        return storageService.findStorageVolumes(dataPath, subjectKey, authToken).stream()
+        return storageService.findStorageVolumes(dataPath, subjectKey, authToken, storageAttributes).stream()
                 .map(vsInfo -> {
                     String renderedVolumePath;
                     if (vsInfo.getStorageVirtualPath() != null && dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
@@ -94,13 +91,13 @@ public class DataStorageLocationFactory {
                         renderedVolumePath = "";
                     }
                     LOG.debug("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
-                    return new JADEBasedDataLocation(
+                    return new JadeBasedDataLocation(
                             vsInfo.getStorageServiceURL(),
                             vsInfo.getVolumeStorageURI(),
                             renderedVolumePath,
                             authToken,
                             storageServiceApiKey,
-                            httpClientProvider);
+                            storageAttributes);
                 })
                 .filter(dl -> dl.checkContentAtAbsolutePath(dataPath))
                 .findFirst()
@@ -112,8 +109,8 @@ public class DataStorageLocationFactory {
             return null;
         } else if (RenderedVolumeLocation.class.isAssignableFrom(dl.getClass())) {
             return (RenderedVolumeLocation) dl;
-        } else if (dl instanceof JADEBasedDataLocation) {
-            return new JADEBasedRenderedVolumeLocation((JADEBasedDataLocation) dl);
+        } else if (dl instanceof JadeBasedDataLocation) {
+            return new JadeBasedRenderedVolumeLocation((JadeBasedDataLocation) dl);
         } else if (dl instanceof FileBasedDataLocation) {
             return new FileBasedRenderedVolumeLocation((FileBasedDataLocation) dl);
         } else {

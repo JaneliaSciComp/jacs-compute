@@ -1,13 +1,40 @@
 package org.janelia.jacs2.asyncservice.files;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ResourceHelper;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacsstorage.clients.api.*;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
+import org.janelia.jacsstorage.clients.api.JadeStorageService;
+import org.janelia.jacsstorage.clients.api.StorageLocation;
+import org.janelia.jacsstorage.clients.api.StorageObject;
+import org.janelia.jacsstorage.clients.api.StorageObjectNotFoundException;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.domain.DomainObject;
@@ -19,16 +46,6 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
 
 /**
  * This service searches the given path using a set of discovery agents which synchronize paths to the database.
@@ -107,8 +124,10 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         logger.info("Starting refresh for {}", syncedRoot);
 
         JadeStorageService jadeStorage = new JadeStorageService(masterStorageServiceURL, storageServiceApiKey, syncedRoot.getOwnerKey(), authToken);
-
-        StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(syncedRoot.getFilepath());
+        JadeStorageAttributes jadeStorageAttributes = new JadeStorageAttributes()
+                .setAttributeValue("AccessKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.AccessKey"))
+                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.SecretKey"));
+        StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(syncedRoot.getFilepath(), jadeStorageAttributes);
         if (storageLocation == null) {
             throw new ComputationException(jacsServiceData, "Could not find storage location for path " + syncedRoot.getFilepath());
         }

@@ -12,7 +12,8 @@ project(":jacs2-syncweb") {
                        JACKSON_JAXRS_XML_PROVIDER,
                        SOLR_SEARCH_LIB,
                        JACS_MESSAGING_CORE_LIB,
-                       JACS_MESSAGING_BROKER_LIB
+                       JACS_MESSAGING_BROKER_LIB,
+                       JACS_STORAGE_CLIENTS_LIB
 
         testImplementation project(path: ":jacs2-commonweb", configuration: "testArtifacts")
     }

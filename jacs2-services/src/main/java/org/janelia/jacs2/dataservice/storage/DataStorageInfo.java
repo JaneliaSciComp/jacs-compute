@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.ws.rs.core.UriBuilder;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import org.janelia.jacsstorage.clients.api.StoragePathURI;
+
 
 /**
  * This is the equivalent of the jade.DataStorageInfo type.

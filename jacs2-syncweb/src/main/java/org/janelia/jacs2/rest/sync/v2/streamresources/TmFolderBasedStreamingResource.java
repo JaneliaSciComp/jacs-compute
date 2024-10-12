@@ -27,6 +27,7 @@ import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RawImage;
 import org.janelia.rendering.RenderedVolumeLoader;
@@ -63,13 +64,15 @@ public class TmFolderBasedStreamingResource {
                     .entity(new ErrorResponse("No base path has been specified"))
                     .build();
         }
-        String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null)
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
+                .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderParam, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.loadVolume(rvl))
                 .map(rv -> Response.ok(rv).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error retrieving rendering info from " + baseFolderName + " or no folder found"))
+                        .entity(new ErrorResponse("Error retrieving rendering info from " + baseFolderParam + " or no folder found"))
                         .build())
                 ;
     }
@@ -98,13 +101,15 @@ public class TmFolderBasedStreamingResource {
         int xVoxel = xVoxelParam == null ? 0 : xVoxelParam;
         int yVoxel = yVoxelParam == null ? 0 : yVoxelParam;
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
-        String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null)
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
+                .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderParam, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.findClosestRawImageFromVoxelCoord(rvl, xVoxel, yVoxel, zVoxel))
                 .map(rawTileImage -> Response.ok(rawTileImage).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
+                        .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderParam + " with ("
                                 + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
                         .build())
                 ;
@@ -142,8 +147,10 @@ public class TmFolderBasedStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null)
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
+                .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderParam, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.findClosestRawImageFromVoxelCoord(rvl, xVoxel, yVoxel, zVoxel)
                         .flatMap(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz).asOptional()))
@@ -157,7 +164,7 @@ public class TmFolderBasedStreamingResource {
                             .build();
                 })
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
+                        .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderParam + " with ("
                                 + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
                         .build())
                 ;
@@ -178,10 +185,14 @@ public class TmFolderBasedStreamingResource {
             @QueryParam("y") Integer yParam,
             @QueryParam("z") Integer zParam,
             @Context ContainerRequestContext requestContext) {
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
+                .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
                 dataStorageLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam);
+                baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam,
+                storageAttributes);
     }
 
     @ApiOperation(value = "Tiff Stream", notes = "Streams the requested tile stored as a TIFF file")

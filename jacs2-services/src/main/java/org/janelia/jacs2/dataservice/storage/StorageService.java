@@ -5,6 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
+import org.janelia.jacsstorage.clients.api.JadeStorageVolume;
+import org.janelia.jacsstorage.clients.api.StorageEntryInfo;
+import org.janelia.jacsstorage.clients.api.StoragePathURI;
 import org.janelia.model.domain.report.QuotaUsage;
 import org.janelia.model.jacs2.page.PageResult;
 import org.slf4j.Logger;
@@ -39,7 +43,7 @@ public class StorageService {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public Optional<QuotaUsage> fetchQuotaForUser(String volumeName, String userKey) {
+    public Optional<QuotaUsage> fetchQuotaForUser(String volumeName, String userKey, JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -47,7 +51,7 @@ public class StorageService {
                     .path(volumeName)
                     .path("report")
                     .queryParam("subjectName", userKey);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), userKey, null);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), userKey, null, storageOptions);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
@@ -67,7 +71,13 @@ public class StorageService {
         }
     }
 
-    List<DataStorageInfo> lookupDataBundle(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    List<DataStorageInfo> lookupDataBundle(String storageURI,
+                                           String storageId,
+                                           String storageName,
+                                           String storagePath,
+                                           String subjectKey,
+                                           String authToken,
+                                           JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target;
@@ -102,7 +112,7 @@ public class StorageService {
                 target = target.queryParam("ownerKey", subjectKey);
             }
             LOG.debug("Requesting {}", target.getUri());
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageOptions);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
@@ -131,8 +141,8 @@ public class StorageService {
         }
     }
 
-    public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
-        return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken).stream()
+    public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken, JadeStorageAttributes storageAttributes) {
+        return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken, storageAttributes).stream()
                 .filter(storageVolume -> {
                     if ("S3".equals(storageVolume.getStorageType()) &&
                             (StringUtils.startsWith(storagePath, "https://") ||
@@ -149,7 +159,7 @@ public class StorageService {
                 .collect(Collectors.toList());
     }
 
-    private List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    private List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken, JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -167,7 +177,7 @@ public class StorageService {
                 target = target.queryParam("ownerKey", subjectKey);
             }
             LOG.debug("Requesting {}", target.getUri());
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageOptions);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
@@ -187,14 +197,14 @@ public class StorageService {
         }
     }
 
-    public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
+    public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken, JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageServiceURL);
             if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
                 target = target.path("storage");
             }
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken, storageOptions);
             DataStorageInfo storageData = new DataStorageInfo();
             storageData.setName(storageName);
             storageData.setOwnerKey(subject);
@@ -216,11 +226,11 @@ public class StorageService {
         }
     }
 
-    public InputStream getStorageContent(String storageURI, String subject, String authToken) {
+    public InputStream getStorageContent(String storageURI, String subject, String authToken, JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken, storageOptions);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
@@ -255,7 +265,8 @@ public class StorageService {
                                                boolean sortedContent,
                                                String filter,
                                                String subject,
-                                               String authToken) {
+                                               String authToken,
+                                               JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI)
@@ -267,7 +278,7 @@ public class StorageService {
                     .queryParam("entryPattern", filter)
                     .queryParam("entriesCount", size);
             LOG.debug("Get content: {}", target);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken, storageOptions);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
@@ -282,7 +293,9 @@ public class StorageService {
         }
     }
 
-    public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken, InputStream dataStream) {
+    public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken,
+                                              JadeStorageAttributes storageOptions,
+                                              InputStream dataStream) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient
@@ -290,7 +303,7 @@ public class StorageService {
                     .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024 * 1024)
                     .property(ClientProperties.REQUEST_ENTITY_PROCESSING, "CHUNKED")
                     .path(entryName);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken, storageOptions);
             Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
@@ -319,7 +332,8 @@ public class StorageService {
                                                      String authToken,
                                                      int depth,
                                                      long offset,
-                                                     int length) {
+                                                     int length,
+                                                     JadeStorageAttributes storageAttributes) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI).path("list");
@@ -336,7 +350,8 @@ public class StorageService {
                 target = target.queryParam("length", length);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(
-                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
+                    target.request(MediaType.APPLICATION_JSON), subject, authToken, storageAttributes
+            );
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
@@ -355,7 +370,7 @@ public class StorageService {
         }
     }
 
-    public void removeStorageContent(String storageURI, String storagePath, String subject, String authToken) {
+    public void removeStorageContent(String storageURI, String storagePath, String subject, String authToken, JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI);
@@ -363,7 +378,8 @@ public class StorageService {
                 target = target.path(storagePath);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(
-                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
+                    target.request(MediaType.APPLICATION_JSON), subject, authToken, storageOptions
+            );
             Response response = requestBuilder.delete();
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
@@ -381,12 +397,13 @@ public class StorageService {
         return StringUtils.appendIfMissing(storageURI, "/") + "data_content/" + entryName;
     }
 
-    public boolean exists(String storageURI, String subjectKey, String authToken) {
+    public boolean exists(String storageURI, String subjectKey, String authToken, JadeStorageAttributes storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI);
             Invocation.Builder requestBuilder = createRequestWithCredentials(
-                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageOptions
+            );
             Response response = requestBuilder.head();
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return true;
@@ -404,28 +421,7 @@ public class StorageService {
         }
     }
 
-    public long getContentLength(String storageURI, String subjectKey, String authToken) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target = httpclient.target(storageURI);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(
-                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
-            Response response = requestBuilder.head();
-            if (response.getStatus() >= 200 && response.getStatus() < 300) {
-                return response.getLength();
-            } else {
-                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
-            }
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
-    }
-
-    protected Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
+    protected Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken, JadeStorageAttributes storageOptions) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
         if (StringUtils.isNotBlank(authToken)) {
             requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
@@ -440,6 +436,9 @@ public class StorageService {
             requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
                     "JacsSubject",
                     jacsPrincipal);
+        }
+        for (String storageAttribute : storageOptions.getAttributeNames()) {
+            requestBuilder.header(storageAttribute, storageOptions.getAttributeValue(storageAttribute));
         }
         return requestWithCredentialsBuilder;
     }

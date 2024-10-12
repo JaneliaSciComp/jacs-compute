@@ -40,6 +40,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.jacsstorage.clients.api.JadeStorageService;
 import org.janelia.jacsstorage.clients.api.StorageLocation;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -255,7 +256,8 @@ public class SWCService {
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
         List<BoundingBox3d> boundingBoxes = new ArrayList<>();
         LOG.info("Lookup SWC folder {}", swcFolderName);
-        storageService.findStorageVolumes(swcFolderName, null, null)
+        JadeStorageAttributes storageOptions = new JadeStorageAttributes().setFromMap(tmSample.getStorageAttributes());
+        storageService.findStorageVolumes(swcFolderName, null, null, storageOptions)
                 .stream().findFirst()
                 .map(vsInfo -> {
                     LOG.info("Found {} for SWC folder {}", vsInfo, swcFolderName);
@@ -279,7 +281,8 @@ public class SWCService {
                             maxSize,
                             getBatchSize,
                             depth,
-                            orderSWCs
+                            orderSWCs,
+                            storageOptions
                     );
                     return StreamSupport.stream(storageContentSupplier, true);
                 })
@@ -346,7 +349,8 @@ public class SWCService {
         String altPath = tmSample.getFiles().get(FileType.LargeVolumeZarr);
         if (altPath!=null && altPath.length()>0)
             return null;
-        RenderedVolumeLocation volumeLocation = dataStorageLocationFactory.asRenderedVolumeLocation(dataStorageLocationFactory.getDataLocationWithLocalCheck(sampleFilepath, tmSample.getOwnerKey(), null));
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes().setFromMap(tmSample.getStorageAttributes());
+        RenderedVolumeLocation volumeLocation = dataStorageLocationFactory.asRenderedVolumeLocation(dataStorageLocationFactory.getDataLocationWithLocalCheck(sampleFilepath, tmSample.getOwnerKey(), null, storageAttributes));
         RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(volumeLocation)
                 .orElseThrow(() -> {
                     LOG.error("Could not load volume metadata for sample {} from {}", tmSample.getId(), volumeLocation.getBaseStorageLocationURI());
@@ -366,14 +370,17 @@ public class SWCService {
      * @param externalToInternalConverter
      */
     public TmNeuronMetadata importSWC(String swcFilepath, TmWorkspace tmWorkspace,
-                                      String neuronName, String neuronOwnerKey, VectorOperator externalToInternalConverter) {
+                                      String neuronName, String neuronOwnerKey, VectorOperator externalToInternalConverter,
+                                      Map<String, Object> storageAttributes) {
 
         Path swcPath = Paths.get(swcFilepath);
         String swcFilename = swcPath.getFileName().toString();
 
         JadeStorageService jadeStorage = new JadeStorageService(masterStorageServiceURL, storageServiceApiKey, null, null);
 
-        StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(swcFilepath);
+        StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(
+                swcFilepath,
+                new JadeStorageAttributes().setFromMap(storageAttributes));
         if (storageLocation == null) {
             throw new IllegalStateException("Filepath does not exist in Jade: "+swcFilepath);
         }
@@ -394,7 +401,8 @@ public class SWCService {
                                                                               long offset,
                                                                               long getBatchSize,
                                                                               int depth,
-                                                                              boolean orderFlag) {
+                                                                              boolean orderFlag,
+                                                                              JadeStorageAttributes storageOptions) {
         ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack = new ConcurrentStack<>();
         ArchiveInputStreamPosition archiveInputStream = prepareStreamIfArchive(
                 storageURL + ":" + offset,
@@ -403,7 +411,8 @@ public class SWCService {
                         offset,
                         getBatchSize,
                         depth,
-                        orderFlag),
+                        orderFlag,
+                        storageOptions),
                 offset);
         if (archiveInputStream != null) {
             archiveInputStreamStack.push(archiveInputStream);
@@ -416,13 +425,15 @@ public class SWCService {
                                                                 long maxSize,
                                                                 int getBatchSize,
                                                                 int depth,
-                                                                boolean orderSWCs) {
+                                                                boolean orderSWCs,
+                                                                JadeStorageAttributes storageOptions) {
         ConcurrentStack<ArchiveInputStreamPosition> archiveInputStreamStack =
                 initializeStreamStack(swcStorageFolderURL,
                         firstEntry,
                         getBatchSize,
                         depth,
-                        orderSWCs);
+                        orderSWCs,
+                        storageOptions);
         return new Spliterator<NamedData<InputStream>>() {
 
             AtomicLong totalEntriesCount = new AtomicLong(0);
@@ -455,7 +466,8 @@ public class SWCService {
                                             offset,
                                             getBatchSize,
                                             depth,
-                                            orderSWCs),
+                                            orderSWCs,
+                                            storageOptions),
                                     offset
                             );
                             if (nextStream != null) {
@@ -537,12 +549,13 @@ public class SWCService {
         }
     }
 
-    private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs) {
+    private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs, JadeStorageAttributes storageOptions) {
         LOG.info("Retrieve {} entries from {}:{}", length <= 0 ? "all" : length, swcStorageFolderURL, offset);
         InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
                 "\\.(swc|zip|tar|tgz|tar.gz)$",
                 null,
-                null);
+                null,
+                storageOptions);
         if (swcDataStream == null) {
             return null;
         }

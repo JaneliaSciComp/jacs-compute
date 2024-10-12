@@ -7,6 +7,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.TileKey;
@@ -26,7 +27,8 @@ class TmStreamingResourceHelper {
             Coordinate axisParam,
             Integer xParam,
             Integer yParam,
-            Integer zParam) {
+            Integer zParam,
+            JadeStorageAttributes storageAttributes) {
         LOG.debug("Stream tile ({}, {}, {}, {}, {}) from {}", zoomParam, axisParam, xParam, yParam, zParam, baseFolderParam);
         if (StringUtils.isBlank(baseFolderParam)) {
             LOG.error("No base folder has been specified: {}", baseFolderParam);
@@ -35,7 +37,7 @@ class TmStreamingResourceHelper {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, subjectKey, null)
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, subjectKey, null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.loadVolume(rvl)
                                 .flatMap(rvm -> rvm.getTileInfo(axisParam)

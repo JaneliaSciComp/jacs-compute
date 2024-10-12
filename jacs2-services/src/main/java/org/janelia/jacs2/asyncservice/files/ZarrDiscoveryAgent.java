@@ -24,7 +24,7 @@ import java.util.Map;
 @Named("zarrDiscoveryAgent")
 public class ZarrDiscoveryAgent implements FileDiscoveryAgent<ZarrContainer> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZarrDiscoveryAgent.class);
 
     @Inject
     private NDContainerDao ndContainerDao;

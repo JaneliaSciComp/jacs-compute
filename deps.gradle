@@ -93,23 +93,21 @@ dependencies {
         CRON_UTILS_LIB = "com.cronutils:cron-utils:9.2.0"
 
         // search
-        SOLR_VERSION = "3.6.2"
-        SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
+        SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:3.6.2"
         HTTP_COMPONENTS_VERSION = "4.5.6"
         HTTP_CLIENT_LIB = "org.apache.httpcomponents:httpclient:${HTTP_COMPONENTS_VERSION}"
         HTTP_MIME_LIB = "org.apache.httpcomponents:httpmime:${HTTP_COMPONENTS_VERSION}"
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.4.0"
-        JACS_MODEL_VERSION = "3.1.0"
+        JACS_MODEL_VERSION = "3.2.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
         JACS_MESSAGING_VERSION = "2.5.0"
         JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
         JACS_MESSAGING_BROKER_LIB = "org.janelia.jacs-messaging:jacs-messaging-broker:${JACS_MESSAGING_VERSION}"
-        JACS_STORAGE_VERSION = "1.19.0.RELEASE"
-        JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:${JACS_STORAGE_VERSION}"
+        JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:1.22.0.RC2"
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"

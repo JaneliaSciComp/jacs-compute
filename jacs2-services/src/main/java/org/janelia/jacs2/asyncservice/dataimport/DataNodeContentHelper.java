@@ -8,9 +8,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
-import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
+import org.janelia.jacsstorage.clients.api.StorageEntryInfo;
+import org.janelia.jacsstorage.clients.api.StoragePathURI;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.Image;

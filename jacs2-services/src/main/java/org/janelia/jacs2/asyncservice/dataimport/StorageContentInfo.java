@@ -3,11 +3,10 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
+import org.janelia.jacsstorage.clients.api.StorageEntryInfo;
 
 import java.nio.file.Paths;
 
-@Deprecated
 public class StorageContentInfo {
     @JsonProperty
     private StorageEntryInfo remoteInfo;

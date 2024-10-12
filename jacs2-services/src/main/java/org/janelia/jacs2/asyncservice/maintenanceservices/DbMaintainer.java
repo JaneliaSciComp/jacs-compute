@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.maintenanceservices;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.dao.LegacyDomainDao.DaoIndex;
 import org.janelia.model.domain.DomainUtils;
@@ -193,7 +194,7 @@ public class DbMaintainer {
                 try {
                     // Check JADE to see if the directory is accessible
                     boolean filepathExists = dataStorageLocationFactory.lookupJadeDataLocation(
-                            filepath, sample.getOwnerKey(), null).isPresent();
+                            filepath, sample.getOwnerKey(), null, new JadeStorageAttributes().setFromMap(sample.getStorageAttributes())).isPresent();
                     LOG.info("  {} {}", filepath, filepathExists ? "exists" : "does not exist");
                     if (!filepathExists) {
                         sync = false;

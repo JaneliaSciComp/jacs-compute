@@ -31,6 +31,7 @@ import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -186,6 +187,8 @@ public class TmSampleResource {
     @Path("sample/constants")
     public Response getTmSampleConstants(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                          @ApiParam @QueryParam("samplePath") final String samplePath,
+                                         @HeaderParam("AccessKey") String accessKey,
+                                         @HeaderParam("SecretKey") String secretKey,
                                          @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
         if (StringUtils.isBlank(samplePath)) {
@@ -194,7 +197,10 @@ public class TmSampleResource {
                     .build();
         }
         String authSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        return hortaDataManager.getSampleConstants(authSubjectKey, samplePath)
+        JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
+                .setAttributeValue("AccessKey", accessKey)
+                .setAttributeValue("SecretKey", secretKey);
+        return hortaDataManager.getSampleConstants(authSubjectKey, samplePath, storageAttributes)
                 .map(constants -> Response.ok()
                         .entity(new GenericEntity<Map<String, Object>>(constants){})
                         .build())
@@ -218,9 +224,11 @@ public class TmSampleResource {
     @Path("sample")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createTmSample(DomainQuery query) {
+    public Response createTmSample(@HeaderParam("AccessKey") String accessKey, @HeaderParam("SecretKey") String secretKey, DomainQuery query) {
         LOG.trace("createTmSample({})", query);
         TmSample sample = query.getDomainObjectAs(TmSample.class);
+        sample.setStorageAttribute("AccessKey", accessKey);
+        sample.setStorageAttribute("SecretKey", secretKey);
         String samplePath = sample.getLargeVolumeOctreeFilepath();
         LOG.info("Creating new TmSample {} with path {}", sample.getName(), samplePath);
         try {

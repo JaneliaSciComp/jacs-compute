@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Named("hortaDiscoveryAgent")
 public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HortaDiscoveryAgent.class);
 
     @Inject
     private HortaDataManager hortaDataManager;
@@ -217,8 +217,14 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 if (value.has("consensus")) {
                     String consensus = value.get("consensus").asText();
                     String consensusUrl = getPath(folderPath, consensus);
-                    TmNeuronMetadata consensusNeuron = swcService.importSWC(consensusUrl, tmWorkspace,
-                            neuronBrowserName+" consensus", subjectKey, externalToInternalConverter);
+                    TmNeuronMetadata consensusNeuron = swcService.importSWC(
+                            consensusUrl,
+                            tmWorkspace,
+                            neuronBrowserName+" consensus",
+                            subjectKey,
+                            externalToInternalConverter,
+                            sample.getStorageAttributes()
+                    );
                     LOG.debug("  Loaded consensus SWC as {}", consensusNeuron);
                     mappedNeuron.addNeuronRef(Reference.createFor(consensusNeuron));
                 }
@@ -227,8 +233,14 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 if (value.has("dendrite")) {
                     String dendrite = value.get("dendrite").asText();
                     String dendriteUrl = getPath(folderPath, dendrite);
-                    TmNeuronMetadata dendriteNeuron = swcService.importSWC(dendriteUrl, tmWorkspace,
-                            neuronBrowserName+" dendrite", subjectKey, externalToInternalConverter);
+                    TmNeuronMetadata dendriteNeuron = swcService.importSWC(
+                            dendriteUrl,
+                            tmWorkspace,
+                            neuronBrowserName+" dendrite",
+                            subjectKey,
+                            externalToInternalConverter,
+                            sample.getStorageAttributes()
+                    );
                     LOG.debug("  Loaded dendrite SWC as {}", dendriteNeuron);
                     mappedNeuron.addNeuronRef(Reference.createFor(dendriteNeuron));
                 }
