@@ -227,8 +227,8 @@ public class TmSampleResource {
     public Response createTmSample(@HeaderParam("AccessKey") String accessKey, @HeaderParam("SecretKey") String secretKey, DomainQuery query) {
         LOG.trace("createTmSample({})", query);
         TmSample sample = query.getDomainObjectAs(TmSample.class);
-        sample.setStorageAttribute("AccessKey", accessKey);
-        sample.setStorageAttribute("SecretKey", secretKey);
+        if (StringUtils.isNotBlank(accessKey)) sample.setStorageAttribute("AccessKey", accessKey);
+        if (StringUtils.isNotBlank(secretKey)) sample.setStorageAttribute("SecretKey", secretKey);
         String samplePath = sample.getLargeVolumeOctreeFilepath();
         LOG.info("Creating new TmSample {} with path {}", sample.getName(), samplePath);
         try {
