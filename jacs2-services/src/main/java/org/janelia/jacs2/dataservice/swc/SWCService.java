@@ -461,6 +461,11 @@ public class SWCService {
                         ArchiveInputStreamPosition parentInputStream = archiveInputStreamStack.top();
                         if (parentInputStream == null) {
                             // I am at the top level - then fetch the next batch
+//                            if (totalEntriesCount.get() < getBatchSize) {
+//                                // if this is the top of the stack and totalEntries is less than batchsize
+//                                // it means that it retrieved everything so return false
+//                                return false;
+//                            }
                             long offset = currentInputStream.getNextOffset();
                             LOG.info("Fetch next batch from {}:{}", swcStorageFolderURL, offset);
                             ArchiveInputStreamPosition nextStream = prepareStreamIfArchive(

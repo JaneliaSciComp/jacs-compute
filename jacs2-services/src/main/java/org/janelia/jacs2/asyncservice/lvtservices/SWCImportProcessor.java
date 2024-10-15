@@ -136,10 +136,10 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
     private Map<String, Object> getStorageAttributes(JacsServiceData jacsServiceData) {
         Map<String, Object> attributes = new HashMap<>();
         if (jacsServiceData.getDictionaryArgAsString("AccessKey") != null) {
-            attributes.put("accessKey", jacsServiceData.getDictionaryArgAsString("AccessKey"));
+            attributes.put("AccessKey", jacsServiceData.getDictionaryArgAsString("AccessKey"));
         }
         if (jacsServiceData.getDictionaryArgAsString("SecretKey") != null) {
-            attributes.put("secretKey", jacsServiceData.getDictionaryArgAsString("SecretKey"));
+            attributes.put("SecretKey", jacsServiceData.getDictionaryArgAsString("SecretKey"));
         }
         return attributes;
     }
