@@ -1,6 +1,8 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -122,7 +124,8 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
                         args.recurseDepth,
                         args.orderSWCs,
                         args.markAsFragments,
-                        args.appendToExisting))
+                        args.appendToExisting,
+                        getStorageAttributes(jacsServiceData)))
                 .thenApply(tmWorkspace -> updateServiceResult(jacsServiceData, tmWorkspace.getId()));
     }
 
@@ -130,4 +133,14 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SWCImportArgs());
     }
 
+    private Map<String, Object> getStorageAttributes(JacsServiceData jacsServiceData) {
+        Map<String, Object> attributes = new HashMap<>();
+        if (jacsServiceData.getDictionaryArgAsString("AccessKey") != null) {
+            attributes.put("accessKey", jacsServiceData.getDictionaryArgAsString("AccessKey"));
+        }
+        if (jacsServiceData.getDictionaryArgAsString("SecretKey") != null) {
+            attributes.put("secretKey", jacsServiceData.getDictionaryArgAsString("SecretKey"));
+        }
+        return attributes;
+    }
 }

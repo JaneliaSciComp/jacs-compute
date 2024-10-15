@@ -180,8 +180,10 @@ public class SWCService {
             : Paths.get("");
     }
 
-    public TmWorkspace importSWCFolder(String swcFolderName, Long sampleId,
-                                       String workspaceName, String workspaceOwnerKey,
+    public TmWorkspace importSWCFolder(String swcFolderName,
+                                       Long sampleId,
+                                       String workspaceName,
+                                       String workspaceOwnerKey,
                                        String neuronOwnerKey,
                                        List<String> accessUsers,
                                        long firstEntryOffset,
@@ -190,7 +192,8 @@ public class SWCService {
                                        int depth,
                                        boolean orderSWCs,
                                        boolean markAsFragments,
-                                       boolean appendToExisting) {
+                                       boolean appendToExisting,
+                                       Map<String, Object> storageAttributes) {
         LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
@@ -238,7 +241,7 @@ public class SWCService {
         tmWorkspaceDao.updateTmWorkspace(workspaceOwnerKey, tmWorkspace);
 
         return importSWCFolder(swcFolderName, tmSample, tmWorkspace, neuronOwnerKey, firstEntryOffset, maxSize, getBatchSize, depth,
-                orderSWCs, markAsFragments, appendToExisting);
+                orderSWCs, markAsFragments, appendToExisting, storageAttributes);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName,
@@ -251,13 +254,13 @@ public class SWCService {
                                        int depth,
                                        boolean orderSWCs,
                                        boolean markAsFragments,
-                                       boolean appendToExisting) {
-
+                                       boolean appendToExisting,
+                                       Map<String, Object> storageAttributes) {
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
         List<BoundingBox3d> boundingBoxes = new ArrayList<>();
         LOG.info("Lookup SWC folder {}", swcFolderName);
-        JadeStorageAttributes storageOptions = new JadeStorageAttributes().setFromMap(tmSample.getStorageAttributes());
-        storageService.findStorageVolumes(swcFolderName, null, null, storageOptions)
+        JadeStorageAttributes jadeStorageAttributes = new JadeStorageAttributes().setFromMap(storageAttributes);
+        storageService.findStorageVolumes(swcFolderName, null, null, jadeStorageAttributes)
                 .stream().findFirst()
                 .map(vsInfo -> {
                     LOG.info("Found {} for SWC folder {}", vsInfo, swcFolderName);
@@ -282,7 +285,7 @@ public class SWCService {
                             getBatchSize,
                             depth,
                             orderSWCs,
-                            storageOptions
+                            jadeStorageAttributes
                     );
                     return StreamSupport.stream(storageContentSupplier, true);
                 })

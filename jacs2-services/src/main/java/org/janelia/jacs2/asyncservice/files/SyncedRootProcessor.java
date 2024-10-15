@@ -125,8 +125,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
         JadeStorageService jadeStorage = new JadeStorageService(masterStorageServiceURL, storageServiceApiKey, syncedRoot.getOwnerKey(), authToken);
         JadeStorageAttributes jadeStorageAttributes = new JadeStorageAttributes()
-                .setAttributeValue("AccessKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.AccessKey"))
-                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.SecretKey"));
+                .setAttributeValue("AccessKey", jacsServiceData.getDictionaryArgAsString("Storage.AccessKey"))
+                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("Storage.SecretKey"));
         StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(syncedRoot.getFilepath(), jadeStorageAttributes);
         if (storageLocation == null) {
             throw new ComputationException(jacsServiceData, "Could not find storage location for path " + syncedRoot.getFilepath());
