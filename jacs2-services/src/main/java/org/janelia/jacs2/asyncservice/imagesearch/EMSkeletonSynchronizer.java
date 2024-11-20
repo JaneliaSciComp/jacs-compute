@@ -50,6 +50,8 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         String library;
         @Parameter(names = "-processingPartitionSize", description = "Processing partition size")
         Integer processingPartitionSize=DEFAULT_PARTITION_SIZE;
+        @Parameter(names = "-lookupDepth", description = "Skeleton lookup depth")
+        Integer skeletonLookupDepth = 1;
 
         SyncArgs() {
             super("EM skeleton synchronization");
@@ -111,7 +113,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         logger.info("Running discovery with parameters:");
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
-        List<ServiceComputation<?>> systemLibrariesComputations = partitionSystemLibraryDirs(rootPath.toFile(), args.alignmentSpace, args.library, args.processingPartitionSize).stream()
+        List<ServiceComputation<?>> systemLibrariesComputations = partitionSystemLibraryDirs(rootPath.toFile(), args.alignmentSpace, args.library, args.skeletonLookupDepth, args.processingPartitionSize).stream()
                 .map(libraryDirs -> computationFactory.<Void>newComputation().supply(() -> {
                     libraryDirs.forEach(libraryDir -> {
                         // Read optional metadata
@@ -147,19 +149,19 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SyncArgs());
     }
 
-    private Collection<List<File>> partitionSystemLibraryDirs(File rootDir, String alignmentSpace, String selectedLibrary, int partitionSizeArg) {
+    private Collection<List<File>> partitionSystemLibraryDirs(File rootDir, String alignmentSpace, String selectedLibrary, int skeletonLookupDepth, int partitionSizeArg) {
         final AtomicInteger index = new AtomicInteger();
         int partitionSize = partitionSizeArg > 0 ? partitionSizeArg : 1;
-        return listChildDirs(rootDir).stream()
+        return listChildDirs(rootDir, skeletonLookupDepth).stream()
                 .filter(alignmentDir -> StringUtils.isBlank(alignmentSpace) || alignmentDir.getName().equals(alignmentSpace))
-                .flatMap(alignmentDir -> listChildDirs(alignmentDir).stream())
+                .flatMap(alignmentDir -> listChildDirs(alignmentDir, skeletonLookupDepth).stream())
                 .filter(libraryDir -> StringUtils.isBlank(selectedLibrary) || libraryDir.getName().equals(selectedLibrary))
                 .collect(Collectors.groupingBy(libraryDir -> index.getAndIncrement() / partitionSize))
                 .values()
                 ;
     }
 
-    private List<File> listChildDirs(File dir) {
+    private List<File> listChildDirs(File dir, int lookupDepth) {
         if (dir == null) {
             return Collections.emptyList();
         }
@@ -168,7 +170,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
             return Collections.emptyList();
         }
         logger.info("Discovering sub-directories in {}", dir);
-        return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
+        return FileUtils.lookupFiles(dirPath, lookupDepth, "glob:**/*")
                 .filter(Files::isDirectory)
                 .map(Path::toFile)
                 .filter(p -> !p.equals(dir))
