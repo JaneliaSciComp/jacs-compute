@@ -113,7 +113,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         logger.info("Running discovery with parameters:");
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
-        List<ServiceComputation<?>> systemLibrariesComputations = partitionSystemLibraryDirs(rootPath.toFile(), args.alignmentSpace, args.library, args.skeletonLookupDepth, args.processingPartitionSize).stream()
+        List<ServiceComputation<?>> systemLibrariesComputations = partitionSystemLibraryDirs(rootPath.toFile(), args.alignmentSpace, args.library, args.processingPartitionSize).stream()
                 .map(libraryDirs -> computationFactory.<Void>newComputation().supply(() -> {
                     libraryDirs.forEach(libraryDir -> {
                         // Read optional metadata
@@ -128,6 +128,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
                         processLibraryDir(
                                 libraryDir,
                                 libraryDir.getParentFile().getName(), // alignmentSpace
+                                args.skeletonLookupDepth,
                                 emDataSet);
                     });
                     return null;
@@ -149,19 +150,19 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SyncArgs());
     }
 
-    private Collection<List<File>> partitionSystemLibraryDirs(File rootDir, String alignmentSpace, String selectedLibrary, int skeletonLookupDepth, int partitionSizeArg) {
+    private Collection<List<File>> partitionSystemLibraryDirs(File rootDir, String alignmentSpace, String selectedLibrary, int partitionSizeArg) {
         final AtomicInteger index = new AtomicInteger();
         int partitionSize = partitionSizeArg > 0 ? partitionSizeArg : 1;
-        return listChildDirs(rootDir, skeletonLookupDepth).stream()
+        return listChildDirs(rootDir).stream()
                 .filter(alignmentDir -> StringUtils.isBlank(alignmentSpace) || alignmentDir.getName().equals(alignmentSpace))
-                .flatMap(alignmentDir -> listChildDirs(alignmentDir, skeletonLookupDepth).stream())
+                .flatMap(alignmentDir -> listChildDirs(alignmentDir).stream())
                 .filter(libraryDir -> StringUtils.isBlank(selectedLibrary) || libraryDir.getName().equals(selectedLibrary))
                 .collect(Collectors.groupingBy(libraryDir -> index.getAndIncrement() / partitionSize))
                 .values()
                 ;
     }
 
-    private List<File> listChildDirs(File dir, int lookupDepth) {
+    private List<File> listChildDirs(File dir) {
         if (dir == null) {
             return Collections.emptyList();
         }
@@ -170,14 +171,14 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
             return Collections.emptyList();
         }
         logger.info("Discovering sub-directories in {}", dir);
-        return FileUtils.lookupFiles(dirPath, lookupDepth, "glob:**/*")
+        return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
                 .filter(Files::isDirectory)
                 .map(Path::toFile)
                 .filter(p -> !p.equals(dir))
                 .collect(Collectors.toList());
     }
 
-    private void processLibraryDir(File libraryDir, String alignmentSpace, EMDataSet emDataSet) {
+    private void processLibraryDir(File libraryDir, String alignmentSpace, int lookupDepth, EMDataSet emDataSet) {
         logger.info("Discovering files in {}", libraryDir);
         String libraryIdentifier = libraryDir.getName();
 
@@ -191,7 +192,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         if (Files.exists(swcDir)) {
             logger.info("Checking for SWC files in {}", swcDir);
             FileUtils.lookupFiles(
-                            swcDir, 1, "glob:**/*.swc")
+                            swcDir, lookupDepth, "glob:**/*.swc")
                     .map(Path::toFile)
                     .filter(File::isFile)
                     .forEach(file -> {
@@ -225,7 +226,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
         if (Files.exists(objDir)) {
             logger.info("Checking for OBJ files in {}", objDir);
             FileUtils.lookupFiles(
-                            objDir, 1, "glob:**/*.obj")
+                            objDir, lookupDepth, "glob:**/*.obj")
                     .map(Path::toFile)
                     .filter(File::isFile)
                     .forEach(file -> {
