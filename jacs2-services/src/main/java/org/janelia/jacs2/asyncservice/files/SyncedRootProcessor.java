@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This service searches the given path using a set of discovery agents which synchronize paths to the database.
- *
+ * <p>
  * Use the SyncedPathResource web API to define a SyncedRoot before invoking this service.
  */
 @Named("syncedRoot")
@@ -62,6 +62,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         Long syncedRootId;
         @Parameter(names = "-dryRun", description = "Process the path normally, but don't invoke any discovery agents.", arity = 1)
         boolean dryRun = false;
+
         SyncedRootArgs() {
             super("Service that synchronizes file present in JADE to the database");
         }
@@ -110,7 +111,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
             @Override
             public Long getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<Long>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<Long>() {
+                });
             }
         };
     }
@@ -134,9 +136,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
         StorageObject rootMetadata;
         try {
-            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath());
-        }
-        catch (StorageObjectNotFoundException e) {
+            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath(), true);
+        } catch (StorageObjectNotFoundException e) {
             throw new ComputationException(jacsServiceData, "Could not find metadata for " + storageLocation.getStorageURL() + " path " + syncedRoot.getFilepath());
         }
 
@@ -155,7 +156,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     agents.add(agent);
                 }
                 for (DomainObject domainObject : legacyDomainDao.getUserDomainObjects(syncedRoot.getOwnerKey(), agentType.getDomainObjectClass())) {
-                    SyncedPath syncedPath = (SyncedPath)domainObject;
+                    SyncedPath syncedPath = (SyncedPath) domainObject;
                     // We only touch auto-synchronized paths
                     if (syncedPath.isAutoSynchronized()) {
                         if (currentPaths.containsKey(syncedPath.getFilepath())) {
@@ -167,8 +168,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     }
                 }
             }
-        }
-        else {
+        } else {
             logger.info("Service running in dry run mode. No discovery agents will be called.");
         }
 
@@ -187,14 +187,11 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         for (Future<DomainObject> future : futures) {
             try {
                 newChildren.add(future.get(1, TimeUnit.HOURS));
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 logger.info("Discovery agent was interrupted", e);
-            }
-            catch (ExecutionException e) {
+            } catch (ExecutionException e) {
                 logger.info("Discovery agent threw an exception", e);
-            }
-            catch (TimeoutException e) {
+            } catch (TimeoutException e) {
                 logger.info("Discovery agent timed out after 1 hour", e);
             }
         }
@@ -215,7 +212,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                             legacyDomainDao.updateProperty(syncedRoot.getOwnerKey(), syncedPath.getClass(),
                                     syncedPath.getId(), "existsInStorage", false);
                         } catch (Exception e) {
-                            logger.error("Error updating "+syncedPath, e);
+                            logger.error("Error updating " + syncedPath, e);
                             throw new ComputationException(jacsServiceData, "Could not update " + syncedPath);
                         }
                     }
@@ -229,17 +226,17 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
     }
 
     private List<Future<DomainObject>> walkStorage(SyncedRoot syncedRoot,
-                                           Map<String, SyncedPath> currentPaths,
-                                           JadeObject jadeObject,
-                                           List<FileDiscoveryAgent<?>> agents,
-                                           int levels,
-                                           String indent) {
+                                                   Map<String, SyncedPath> currentPaths,
+                                                   JadeObject jadeObject,
+                                                   List<FileDiscoveryAgent<?>> agents,
+                                                   int levels,
+                                                   String indent) {
         List<Future<DomainObject>> futures = new ArrayList<>();
         try {
-            for (JadeObject child : jadeObject.getChildren()) {
+            for (JadeObject child : jadeObject.getSubdirs()) {
                 StorageObject storageObject = child.getStorageObject();
-                logger.debug(indent+"{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
-                logger.debug(indent+"      {}", child);
+                logger.debug(indent + "{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
+                logger.debug(indent + "      {}", child);
 
                 futures.add(executorService.submit(() -> {
                     DomainObject discoveredObject = null;
@@ -254,12 +251,11 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
                 if (levels > 1 && storageObject.isCollection()) {
                     // Recurse into the folder hierarchy
-                    futures.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent+"  "));
+                    futures.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent + "  "));
                 }
             }
             return futures;
-        }
-        catch (StorageObjectNotFoundException e) {
+        } catch (StorageObjectNotFoundException e) {
             throw new IllegalStateException("Storage object disappeared mysteriously: "
                     + jadeObject.getStorageObject().getAbsolutePath());
         }
@@ -267,8 +263,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
     private SyncedRoot getSyncedRoot(Long syncedRootId) {
         SyncedRoot syncedRoot = syncedRootDao.findById(syncedRootId);
-        if (syncedRoot==null) {
-            throw new IllegalArgumentException("Cannot find SyncedRoot#"+syncedRootId);
+        if (syncedRoot == null) {
+            throw new IllegalArgumentException("Cannot find SyncedRoot#" + syncedRootId);
         }
         return syncedRoot;
     }
