@@ -28,8 +28,8 @@ public class JadeObject {
         return storageObject;
     }
 
-    public List<JadeObject> getSubdirs() throws StorageObjectNotFoundException {
-        return jadeStorage.getChildren(storageObject.getLocation(), storageObject.getAbsolutePath(), true)
+    public List<JadeObject> getChildren() throws StorageObjectNotFoundException {
+        return jadeStorage.getChildren(storageObject.getLocation(), storageObject.getAbsolutePath())
                 .stream().map(this::resolve).collect(Collectors.toList());
     }
 
