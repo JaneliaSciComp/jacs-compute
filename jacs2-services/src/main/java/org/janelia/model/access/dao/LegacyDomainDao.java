@@ -333,9 +333,13 @@ public interface LegacyDomainDao {
 
     Node removeReference(String subjectKey, Node nodeArg, Reference reference) throws Exception;
 
-    <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception;
+    <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue, Class<?> propType) throws Exception;
 
-    DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception;
+    default <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
+        return updateProperty(subjectKey, clazz, id, propName, propValue, propValue != null ? propValue.getClass() : Object.class);
+    }
+
+    DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue, Class<?> propType) throws Exception;
 
     <T extends DomainObject> void deleteProperty(String ownerKey, Class<T> clazz, String propName);
 

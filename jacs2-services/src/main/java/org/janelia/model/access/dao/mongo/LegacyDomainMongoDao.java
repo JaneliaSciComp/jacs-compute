@@ -570,15 +570,15 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
-        T updatedDomainObject = dao.updateProperty(subjectKey, clazz, id, propName, propValue);
+    public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue, Class<?> propType) throws Exception {
+        T updatedDomainObject = dao.updateProperty(subjectKey, clazz, id, propName, propValue, propType);
         domainObjectIndexer.indexDocument(updatedDomainObject);
         return updatedDomainObject;
     }
 
     @Override
-    public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
-        DomainObject updatedDomainObject = dao.updateProperty(subjectKey, className, id, propName, propValue);
+    public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue, Class<?> propType) throws Exception {
+        DomainObject updatedDomainObject = dao.updateProperty(subjectKey, className, id, propName, propValue, propType);
         domainObjectIndexer.indexDocument(updatedDomainObject);
         return updatedDomainObject;
     }
