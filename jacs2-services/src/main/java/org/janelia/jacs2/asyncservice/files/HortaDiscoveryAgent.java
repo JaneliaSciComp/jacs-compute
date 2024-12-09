@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -283,7 +284,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         if (child.startsWith("/")) {
             return child;
         } else {
-            return StringUtils.appendIfMissing(parent, "/") + child;
+            return URI.create(StringUtils.appendIfMissing(parent, "/") + child).normalize().toString();
         }
     }
 
