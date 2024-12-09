@@ -143,7 +143,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         Path ktxPath = Paths.get(storageObject.getAbsolutePath(), "ktx");
 
         try {
-            return jadeStorage.getChildren(storageObject.getLocation(), ktxPath.toString())
+            return jadeStorage.getChildren(storageObject.getLocation(), ktxPath.toString(), true)
                     .stream().anyMatch(k -> k.getAbsolutePath().endsWith(".ktx"));
         }
         catch (StorageObjectNotFoundException e) {

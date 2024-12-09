@@ -136,7 +136,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
         StorageObject rootMetadata;
         try {
-            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath());
+            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath(), true);
         } catch (StorageObjectNotFoundException e) {
             throw new ComputationException(jacsServiceData, "Could not find metadata for " + storageLocation.getStorageURL() + " path " + syncedRoot.getFilepath());
         }
@@ -233,7 +233,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                                                    String indent) {
         List<Future<DomainObject>> futures = new ArrayList<>();
         try {
-            for (JadeObject child : jadeObject.getChildren()) {
+            for (JadeObject child : jadeObject.getSubdirs()) {
                 StorageObject storageObject = child.getStorageObject();
                 logger.debug(indent + "{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
                 logger.debug(indent + "      {}", child);
