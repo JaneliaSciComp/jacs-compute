@@ -235,10 +235,6 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         try {
             for (JadeObject child : jadeObject.getSubdirs()) {
                 StorageObject storageObject = child.getStorageObject();
-                if (storageObject.getAbsolutePath().equals(jadeObject.getStorageObject().getAbsolutePath())) {
-                    // if the requested path is returned - skip it to prevent an infinite loop
-                    continue;
-                }
                 logger.debug(indent + "{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
                 logger.debug(indent + "      {}", child);
 
@@ -253,7 +249,9 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     return discoveredObject;
                 }));
 
-                if (levels > 1 && storageObject.isCollection()) {
+                if (levels > 1 &&
+                        storageObject.isCollection() &&
+                        child.getStorageObject().getAbsolutePath().equals(jadeObject.getStorageObject().getAbsolutePath())) {
                     // Recurse into the folder hierarchy
                     futures.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent + "  "));
                 }
