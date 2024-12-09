@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.files;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.dataimport.StorageContentHelper;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.dataservice.swc.SWCService;
@@ -58,9 +59,9 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
             String filepath = storageObject.getAbsolutePath();
             LOG.info("Inspecting potential TM sample directory {}", filepath);
 
-            Path transformPath = Paths.get(storageObject.getAbsolutePath(), "transform.txt");
+            String transformPath = getPath(storageObject.getAbsolutePath(), "transform.txt");
 
-            if (jadeStorage.exists(storageObject.getLocation(), transformPath.toString())) {
+            if (jadeStorage.exists(storageObject.getLocation(), transformPath)) {
                 LOG.info("  Found transform.txt");
 
                 String sampleName = storageObject.getObjectName();
@@ -112,8 +113,8 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
 
                 // Load neurons into workspaces
 
-                Path neuronsPath = Paths.get(storageObject.getAbsolutePath(), "neurons.json");
-                if (jadeStorage.exists(storageObject.getLocation(), neuronsPath.toString())) {
+                String neuronsPath = getPath(storageObject.getAbsolutePath(), "neurons.json");
+                if (jadeStorage.exists(storageObject.getLocation(), neuronsPath)) {
                     try {
                         loadNeurons(syncedRoot.getOwnerKey(), jadeObject, neuronsPath, sample);
                     } catch (Exception e) {
@@ -158,7 +159,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
      * @param neuronsPath path to the neurons metadata json
      * @param sample sample containing the related imagery
      */
-    private void loadNeurons(String subjectKey, JadeObject jadeObject, Path neuronsPath, TmSample sample) throws IOException {
+    private void loadNeurons(String subjectKey, JadeObject jadeObject, String neuronsPath, TmSample sample) throws IOException {
 
         LOG.info("  Loading {} as a workspace", neuronsPath);
 
@@ -172,7 +173,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         JadeStorageService jadeStorage = jadeObject.getJadeStorage();
         StorageObject storageObject = jadeObject.getStorageObject();
 
-        InputStream content = jadeStorage.getContent(storageObject.getLocation(), neuronsPath.toString());
+        InputStream content = jadeStorage.getContent(storageObject.getLocation(), neuronsPath);
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode root = objectMapper.readTree(content);
@@ -200,7 +201,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 String somaLocation = value.get("somaLocation").asText();
 
                 // Resolve relative paths
-                Path folderPath = Paths.get(storageObject.getAbsolutePath());
+                String folderPath = storageObject.getAbsolutePath();
 
                 TmMappedNeuron mappedNeuron = new TmMappedNeuron();
                 mappedNeuron.setName(neuronBrowserName);
@@ -272,15 +273,18 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
     }
 
     /**
-     * Returns the full absolute path to the SWC, given a current working directory. If the given swcPath is
-     * absolute, just return it. If it's relative, resolve it relative to the cwd.
-     * @param cwd current working directory
-     * @param swcPath path to swc (absolute or relative to cwd)
-     * @return absolute path to swc
+     * Returns the full absolute path to the child, given a parent directory. If the given child path is
+     * absolute, just return it. If it's relative, resolve it relative to the parent.
+     * @param parent parent directory
+     * @param child path to child dir (absolute or relative to parent)
+     * @return absolute path to child
      */
-    private String getPath(Path cwd, String swcPath) {
-        return swcPath.startsWith("/")
-                ? swcPath
-                : cwd.resolve(swcPath).normalize().toString();
+    private String getPath(String parent, String child) {
+        if (child.startsWith("/")) {
+            return child;
+        } else {
+            return StringUtils.appendIfMissing(parent, "/") + child;
+        }
     }
+
 }

@@ -235,6 +235,10 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         try {
             for (JadeObject child : jadeObject.getSubdirs()) {
                 StorageObject storageObject = child.getStorageObject();
+                if (storageObject.getAbsolutePath().equals(jadeObject.getStorageObject().getAbsolutePath())) {
+                    // if the requested path is returned - skip it to prevent an infinite loop
+                    continue;
+                }
                 logger.debug(indent + "{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
                 logger.debug(indent + "      {}", child);
 
