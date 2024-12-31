@@ -2,28 +2,22 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Optional;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-import com.google.common.collect.ImmutableMap;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -36,21 +30,7 @@ import org.janelia.model.domain.report.DiskUsageSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "DataSummary", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
@@ -66,16 +46,16 @@ public class DataSummaryResource {
     @PropertyValue(name = "Dataset.Storage.DefaultVolume")
     private String defaultVolume;
 
-    @ApiOperation(value = "Returns a disk usage summary for a given user")
+    @Operation(summary = "Returns a disk usage summary for a given user")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got disk uage summary", response = DiskUsageSummary.class),
-            @ApiResponse(code = 500, message = "Internal Server Error getting disk usage summary")
+            @ApiResponse(responseCode = "200", description = "Successfully got disk uage summary"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting disk usage summary")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("summary/disk")
-    public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
-                                        @ApiParam @QueryParam("subjectKey") String subjectKey,
+    public Response getDiskUsageSummary(@Parameter @QueryParam("volumeName") String volumeNameParam,
+                                        @Parameter @QueryParam("subjectKey") String subjectKey,
                                         @HeaderParam("AccessKey") String accessKey,
                                         @HeaderParam("SecretKey") String secretKey) {
         LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
@@ -113,15 +93,15 @@ public class DataSummaryResource {
         }
     }
 
-    @ApiOperation(value = "Returns a database summary for a given user")
+    @Operation(summary = "Returns a database summary for a given user")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got data summary", response = DatabaseSummary.class),
-            @ApiResponse(code = 500, message = "Internal Server Error getting data summary")
+            @ApiResponse(responseCode = "200", description = "Successfully got data summary"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting data summary")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/summary/database")
-    public Response getDatabaseSummary(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getDatabaseSummary(@Parameter @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDatabaseSummary({})", subjectKey);
         try {
             if (StringUtils.isBlank(subjectKey)) {

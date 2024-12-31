@@ -6,31 +6,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableSet;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
@@ -49,21 +44,7 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "DomainObject", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
@@ -73,18 +54,18 @@ public class DomainObjectResource {
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
-    @ApiOperation(value = "Updates an Object's Attribute",
-            notes = "uses the ObjectType, ObjectId(first position), PropertyName, and PropertyValue parameters of the DomainQuery"
+    @Operation(summary = "Updates an Object's Attribute",
+            description = "uses the ObjectType, ObjectId(first position), PropertyName, and PropertyValue parameters of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully updated a domain object's properties", response=DomainObject.class),
-            @ApiResponse( code = 500, message = "Internal Server Error updating a domain object's properties" )
+            @ApiResponse( responseCode = "200", description = "Successfully updated a domain object's properties"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error updating a domain object's properties" )
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject")
-    public Response updateObjectProperty(@ApiParam DomainQuery query) {
+    public Response updateObjectProperty(@Parameter DomainQuery query) {
         LOG.trace("Start updateObjectProperty({})", query);
         try {
             DomainObject updateObj;
@@ -110,18 +91,18 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(value = "creates or updates a DomainObject ",
-            notes = "uses the DomainObject parameter of the DomainQuery"
+    @Operation(summary = "creates or updates a DomainObject ",
+            description = "uses the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created/updated the value of an existing Domain Object", response=DomainObject.class),
-            @ApiResponse( code = 500, message = "Internal Server Error updating DomainObject" )
+            @ApiResponse( responseCode = "200", description = "Successfully created/updated the value of an existing Domain Object"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error updating DomainObject" )
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject")
-    public DomainObject saveDomainObject(@ApiParam DomainQuery query) {
+    public DomainObject saveDomainObject(@Parameter DomainQuery query) {
         LOG.trace("Start saveDomainObject({})", query);
         try {
             return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObject());
@@ -133,16 +114,16 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(value = "Gets an Domain Object's Details using either the references parameters or the objectType & objectIds")
+    @Operation(summary = "Gets an Domain Object's Details using either the references parameters or the objectType & objectIds")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects" )
+            @ApiResponse(responseCode = "200", description = "Successfully got a list of DomainObjectst"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of DomainObjects" )
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject/details")
-    public Response getObjectDetails(@ApiParam DomainQuery query) {
+    public Response getObjectDetails(@Parameter DomainQuery query) {
         LOG.trace("Start getObjectDetails(({})", query);
         try {
             List<DomainObject> detailObjects;
@@ -193,19 +174,18 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(value = "Gets DomainObjects by Name and DomainClass")
+    @Operation(summary = "Gets DomainObjects by Name and DomainClass")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got a list of DomainObjects", response = DomainObject.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects")
+            @ApiResponse(responseCode = "200", description = "Successfully got a list of DomainObjects"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of DomainObjects")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject/name")
-    public Response getObjectsByName(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                     @ApiParam @QueryParam("name") final String name,
-                                     @ApiParam @QueryParam("domainClass") final String domainClass) {
+    public Response getObjectsByName(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                     @Parameter @QueryParam("name") final String name,
+                                     @Parameter @QueryParam("domainClass") final String domainClass) {
         LOG.trace("Start getObjectsByName({}, name={}, domainClass={})", subjectKey, name, domainClass);
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
@@ -218,17 +198,16 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(value = "Gets DomainObjects by Property Value")
+    @Operation(summary = "Gets DomainObjects by Property Value")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got a list of DomainObjects", response = DomainObject.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects")
+            @ApiResponse(responseCode = "200", description = "Successfully got a list of DomainObjects"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of DomainObjects")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject/withproperty")
-    public Response getObjectsWithProperty(@ApiParam DomainQuery query) {
+    public Response getObjectsWithProperty(@Parameter DomainQuery query) {
         LOG.trace("Start getObjectsByProperty({})", query);
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(query.getObjectType());
         try {
@@ -241,24 +220,23 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(
-            value = "Gets Folder References to a DomainObject ",
-            notes = "uses the DomainObject parameter of the DomainQuery"
+    @Operation(
+            summary = "Gets Folder References to a DomainObject ",
+            description = "uses the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "Successfully got a list of Folder References", response=Reference.class,
-                    responseContainer = "List"),
+                    responseCode = "200",
+                    description = "Successfully got a list of Folder References"),
             @ApiResponse(
-                    code = 500,
-                    message = "Internal Server Error getting list of Folder References" )
+                    responseCode = "500",
+                    description = "Internal Server Error getting list of Folder References" )
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject/references")
-    public Response getContainerReferences(@ApiParam DomainQuery query) {
+    public Response getContainerReferences(@Parameter DomainQuery query) {
         LOG.trace("Start getContainerReferences({})", query);
         try {
             List<Reference> objectReferences = legacyDomainDao.getAllNodeContainerReferences(query.getDomainObject());
@@ -275,18 +253,18 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(value = "Removes a Domain Object",
-            notes = "uses the References parameter of the DomainQuery"
+    @Operation(summary = "Removes a Domain Object",
+            description = "uses the References parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed all domain objects"),
-            @ApiResponse( code = 500, message = "Internal Server Error removing domain objects" )
+            @ApiResponse( responseCode = "200", description = "Successfully removed all domain objects"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error removing domain objects" )
     })
     @POST
     @Path("/domainobject/remove")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response removeDomainObject(@ApiParam DomainQuery query) {
+    public Response removeDomainObject(@Parameter DomainQuery query) {
         LOG.trace("Start removeDomainObject({})", query);
         try {
             List<ErrorResponse> permissionErrors = new ArrayList<>();
@@ -337,28 +315,26 @@ public class DomainObjectResource {
         return deletableDomainTypes.contains(objectType);
     }
 
-    @ApiOperation(value = "Gets a list of DomainObjects that are referring to this DomainObject",
-            notes = "Uses reference attribute and reference class to determine type of parent reference to find"
+    @Operation(summary = "Gets a list of DomainObjects that are referring to this DomainObject",
+            description = "Uses reference attribute and reference class to determine type of parent reference to find"
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "Successfully got a list of DomainObjects",
-                    response = DomainObject.class,
-                    responseContainer = "List"),
+                    responseCode = "200",
+                    description = "Successfully got a list of DomainObjects"),
             @ApiResponse(
-                    code = 500,
-                    message = "Internal Server Error getting list of DomainObjects" )
+                    responseCode = "500",
+                    description = "Internal Server Error getting list of DomainObjects" )
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobject/reverseLookup")
-    public Response getObjectsByReverseRef(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                           @ApiParam @QueryParam("referenceId") final Long referenceId,
-                                           @ApiParam @QueryParam("count") final Long count,
-                                           @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
-                                           @ApiParam @QueryParam("referenceClass") final String referenceClass) {
+    public Response getObjectsByReverseRef(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                           @Parameter @QueryParam("referenceId") final Long referenceId,
+                                           @Parameter @QueryParam("count") final Long count,
+                                           @Parameter @QueryParam("referenceAttr") final String referenceAttr,
+                                           @Parameter @QueryParam("referenceClass") final String referenceClass) {
         LOG.trace("Start getObjectsByReverseRef({}, referenceId={}, count={}, referenceAttr={}, referenceClass={})", subjectKey, referenceId, count, referenceAttr, referenceClass);
         ReverseReference reverseRef = new ReverseReference();
         reverseRef.setCount(count);
@@ -375,14 +351,14 @@ public class DomainObjectResource {
         }
     }
 
-    @ApiOperation(value = "Retrieve all search attributes")
+    @Operation(summary = "Retrieve all search attributes")
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "Successfully got search attributes mapping"),
+                    responseCode = "200",
+                    description = "Successfully got search attributes mapping"),
             @ApiResponse(
-                    code = 500,
-                    message = "Internal Server Error getting search attributes")
+                    responseCode = "500",
+                    description = "Internal Server Error getting search attributes")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)

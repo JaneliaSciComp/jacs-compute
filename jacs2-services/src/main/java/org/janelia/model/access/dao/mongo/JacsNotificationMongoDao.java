@@ -6,7 +6,7 @@ import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.service.JacsNotification;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Mongo based implementation of JacsNotificationDao.

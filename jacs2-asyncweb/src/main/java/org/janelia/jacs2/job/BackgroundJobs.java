@@ -1,14 +1,14 @@
 package org.janelia.jacs2.job;
 
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.enterprise.inject.se.SeContainerInitializer;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+
 import org.janelia.jacs2.asyncservice.common.JacsQueueSyncer;
 import org.janelia.jacs2.asyncservice.common.JacsScheduledServiceRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceDispatchRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationQueue;
-import org.janelia.jacs2.cdi.SeContainerFactory;
-
-import javax.enterprise.inject.se.SeContainer;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 
 public class BackgroundJobs implements ServletContextListener {
 
@@ -19,7 +19,8 @@ public class BackgroundJobs implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        SeContainer seContainer = SeContainerFactory.getSeContainer();
+        SeContainerInitializer containerInitializer = SeContainerInitializer.newInstance();
+        SeContainer seContainer = containerInitializer.initialize();
         queueSyncer = seContainer.select(JacsQueueSyncer.class).get();
         serviceDispatchRunner = seContainer.select(JacsServiceDispatchRunner.class).get();
         scheduledServicesRunner = seContainer.select(JacsScheduledServiceRunner.class).get();

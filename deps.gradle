@@ -1,28 +1,45 @@
 dependencies {
     project.ext {
         // logging
-        SLF4J_VERSION = "1.7.36"
-        LOGBACK_VERSION = "1.2.11"
+        SLF4J_VERSION = "2.0.16"
+        LOGBACK_VERSION = "1.5.15"
         SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
-        // dependency injection
-        JAVAX_ENTERPRISE_VERSION = "2.0.SP1"
-        WELD_VERSION = "3.1.5.Final"
-        CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
-        CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
-        CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
-        CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
+        // JAKARTA API
+        JAKARTA_CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
+        JAKARTA_SERVLET_API_LIB = "jakarta.servlet:jakarta.servlet-api:6.0.0"
+        JAKARTA_RS_API_LIB = "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
+
+        // CDI impl
+        WELD_VERSION = "6.0.0.Final"
+        WELD_CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
+        WELD_CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
+
+        // JAKARTA-RS impl
+        JERSEY_VERSION = "4.0.0-M1"
+        JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
+        JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
+        JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
+        JERSEY_CONTAINER_SERVLET_LIB = "org.glassfish.jersey.containers:jersey-container-servlet:${JERSEY_VERSION}"
+        JERSEY_HTTP_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${JERSEY_VERSION}"
+        JERSEY_INJECT_HK2_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
+        JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
+        JERSEY_WELD_SE_LIB = "org.glassfish.jersey.ext.cdi:jersey-weld2-se:${JERSEY_VERSION}"
+
+        JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-core:${JERSEY_VERSION}"
+        JERSEY_TEST_UTIL_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
+        JERSEY_TEST_PROVIDER_BUNDLE_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // ldap
         LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
 
         // utilities
-        GUAVA_LIB = "com.google.guava:guava:32.0.0-jre"
+        GUAVA_LIB = "com.google.guava:guava:33.4.0-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // Mail
-        JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.2"
+        JAVAMAIL_LIB = "com.sun.mail:jakarta.mail:2.0.1"
 
         // database
         MONGODB_VERSION = "3.12.5"
@@ -40,37 +57,24 @@ dependencies {
         COMMONS_COMPRMPRESS_LIB_VERSION = "1.15"
         COMMOCOMPRESS_LIB = "org.apache.commons:commons-compress:${COMMONS_COMPRMPRESS_LIB_VERSION}"
 
-        // JAX-RS API
-        JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
-        JERSEY_VERSION = "2.29.1"
-        JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_CONTAINERS_CORE_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_CONTAINER_LIB = "org.glassfish.jersey.containers:jersey-container-servlet:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_CDI_SERVLET_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
-
         // command line args
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.78"
 
         // servlet engine
-        JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
-        UNDERTOW_VERSION = "2.0.21.Final"
+        JAKARTA_SERVLET_API_LIB = "jakarta.servlet:jakarta.servlet-api:6.0.0"
+
+        UNDERTOW_VERSION = "2.3.18.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
         // REST API documentation
-        SWAGGER_VERSION = "1.5.16"
-        SWAGGER_ANNOTATIONS_LIB = "io.swagger:swagger-annotations:${SWAGGER_VERSION}"
-        SWAGGER_JAXRS_LIB = "io.swagger:swagger-jersey2-jaxrs:${SWAGGER_VERSION}"
+        SWAGGER_VERSION = "2.2.27"
+        SWAGGER_ANNOTATIONS_LIB = "io.swagger.core.v3:swagger-annotations-jakarta:${SWAGGER_VERSION}"
+        SWAGGER_JAXRS_LIB = "io.swagger.core.v3:swagger-jaxrs2-jakarta:${SWAGGER_VERSION}"
+        SWAGGER_SERVLET_LIB = "io.swagger.core.v3:swagger-jaxrs2-servlet-initializer-jakarta:${SWAGGER_VERSION}"
 
         // JSON
-        JACKSON_VERSION = "2.9.5"
+        JACKSON_VERSION = "2.18.2"
         JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
         JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
         JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
@@ -82,7 +86,7 @@ dependencies {
         SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.12:3.0.1"
 
         // expressions
-        JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
+        JAVA_EXP_IMPL_LIB = "org.glassfish:jakarta.el:4.0.2"
 
         // auth
         JWT_API = 'io.jsonwebtoken:jjwt-api:0.10.5'
@@ -100,7 +104,7 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.4.0"
-        JACS_MODEL_VERSION = "3.3.0"
+        JACS_MODEL_VERSION = "4.0.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
@@ -113,18 +117,15 @@ dependencies {
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
         // testing
-        ASSERTJ_VERSION = "3.11.1"
-        JUNIT_VERSION = "4.13.1"
-        HAMCREST_VERSION = "2.0.0.0"
-        MOCKITO_VERSION = "2.8.47"
-        POWERMOCKITO_VERSION = "1.7.3"
-
-        JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
-        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
-        HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
-        MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
-        POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
-        POWERMOCK_API_MOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
+        JUNIT4_LIB = "junit:junit:4.13.1"
+        JUNIT5_LIB = "org.junit.jupiter:junit-jupiter:5.11.4"
+        JUNIT_ENGINE_LIB = "org.junit.vintage:junit-vintage-engine:5.11.4"
+        JUNIT_PLATFORM_LAUNCHER = "org.junit.platform:junit-platform-launcher:1.11.4"
+        HAMCREST_LIB = "org.hamcrest:java-hamcrest:2.0.0.0"
+        MOCKITO_VERSION = "5.14.2"
+        MOCKITO_CORE_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+        MOCKITO_JUNIT5_LIB = "org.mockito:mockito-junit-jupiter:${MOCKITO_VERSION}"
+        ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
     }
 
     // Included in ALL projects
@@ -134,10 +135,16 @@ dependencies {
                    LOGBACK_CLASSIC_LIB,
                    SLF4J_LIB
 
-    testImplementation ASSERTJ_LIB,
+    testImplementation JUNIT4_LIB,
+                       JUNIT5_LIB,
+                       ASSERTJ_LIB,
                        HAMCREST_LIB,
-                       JUNIT_LIB,
-                       MOCKITO_LIB,
-                       POWERMOCK_API_MOCKITO_LIB,
-                       POWERMOCK_JUNIT4_LIB
+                       MOCKITO_CORE_LIB,
+                       MOCKITO_JUNIT5_LIB
+
+    testRuntimeOnly JUNIT_ENGINE_LIB,
+                    JUNIT_PLATFORM_LAUNCHER
+
+    mockitoAgent MOCKITO_CORE_LIB
+
 }

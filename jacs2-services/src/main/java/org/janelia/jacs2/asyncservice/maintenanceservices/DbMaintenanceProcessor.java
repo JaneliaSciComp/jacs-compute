@@ -1,9 +1,11 @@
 package org.janelia.jacs2.asyncservice.maintenanceservices;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -17,11 +19,6 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 @Named("dbMaintenance")
 public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {

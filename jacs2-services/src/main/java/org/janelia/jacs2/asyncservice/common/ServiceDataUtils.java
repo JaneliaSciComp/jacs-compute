@@ -54,11 +54,12 @@ public class ServiceDataUtils {
         }
     }
 
-    public  static <T> T serializableObjectToAny(Object o, TypeReference typeRef) {
+    @SuppressWarnings("unchecked")
+    public static <T> T serializableObjectToAny(Object o, TypeReference typeRef) {
         if (o == null) {
             return null;
         } else {
-            return MAPPER.convertValue(o, typeRef);
+            return (T) MAPPER.convertValue(o, typeRef);
         }
     }
 

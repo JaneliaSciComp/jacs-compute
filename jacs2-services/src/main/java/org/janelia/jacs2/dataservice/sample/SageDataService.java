@@ -4,7 +4,7 @@ import org.janelia.model.jacs2.dao.SageDao;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.sage.SlideImage;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 public class SageDataService {

@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringJoiner;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 
 import com.google.common.base.Splitter;
 

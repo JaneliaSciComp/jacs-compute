@@ -1,6 +1,27 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.*;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -12,34 +33,11 @@ import org.janelia.model.domain.files.SyncedRoot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Web service for CRUD operations for synced paths.
  */
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "SyncedRoot",
+        description = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -55,18 +53,17 @@ public class SyncedRootResource {
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
-    @ApiOperation(value = "Gets a List of SyncedRoots for the User",
-            notes = "Uses the subject key to return a list of SyncedRoots for the user"
+    @Operation(summary = "Gets a List of SyncedRoots for the User",
+            description = "Uses the subject key to return a list of SyncedRoots for the user"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of SyncedRoots",  response = SyncedRoot.class,
-                    responseContainer = "List" ),
-            @ApiResponse( code = 500, message = "Internal Server Error fetching the SyncedRoots" )
+            @ApiResponse( responseCode = "200", description = "Successfully fetched the list of SyncedRoots"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error fetching the SyncedRoots")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("syncedRoot")
-    public Response getSyncedRoots(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getSyncedRoots(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getSyncedRoots({})", subjectKey);
         try {
             List<SyncedRoot> syncedRoots = syncedRootDao.getSyncedRoots(subjectKey);
@@ -83,10 +80,10 @@ public class SyncedRootResource {
         }
     }
 
-    @ApiOperation(value = "Creates a SyncedRoot using the DomainObject parameter of the DomainQuery")
+    @Operation(description = "Creates a SyncedRoot using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a SyncedRoot", response = SyncedRoot.class),
-            @ApiResponse( code = 500, message = "Internal Server Error creating a SyncedRoot" )
+            @ApiResponse( responseCode = "200", description = "Successfully created a SyncedRoot"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error creating a SyncedRoot" )
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -118,11 +115,10 @@ public class SyncedRootResource {
         }
     }
 
-    @ApiOperation(value = "Updates a SyncedRoot using the DomainObject parameter of the DomainQuery")
+    @Operation(description = "Updates a SyncedRoot using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated a SyncedRoot",
-                    response = SyncedRoot.class),
-            @ApiResponse(code = 500, message = "Internal Server Error updating a SyncedRoot")
+            @ApiResponse(responseCode = "200", description = "Successfully updated a SyncedRoot"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error updating a SyncedRoot")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -146,16 +142,16 @@ public class SyncedRootResource {
         }
     }
 
-    @ApiOperation(value = "Removes the SyncedRoot using the SyncedRoot Id")
+    @Operation(description = "Removes the SyncedRoot using the SyncedRoot Id")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed a SyncedRoot"),
-            @ApiResponse( code = 500, message = "Internal Server Error removing a SyncedRoot" )
+            @ApiResponse( responseCode = "200", description = "Successfully removed a SyncedRoot"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error removing a SyncedRoot" )
     })
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("syncedRoot")
-    public Response removeSyncedRoot(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                     @ApiParam @QueryParam("syncedRootId") final Long syncedRootId) {
+    public Response removeSyncedRoot(@QueryParam("subjectKey") final String subjectKey,
+                                     @QueryParam("syncedRootId") final Long syncedRootId) {
         LOG.trace("Start removeSyncedRoot({}, SyncedRootId={})", subjectKey, syncedRootId);
         try {
             SyncedRoot syncedRoot = syncedRootDao.findEntityByIdReadableBySubjectKey(syncedRootId, subjectKey);
@@ -166,20 +162,19 @@ public class SyncedRootResource {
         }
     }
 
-    @ApiOperation(
-            value = "Gets the SyncedPath children of a SyncedRoot",
-            notes = "Uses the subject key to return a list of children of a SyncedRoot for the user"
+    @Operation(
+            summary = "Gets the SyncedPath children of a SyncedRoot",
+            description = "Uses the subject key to return a list of children of a SyncedRoot for the user"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of SyncedPaths",  response = SyncedPath.class,
-                    responseContainer = "List" ),
-            @ApiResponse( code = 500, message = "Internal Server Error list of SyncedPaths" )
+            @ApiResponse( responseCode = "200", description = "Successfully fetched the list of SyncedPaths"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error list of SyncedPaths" )
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("syncedRoot/children")
-    public Response getSyncedRootChildren(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                          @ApiParam @QueryParam("syncedRootId") final Long syncedRootId) {
+    public Response getSyncedRootChildren(@QueryParam("subjectKey") final String subjectKey,
+                                          @QueryParam("syncedRootId") final Long syncedRootId) {
         LOG.trace("Start getSyncedRootChildren()");
         try {
             SyncedRoot syncedRoot = syncedRootDao.findById(syncedRootId);

@@ -1,10 +1,9 @@
 package org.janelia.jacs2.cdi;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
 
 import com.mongodb.MongoClient;
-
 import org.janelia.jacs2.cdi.qualifier.JacsLegacy;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.domain.DomainDAO;

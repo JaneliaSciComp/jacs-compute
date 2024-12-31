@@ -1,9 +1,20 @@
 package org.janelia.jacs2.rest.async.v2;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
@@ -12,18 +23,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-
-@Api(value = "JACS Service Info")
+@Tag(name = "ServiceActions", description = "JACS Service Info")
 @RequestScoped
 @Produces("application/json")
 @Path("/services")
@@ -33,10 +33,10 @@ public class ServiceActionsResource {
     @Inject private JacsServiceDataManager jacsServiceDataManager;
     @Inject private JacsServiceEngine jacsServiceEngine;
 
-    @ApiOperation(value = "Update service data", notes = "Updates the specified service data")
+    @Operation(summary = "Update service data", description = "Updates the specified service data")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @PUT
     @Path("/{service-instance-id}")
@@ -64,16 +64,16 @@ public class ServiceActionsResource {
         }
     }
 
-    @ApiOperation(
-            value = "Update service state",
-            notes = "Updates the state of the given service. " +
+    @Operation(
+            summary = "Update service state",
+            description = "Updates the state of the given service. " +
                     "This endpoint can be used for terminating, suspending or resuming a service. " +
                     "The respective values for terminating, suspending, and resuming a service are: " +
                     "CANCELED, SUSPENDED, and RESUMED.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "If the service state or the transition is invalid"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "404", description = "If the service state or the transition is invalid"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @PUT
     @Path("/{service-instance-id}/state/{service-state}")

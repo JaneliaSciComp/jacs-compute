@@ -2,8 +2,8 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.slf4j.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ServiceComputationFactory {

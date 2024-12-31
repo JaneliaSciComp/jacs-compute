@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoModule;
@@ -31,8 +32,12 @@ public class ObjectMapperFactory {
     }
 
     public ObjectMapper newObjectMapper() {
-        return new ObjectMapper()
-                .registerModule(new JodaModule())
+        return newMapperBuilder().build();
+    }
+
+    private JsonMapper.Builder newMapperBuilder() {
+        return JsonMapper.builder()
+                .addModule(new JodaModule())
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true)
                 .configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true)
@@ -40,15 +45,16 @@ public class ObjectMapperFactory {
                 .configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
                 .configure(DeserializationFeature.FAIL_ON_UNRESOLVED_OBJECT_IDS, false)
                 .configure(DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY, false)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                .serializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     public ObjectMapper newMongoCompatibleObjectMapper() {
-        ObjectMapper mapper = newObjectMapper();
-        mapper.disable(AUTO_DETECT_SETTERS);
-        mapper.disable(AUTO_DETECT_GETTERS);
-        VisibilityChecker<?> visibilityChecker = mapper.getSerializationConfig().getDefaultVisibilityChecker();
-        return mapper.setVisibility(visibilityChecker.withFieldVisibility(ANY))
-            .registerModule(new MongoModule());
+        JsonMapper.Builder mapperBuilder = newMapperBuilder()
+                .disable(AUTO_DETECT_SETTERS)
+                .disable(AUTO_DETECT_GETTERS);
+        VisibilityChecker<?> visibilityChecker = mapperBuilder.build().getVisibilityChecker();
+        return mapperBuilder.visibility(visibilityChecker.withFieldVisibility(ANY))
+                .addModule(new MongoModule())
+                .build();
     }
 }

@@ -1,14 +1,13 @@
 package org.janelia.jacs2.dataservice.storage;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.ws.rs.core.UriBuilder;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.ws.rs.core.UriBuilder;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.jacsstorage.clients.api.StoragePathURI;
 
 

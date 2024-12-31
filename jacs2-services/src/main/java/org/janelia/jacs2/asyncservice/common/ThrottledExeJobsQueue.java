@@ -1,13 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +8,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
 
 @ApplicationScoped
 public class ThrottledExeJobsQueue {

@@ -9,12 +9,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
-
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.DelegateServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;

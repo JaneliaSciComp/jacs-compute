@@ -3,8 +3,8 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 import java.io.File;
 import java.nio.file.Paths;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;

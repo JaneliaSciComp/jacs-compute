@@ -19,8 +19,8 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @Named("sampleNeuronWarping")
 public class SampleNeuronWarpingProcessor extends AbstractServiceProcessor<NeuronSeparationFiles> {

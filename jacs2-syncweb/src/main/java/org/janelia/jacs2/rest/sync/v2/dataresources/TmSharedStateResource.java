@@ -1,7 +1,30 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.cdi.qualifier.HortaSharedData;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.messaging.broker.neuronadapter.NeuronMessageHeaders;
@@ -16,33 +39,9 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
+@Tag(name = "TmSharedState",
+        description = "Janelia Mouselight Shared Data Service"
 )
-@Api(
-        value = "Janelia Mouselight Shared Data Service",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
-
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data/shared")
@@ -59,12 +58,12 @@ public class TmSharedStateResource {
     @Inject
     private MessageSender messageSender;
 
-    @ApiOperation(value = "Creates a new neuron",
-            notes = "Creates a neuron in the given workspace and notifies other users of the workspace"
+    @Operation(summary = "Creates a new neuron",
+            description = "Creates a neuron in the given workspace and notifies other users of the workspace"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created a TmNeuron", response = TmNeuronMetadata.class),
-            @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
+            @ApiResponse(responseCode = "200", description = "Successfully created a TmNeuron"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while creating a TmNeuron")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -83,26 +82,25 @@ public class TmSharedStateResource {
             // Notify other users
             sendMessage(subjectKey, neuron, NeuronMessageType.NEURON_CREATE, null);
             return Response.ok()
-                    .entity(new GenericEntity<TmNeuronMetadata>(newNeuron){})
+                    .entity(new GenericEntity<TmNeuronMetadata>(newNeuron) {
+                    })
                     .build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error creating neuron {}", neuron.getId(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error updating neuron " + neuron.getId()))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finish createTmNeuron({}, workspaceId={}, name={})", subjectKey, neuron.getWorkspaceId(), neuron.getName());
         }
     }
 
-    @ApiOperation(value = "Updates existing neurons",
-            notes = "Updates a neuron and notifies other users of the workspace"
+    @Operation(summary = "Updates existing neurons",
+            description = "Updates a neuron and notifies other users of the workspace"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated TmNeurons", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
+            @ApiResponse(responseCode = "200", description = "Successfully updated TmNeurons"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while updating TmNeurons")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -120,33 +118,32 @@ public class TmSharedStateResource {
             // Notify other users
             sendMessage(subjectKey, neuron, NeuronMessageType.NEURON_SAVE_NEURONDATA, null);
             return Response.ok()
-                    .entity(new GenericEntity<TmNeuronMetadata>(updatedNeuron){})
+                    .entity(new GenericEntity<TmNeuronMetadata>(updatedNeuron) {
+                    })
                     .build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error updating neuron {}", neuron.getId(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error updating neuron " + neuron.getId()))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finish updateTmNeuron({}, neuron={})", subjectKey, neuron);
         }
     }
 
-    @ApiOperation(value = "Change neuron ownership",
-            notes = "Updates a neuron to change its ownership and notifies other workspace users"
+    @Operation(summary = "Change neuron ownership",
+            description = "Updates a neuron to change its ownership and notifies other workspace users"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated TmNeuron", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while updating TmNeuron")
+            @ApiResponse(responseCode = "200", description = "Successfully updated TmNeuron"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while updating TmNeuron")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron/ownership")
     public Response changeOwnership(DomainQuery query,
-                                    @ApiParam @QueryParam("targetUser") final String targetUser) {
+                                    @Parameter @QueryParam("targetUser") final String targetUser) {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
 
@@ -168,34 +165,33 @@ public class TmSharedStateResource {
             sendMessage(subjectKey, neuron, NeuronMessageType.REQUEST_NEURON_ASSIGNMENT, extraArgs);
 
             return Response.ok()
-                    .entity(new GenericEntity<TmNeuronMetadata>(updatedNeuron){})
+                    .entity(new GenericEntity<TmNeuronMetadata>(updatedNeuron) {
+                    })
                     .build();
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error changing ownership of neuron {} to {}", neuron.getId(), targetUser, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error changing ownership of neuron " + neuron.getId()))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finish changeOwnership({}, neuronId={}, target={})", subjectKey, neuron.getId(), targetUser);
         }
     }
 
-    @ApiOperation(value = "Removes an existing neuron",
-            notes = "Removes the neuron by its id and notifies other workspace users"
+    @Operation(summary = "Removes an existing neuron",
+            description = "Removes the neuron by its id and notifies other workspace users"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully removed a TmNeuron"),
-            @ApiResponse(code = 500, message = "Error occurred while removing a TmNeuron")
+            @ApiResponse(responseCode = "200", description = "Successfully removed a TmNeuron"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while removing a TmNeuron")
     })
     @DELETE
     @Path("/workspace/neuron")
-    public Response removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                               @ApiParam @QueryParam("isLarge") final Boolean isLarge,
-                               @ApiParam @QueryParam("neuronId") final Long neuronId) {
+    public Response removeTmNeuron(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                   @Parameter @QueryParam("workspaceId") final Long workspaceId,
+                                   @Parameter @QueryParam("isLarge") final Boolean isLarge,
+                                   @Parameter @QueryParam("neuronId") final Long neuronId) {
 
         LOG.info("removeTmNeuron({}, workspaceId={}, neuronId={})", subjectKey, workspaceId, neuronId);
 
@@ -212,14 +208,12 @@ public class TmSharedStateResource {
             // Notify other users
             sendMessage(subjectKey, neuron, NeuronMessageType.NEURON_DELETE, null);
             return Response.ok().build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error removing TM neuron {} in workspace {}", neuronId, workspaceId, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error removing neuron " + neuronId))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finish removeTmNeuron({}, neuronId={}, workspaceId={})", subjectKey, neuronId, workspaceId);
         }
     }

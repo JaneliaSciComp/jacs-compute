@@ -10,7 +10,7 @@ import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.dao.SubjectDao;
 import org.janelia.model.jacs2.domain.Subject;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;

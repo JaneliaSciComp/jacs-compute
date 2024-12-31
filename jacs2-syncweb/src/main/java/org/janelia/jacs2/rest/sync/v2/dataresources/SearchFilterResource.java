@@ -1,46 +1,29 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.gui.search.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Data Service",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
+@Tag(name = "SearchFilter",
+        description = "Janelia Data Service"
 )
 @RequireAuthentication
 @ApplicationScoped
@@ -52,19 +35,19 @@ public class SearchFilterResource {
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
-    @ApiOperation(value = "Creates a Filter",
-            notes = "uses the DomainObject parameter of the DomainQuery"
+    @Operation(summary = "Creates a Filter",
+            description = "uses the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a Filter", response = Filter.class),
-            @ApiResponse( code = 500, message = "Internal Server Error creating a Filter" )
+            @ApiResponse(responseCode = "200", description = "Successfully created a Filter"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error creating a Filter")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/filter")
-    public Filter createFilter(@ApiParam DomainQuery query) {
-        LOG.trace("createFilter({})",query);
+    public Filter createFilter(@Parameter DomainQuery query) {
+        LOG.trace("createFilter({})", query);
         try {
             return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObjectAs(Filter.class));
         } catch (Exception e) {
@@ -75,19 +58,19 @@ public class SearchFilterResource {
         }
     }
 
-    @ApiOperation(value = "Updates a Filter",
-            notes = "uses the DomainObject parameter of the DomainQuery"
+    @Operation(summary = "Updates a Filter",
+            description = "uses the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully Updated a Filter", response = Filter.class),
-            @ApiResponse( code = 500, message = "Internal Server Error Updating a Filter" )
+            @ApiResponse(responseCode = "200", description = "Successfully Updated a Filter"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error Updating a Filter")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/filter")
-    public Filter updateFilter(@ApiParam DomainQuery query) {
-        LOG.debug("updateFilter({})",query);
+    public Filter updateFilter(@Parameter DomainQuery query) {
+        LOG.debug("updateFilter({})", query);
         try {
             return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObjectAs(Filter.class));
         } catch (Exception e) {

@@ -1,10 +1,9 @@
 package org.janelia.jacs2.auth;
 
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.SecurityContext;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.SecurityContext;
+import org.janelia.model.security.Subject;
 
 public class JacsSecurityContextHelper {
 

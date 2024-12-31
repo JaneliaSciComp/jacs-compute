@@ -1,16 +1,17 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.slf4j.Logger;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.slf4j.Logger;
 
 public class JacsQueueSyncer {
 

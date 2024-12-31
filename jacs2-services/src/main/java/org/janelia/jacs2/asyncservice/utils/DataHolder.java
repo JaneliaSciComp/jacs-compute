@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.utils;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class DataHolder<T> {

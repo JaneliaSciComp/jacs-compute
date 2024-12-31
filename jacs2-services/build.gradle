@@ -1,6 +1,6 @@
 project(":jacs2-services") {
     dependencies {
-        api CDI_API_LIB
+        api JAKARTA_CDI_API_LIB
 
         api (JACS_MODEL_ACCESS_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
@@ -24,9 +24,9 @@ project(":jacs2-services") {
                        JACKSON_DATABIND_LIB,
                        JACKSON_DATATYPE_JODA_LIB,
                        JAMA_LIB,
-                       JAX_RS_JERSEY_CLIENT_LIB,
-                       JAX_RS_JERSEY_MEDIA_LIB,
-                       JAX_RS_JERSEY_MEDIA_JSON_LIB,
+                       JERSEY_CLIENT_LIB,
+                       JERSEY_MEDIA_LIB,
+                       JERSEY_MEDIA_JSON_LIB,
                        JAVA_EXP_IMPL_LIB,
                        JAVA_LSF_LIB,
                        JAVAMAIL_LIB,

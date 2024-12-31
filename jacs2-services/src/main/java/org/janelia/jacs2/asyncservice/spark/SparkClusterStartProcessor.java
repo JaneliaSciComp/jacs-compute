@@ -3,8 +3,8 @@ package org.janelia.jacs2.asyncservice.spark;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 

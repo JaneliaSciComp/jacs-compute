@@ -1,10 +1,22 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
@@ -16,19 +28,7 @@ import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Api(value = "Janelia Workstation Domain Data")
+@Tag(name = "DomainSearch", description = "Janelia Workstation Domain Data Search")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
@@ -40,18 +40,18 @@ public class DomainSearchResource {
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
-    @ApiOperation(value = "Performs a document search using the given search parameters",
-            notes = "Refer to the API docs on SOLRQuery for an explanation of the serialized parameters in search parameters"
+    @Operation(summary = "Performs a document search using the given search parameters",
+            description = "Refer to the API docs on SOLRQuery for an explanation of the serialized parameters in search parameters"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully performed the search", response = DocumentSearchResults.class),
-            @ApiResponse(code = 500, message = "Internal Server Error performing SOLR Search")
+            @ApiResponse(responseCode = "200", description = "Successfully performed the search"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error performing SOLR Search")
     })
     @POST
     @Path("/search")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DocumentSearchResults searchSolrIndices(@ApiParam DocumentSearchParams searchParams) {
+    public DocumentSearchResults searchSolrIndices(DocumentSearchParams searchParams) {
         LOG.trace("Start searchSolrIndices({})", searchParams);
         try {
             DocumentSearchResults results = documentIndexingService.searchIndex(searchParams);
@@ -65,16 +65,16 @@ public class DomainSearchResource {
         }
     }
 
-    @ApiOperation(value = "Performs a document search using the given search parametersto find domain objects")
+    @Operation(description = "Performs a document search using the given search parametersto find domain objects")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully performed the search", response = DocumentSearchResults.class),
-            @ApiResponse(code = 500, message = "Internal Server Error performing SOLR Search")
+            @ApiResponse(responseCode = "200", description = "Successfully performed the search"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error performing SOLR Search")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/domainobjects/search")
-    public DocumentSearchResults searchDomainObjects(@ApiParam DocumentSearchParams searchParams) {
+    public DocumentSearchResults searchDomainObjects(DocumentSearchParams searchParams) {
         LOG.trace("Start searchDomainObjects({})", searchParams);
         try {
             DocumentSearchResults searchResults = documentIndexingService.searchIndex(searchParams);

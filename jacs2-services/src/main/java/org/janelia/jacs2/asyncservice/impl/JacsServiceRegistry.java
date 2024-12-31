@@ -1,16 +1,17 @@
 package org.janelia.jacs2.asyncservice.impl;
 
-import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
-import org.janelia.model.service.ServiceMetaData;
-import org.janelia.jacs2.asyncservice.ServiceRegistry;
-import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
+
+import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
+import org.janelia.model.service.ServiceMetaData;
+import org.slf4j.Logger;
 
 public class JacsServiceRegistry implements ServiceRegistry {
 

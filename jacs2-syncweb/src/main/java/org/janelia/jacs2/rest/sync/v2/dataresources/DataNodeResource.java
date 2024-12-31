@@ -3,32 +3,28 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 import java.util.Collections;
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -49,20 +45,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Web service for handling Node entities.
  */
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Data Node Service",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
+@Tag(name = "DataNode",
+        description = "Data Node Service"
 )
 @RequireAuthentication
 @ApplicationScoped
@@ -95,22 +79,21 @@ public class DataNodeResource {
                 .build();
     }
 
-    @ApiOperation(value = "Gets all the children of a node",
-            notes = "Returns all the children of the given node which are visible to the current user."
+    @Operation(summary = "Gets all the children of a node",
+            description = "Returns all the children of the given node which are visible to the current user."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got children", response=DomainObject.class,
-                    responseContainer =  "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting node children" )
+            @ApiResponse( responseCode = "200", description = "Successfully got children"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error getting node children" )
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/children")
-    public Response getNodeChildren(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                    @ApiParam @QueryParam("nodeRef") String nodeReference,
-                                    @ApiParam @QueryParam("sortCriteria") String sortCriteria,
-                                    @ApiParam @QueryParam("page") int page,
-                                    @ApiParam @QueryParam("pageSize") int pageSize) {
+    public Response getNodeChildren(@Parameter @QueryParam("subjectKey") String subjectKey,
+                                    @Parameter @QueryParam("nodeRef") String nodeReference,
+                                    @Parameter @QueryParam("sortCriteria") String sortCriteria,
+                                    @Parameter @QueryParam("page") int page,
+                                    @Parameter @QueryParam("pageSize") int pageSize) {
         LOG.trace("Start getNodeChildren({}, {}, {}, {}, {})", subjectKey, nodeReference, sortCriteria, page, pageSize);
         try {
             if (StringUtils.isBlank(subjectKey)) {
@@ -138,20 +121,20 @@ public class DataNodeResource {
         }
     }
 
-    @ApiOperation(value = "Adds items to a Node",
-            notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
+    @Operation(summary = "Adds items to a Node",
+            description = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
                     "the References parameter for the list of items to add"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully added items to the Node", response=Node.class),
-            @ApiResponse( code = 500, message = "Internal Server Error adding items to the Node" )
+            @ApiResponse( responseCode = "200", description = "Successfully added items to the Node"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error adding items to the Node" )
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/children")
     @SuppressWarnings("unchecked")
-    public <T extends Node> Response addChildren(@ApiParam DomainQuery query,
+    public <T extends Node> Response addChildren(@Parameter DomainQuery query,
                                                  @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("addChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -185,20 +168,20 @@ public class DataNodeResource {
         }
     }
 
-    @ApiOperation(value = "Removes items from a Node",
-            notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
+    @Operation(summary = "Removes items from a Node",
+            description = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
                     "the References parameter for the list of items to remove"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = Node.class),
-            @ApiResponse( code = 500, message = "Internal Server Error removing items from the Node" )
+            @ApiResponse( responseCode = "200", description = "Successfully removed items from the Node"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error removing items from the Node" )
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/children")
     @SuppressWarnings("unchecked")
-    public <T extends Node> Response removeChildren(@ApiParam DomainQuery query,
+    public <T extends Node> Response removeChildren(@Parameter DomainQuery query,
                                                     @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start removeChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -232,18 +215,18 @@ public class DataNodeResource {
         }
     }
 
-    @ApiOperation(value = "Reorders the items in a node",
-            notes = "Uses the DomainObject parameter of the DomainQuery and the Ordering parameter for the new ordering."
+    @Operation(summary = "Reorders the items in a node",
+            description = "Uses the DomainObject parameter of the DomainQuery and the Ordering parameter for the new ordering."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully reordered Node", response = Node.class),
-            @ApiResponse( code = 500, message = "Internal Server Error reordering Node" )
+            @ApiResponse( responseCode = "200", description = "Successfully reordered Node"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error reordering Node" )
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/reorder")
-    public Response reorderNode(@ApiParam DomainQuery query,
+    public Response reorderNode(@Parameter DomainQuery query,
                                 @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start reorderNode({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -276,19 +259,19 @@ public class DataNodeResource {
         }
     }
 
-    @ApiOperation(value = "Creates a folder",
-            notes = "Uses the DomainObject parameter of the DomainQuery to create a new TreeNode (folder) object."
+    @Operation(summary = "Creates a folder",
+            description = "Uses the DomainObject parameter of the DomainQuery to create a new TreeNode (folder) object."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully creating TreeNode", response=TreeNode.class),
-            @ApiResponse( code = 500, message = "Internal Server Error creating TreeNode" )
+            @ApiResponse( responseCode = "200", description = "Successfully creating TreeNode"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error creating TreeNode" )
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("treenode")
     @SuppressWarnings("unchecked")
-    public <T extends TreeNode> Response createTreeNode(@ApiParam DomainQuery query) {
+    public <T extends TreeNode> Response createTreeNode(@Parameter DomainQuery query) {
         LOG.trace("Start createTreeNode({})", query);
         try {
             T dn = (T) query.getDomainObjectAs(TreeNode.class);
@@ -306,17 +289,17 @@ public class DataNodeResource {
         }
     }
 
-    @ApiOperation(value = "Gets the user's default Workspace",
-            notes = "Returns the user's default Workspace object."
+    @Operation(summary = "Gets the user's default Workspace",
+            description = "Returns the user's default Workspace object."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got default workspace", response=Workspace.class),
-            @ApiResponse( code = 500, message = "Internal Server Error getting default workspace" )
+            @ApiResponse( responseCode = "200", description = "Successfully got default workspace"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error getting default workspace" )
     })
     @GET
     @Path("workspace")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getDefaultWorkspaceBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getDefaultWorkspaceBySubjectKey(@Parameter @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDefaultWorkspaceBySubjectKey({})", subjectKey);
         try {
             if (StringUtils.isBlank(subjectKey)) {
@@ -345,18 +328,17 @@ public class DataNodeResource {
         }
     }
 
-    @ApiOperation(value = "Gets all the Workspaces a user can read",
-            notes = "Returns all the Workspaces which are visible to the current user."
+    @Operation(summary = "Gets all the Workspaces a user can read",
+            description = "Returns all the Workspaces which are visible to the current user."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got all workspaces", response=Workspace.class,
-                    responseContainer =  "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting workspaces" )
+            @ApiResponse( responseCode = "200", description = "Successfully got all workspaces"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error getting workspaces" )
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("workspaces")
-    public Response getAllWorkspacesBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getAllWorkspacesBySubjectKey(@Parameter @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getAllWorkspacesBySubjectKey({})", subjectKey);
         try {
             if (StringUtils.isBlank(subjectKey)) {

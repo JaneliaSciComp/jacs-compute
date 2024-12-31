@@ -1,9 +1,27 @@
 package org.janelia.jacs2.rest.async.v2;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import java.util.List;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriBuilder;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
@@ -11,38 +29,21 @@ import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
-import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsServiceData;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriBuilder;
-import java.util.List;
-
-@Api(value = "Asynchronous JACS Service API")
+@Tag(name = "AsyncService", description = "Asynchronous JACS Service API")
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/async-services")
 public class AsyncServiceResource {
 
-    @Inject private JacsServiceEngine jacsServiceEngine;
+    @Inject
+    private JacsServiceEngine jacsServiceEngine;
 
-    @ApiOperation(value = "Submit a list of services", notes = "The submission assumes an implicit positional dependecy where each service depends on its predecessors")
+    @Operation(summary = "Submit a list of services", description = "The submission assumes an implicit positional dependecy where each service depends on its predecessors")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "201", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @RequireAuthentication
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -63,10 +64,10 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @ApiOperation(value = "Submit a single service of the specified type", notes = "")
+    @Operation(summary = "Submit a single service of the specified type")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "201", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @RequireAuthentication
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -96,11 +97,11 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @ApiOperation(value = "Update the number of processing slots", notes = "A value of 0 disables the processing of new services")
+    @Operation(summary = "Update the number of processing slots", description = "A value of 0 disables the processing of new services")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 403, message = "If the user doesn't have admin privileges"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "403", description = "If the user doesn't have admin privileges"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @RequireAuthentication
     @PUT
     @Path("/processing-slots-count/{slots-count}")
@@ -116,11 +117,11 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @ApiOperation(value = "Update the size of the waiting queue", notes = "")
+    @Operation(summary = "Update the size of the waiting queue")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 403, message = "If the user doesn't have admin privileges"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "403", description = "If the user doesn't have admin privileges"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @RequireAuthentication
     @PUT
     @Path("/waiting-slots-count/{slots-count}")
@@ -136,10 +137,10 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @ApiOperation(value = "Retrieve processing statistics", notes = "")
+    @Operation(summary = "Retrieve processing statistics")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @RequireAuthentication
     @GET
     @Path("/stats")

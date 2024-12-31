@@ -1,14 +1,23 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import java.util.List;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmReviewTaskDao;
@@ -17,34 +26,7 @@ import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import java.util.List;
-
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Mouselight Data Service",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "TmReview", description = "Janelia Mouselight Data Service")
 @RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")
@@ -56,28 +38,27 @@ public class TmReviewsResource {
     @Inject
     private TmReviewTaskDao tmReviewTaskDao;
 
-    @ApiOperation(value = "Gets all review tasks",
-            notes = "Returns a list of all the review tasks currently in the system"
+    @Operation(summary = "Gets all review tasks",
+            description = "Returns a list of all the review tasks currently in the system"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of review tasks",  response = TmReviewTask.class,
-                    responseContainer = "List" ),
-            @ApiResponse( code = 500, message = "Error occurred while fetching the review tasks" )
+            @ApiResponse( responseCode = "200", description = "Successfully fetched the list of review tasks"),
+            @ApiResponse( responseCode = "500", description = "Error occurred while fetching the review tasks" )
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/reviewtask")
-    public List<TmReviewTask> getTmReviewTasks(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public List<TmReviewTask> getTmReviewTasks(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getTmReviewTasks()");
         return tmReviewTaskDao.getReviewTasksForSubject(subjectKey);
     }
 
-    @ApiOperation(value = "Creates a new TmReviewTask",
-            notes = "Creates a TmWorkspace using the DomainObject parameter of the DomainQuery"
+    @Operation(summary = "Creates a new TmReviewTask",
+            description = "Creates a TmWorkspace using the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a TmReviewTask", response = TmReviewTask.class),
-            @ApiResponse( code = 500, message = "Error occurred while creating a TmReviewTask" )
+            @ApiResponse( responseCode = "200", description = "Successfully created a TmReviewTask"),
+            @ApiResponse( responseCode = "500", description = "Error occurred while creating a TmReviewTask")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -90,31 +71,31 @@ public class TmReviewsResource {
 
     @POST
     @Path("/reviewtask")
-    @ApiOperation(value = "Updates an existing TmReviewTask",
-            notes = "Updates a TmReviewTask using the DomainObject parameter of the DomainQuery"
+    @Operation(summary = "Updates an existing TmReviewTask",
+            description = "Updates a TmReviewTask using the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully updated a TmReviewTask", response = TmReviewTask.class),
-            @ApiResponse( code = 500, message = "Error occurred while updating a TmReviewTask" )
+            @ApiResponse( responseCode = "200", description = "Successfully updated a TmReviewTask"),
+            @ApiResponse( responseCode = "500", description = "Error occurred while updating a TmReviewTask" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TmReviewTask updateTmReviewTask(@ApiParam DomainQuery query) {
+    public TmReviewTask updateTmReviewTask(DomainQuery query) {
         LOG.trace("Start updateTmReviewTask({})", query);
         return tmReviewTaskDao.updateTmReviewTask(query.getSubjectKey(), (TmReviewTask) query.getDomainObject());
     }
 
     @DELETE
     @Path("/reviewtask")
-    @ApiOperation(value = "Removes a TmReviewTask",
-            notes = "Removes the TmReviewTask using the TmReviewTask Id"
+    @Operation(summary = "Removes a TmReviewTask",
+            description = "Removes the TmReviewTask using the TmReviewTask Id"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed a TmReviewTask"),
-            @ApiResponse( code = 500, message = "Error occurred while removing a TmReviewTask" )
+            @ApiResponse( responseCode = "200", description = "Successfully removed a TmReviewTask"),
+            @ApiResponse( responseCode = "500", description = "Error occurred while removing a TmReviewTask" )
     })
-    public void removeTmReviewTask(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                   @ApiParam @QueryParam("taskReviewId") final Long taskReviewId) {
+    public void removeTmReviewTask(@QueryParam("subjectKey") final String subjectKey,
+                                   @QueryParam("taskReviewId") final Long taskReviewId) {
         LOG.trace("Start removeTmReviewTask({}, taskReviewId={})", subjectKey, taskReviewId);
         tmReviewTaskDao.deleteByIdAndSubjectKey(taskReviewId, subjectKey);
     }

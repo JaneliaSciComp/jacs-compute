@@ -1,20 +1,14 @@
 package org.janelia.jacs2.app;
 
-import com.beust.jcommander.JCommander;
-
-import io.undertow.Undertow;
-import org.janelia.jacs2.app.undertow.UndertowAppContainer;
-import org.janelia.jacs2.cdi.ApplicationConfigProvider;
-import org.janelia.jacs2.config.ApplicationConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.Application;
-
 import java.util.EventListener;
 import java.util.List;
 
-import static io.undertow.servlet.Servlets.servlet;
+import jakarta.ws.rs.core.Application;
+
+import com.beust.jcommander.JCommander;
+import org.janelia.jacs2.app.undertow.UndertowAppContainer;
+import org.janelia.jacs2.cdi.ApplicationConfigProvider;
+import org.janelia.jacs2.config.ApplicationConfig;
 
 /**
  * This is the bootstrap application for JACS services.

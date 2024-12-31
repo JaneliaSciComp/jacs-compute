@@ -1,42 +1,37 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.*;
+import java.util.Collections;
+import java.util.List;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.domain.dto.annotation.CreateAnnotationParams;
 import org.janelia.model.domain.dto.annotation.QueryAnnotationParams;
 import org.janelia.model.domain.dto.annotation.RemoveAnnotationParams;
 import org.janelia.model.domain.dto.annotation.UpdateAnnotationParams;
-import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.domain.ontology.Annotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "Annotations", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
@@ -47,18 +42,18 @@ public class AnnotationResource {
     @Inject
     private AnnotationDao annotationDao;
 
-    @ApiOperation(value = "Creates an annotation",
-            notes = "Creates a new annotation based on the given parameters"
+    @Operation(summary = "Creates an annotation",
+            description = "Creates a new annotation based on the given parameters"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created annotation", response = Annotation.class),
-            @ApiResponse(code = 500, message = "Internal Server Error creating Annotation")
+            @ApiResponse(responseCode = "200", description = "Successfully created annotation"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error creating Annotation")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("annotations")
-    public Annotation createAnnotation(@ApiParam CreateAnnotationParams params) {
+    public Annotation createAnnotation(CreateAnnotationParams params) {
         LOG.trace("Start createAnnotation({})", params);
         try {
             Annotation annotation = annotationDao.createAnnotation(params.getSubjectKey(), params.getTarget(), params.getOntologyTermReference(), params.getValue());
@@ -72,18 +67,18 @@ public class AnnotationResource {
         }
     }
 
-    @ApiOperation(value = "Updates an annotation",
-            notes = "Updates the value of a given annotation"
+    @Operation(summary = "Updates an annotation",
+            description = "Updates the value of a given annotation"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated annotation", response = Annotation.class),
-            @ApiResponse(code = 500, message = "Internal Server Error updated Annotation")
+            @ApiResponse(responseCode = "200", description = "Successfully updated annotation"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error updated Annotation")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("annotations/value")
-    public Annotation updateAnnotation(@ApiParam UpdateAnnotationParams params) {
+    public Annotation updateAnnotation(UpdateAnnotationParams params) {
         LOG.trace("Start updateAnnotation({})", params);
         try {
             Annotation annotation = annotationDao.updateAnnotationValue(params.getSubjectKey(), params.getAnnotationId(), params.getValue());
@@ -97,19 +92,18 @@ public class AnnotationResource {
         }
     }
 
-    @ApiOperation(value = "Returns a list of Annotations",
-            notes = "Returns a list of Annotations for the objects given in the references parameter of the DomainQuery object"
+    @Operation(summary = "Returns a list of Annotations",
+            description = "Returns a list of Annotations for the objects given in the references parameter of the DomainQuery object"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got the list of annotations", response = Annotation.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting the list of Annotations")
+            @ApiResponse(responseCode = "200", description = "Successfully got the list of annotations"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting the list of Annotations")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("annotations/query")
-    public List<Annotation> getAnnotations(@ApiParam QueryAnnotationParams params) {
+    public List<Annotation> getAnnotations(QueryAnnotationParams params) {
         LOG.trace("Start getAnnotations({})", params);
         try {
             if (CollectionUtils.isEmpty(params.getReferences())) {
@@ -125,16 +119,16 @@ public class AnnotationResource {
         }
     }
 
-    @ApiOperation(value = "Removes an Annotation",
-            notes = "Removes an annotation using the Annotation Id"
+    @Operation(summary = "Removes an Annotation",
+            description = "Removes an annotation using the Annotation Id"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully removed the annotation"),
-            @ApiResponse(code = 500, message = "Internal Server Error removing the annotation")
+            @ApiResponse(responseCode = "200", description = "Successfully removed the annotation"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error removing the annotation")
     })
     @PUT
     @Path("annotations/remove")
-    public Response removeAnnotations(@ApiParam RemoveAnnotationParams params) {
+    public Response removeAnnotations(RemoveAnnotationParams params) {
         LOG.trace("Start removeAnnotations({})", params);
         try {
             Annotation annotation = annotationDao.findEntityByIdReadableBySubjectKey(params.getAnnotationId(), params.getSubjectKey());

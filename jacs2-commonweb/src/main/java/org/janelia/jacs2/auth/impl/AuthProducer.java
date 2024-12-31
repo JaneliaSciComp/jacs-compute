@@ -1,15 +1,15 @@
 package org.janelia.jacs2.auth.impl;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
 
 /**
  * Produces the correct authentication implementation based on user-defined properties.

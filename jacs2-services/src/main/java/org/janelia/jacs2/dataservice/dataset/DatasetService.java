@@ -5,7 +5,7 @@ import org.janelia.model.jacs2.domain.sample.DataSet;
 import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.jacs2.dataservice.subject.SubjectService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DatasetService {
 

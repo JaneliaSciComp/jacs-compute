@@ -2,33 +2,29 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriBuilder;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -36,25 +32,10 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.sample.LineRelease;
-import org.janelia.model.security.Group;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Line Release(s)",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "LineRelease", description = "Janelia Workstation Line Release(s)")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/process")
@@ -68,16 +49,15 @@ public class LineReleaseResource {
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
-    @ApiOperation(value = "Gets Release Information for a specific user")
+    @Operation(summary = "Gets Release Information for a specific user")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got release information",
-                    response = Response.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting Release Information")
+            @ApiResponse(responseCode = "200", description = "Successfully got release information"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting Release Information")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("release")
-    public Response getReleasesInfo(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getReleasesInfo(@Parameter @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getReleasesInfo({})", subjectKey);
         try {
             List<LineRelease> lineReleases = legacyDomainDao.getDomainObjects(subjectKey, LineRelease.class);
@@ -94,16 +74,15 @@ public class LineReleaseResource {
         }
     }
 
-    @ApiOperation(value = "Gets Release Information about a specific release")
+    @Operation(summary = "Gets Release Information about a specific release")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got release information",
-                    response = Response.class, responseContainer = "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting Release Information" )
+            @ApiResponse( responseCode = "200", description = "Successfully got release information"),
+            @ApiResponse( responseCode = "500", description = "Internal Server Error getting Release Information" )
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("release/releaseId/{releaseId}")
-    public Response getReleaseInfoById(@ApiParam @PathParam("releaseId") Long releaseId,
+    public Response getReleaseInfoById(@Parameter @PathParam("releaseId") Long releaseId,
                                        @Context SecurityContext securityContext) {
         LOG.trace("Start getReleaseInfoById({}) by {}", releaseId, securityContext.getUserPrincipal());
         try {
@@ -131,17 +110,16 @@ public class LineReleaseResource {
         }
     }
 
-    @ApiOperation(value = "Gets Release Information about a specific release for a specific user")
+    @Operation(summary = "Gets Release Information about a specific release for a specific user")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got release information",
-                    response = Response.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting Release Information")
+            @ApiResponse(responseCode = "200", description = "Successfully got release information"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting Release Information")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("release/{releaseName}")
-    public Response getReleaseInfo(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                   @ApiParam @PathParam("releaseName") String releaseName) {
+    public Response getReleaseInfo(@Parameter @QueryParam("subjectKey") String subjectKey,
+                                   @Parameter @PathParam("releaseName") String releaseName) {
         LOG.trace("Start getReleaseInfo({}, {})", subjectKey, releaseName);
         try {
             List<LineRelease> lineReleases = legacyDomainDao.getDomainObjectsByName(subjectKey, LineRelease.class, releaseName);
@@ -158,10 +136,10 @@ public class LineReleaseResource {
         }
     }
 
-    @ApiOperation(value = "Creates a Line Release using the DomainObject parameter of the DomainQuery")
+    @Operation(summary = "Creates a Line Release using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created a new release", response = LineRelease.class),
-            @ApiResponse(code = 500, message = "Internal Server Error creating a release")
+            @ApiResponse(responseCode = "200", description = "Successfully created a new release"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error creating a release")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -193,10 +171,10 @@ public class LineReleaseResource {
         }
     }
 
-    @ApiOperation(value = "Updates a Line Release using the DomainObject parameter of the DomainQuery")
+    @Operation(summary = "Updates a Line Release using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated a release", response = Response.class),
-            @ApiResponse(code = 500, message = "Internal Server Error updating a release")
+            @ApiResponse(responseCode = "200", description = "Successfully updated a release"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error updating a release")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -227,21 +205,21 @@ public class LineReleaseResource {
         }
     }
 
-    @ApiOperation(value = "Removes the Line Release using the release Id")
+    @Operation(summary = "Removes the Line Release using the release Id")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully removed a release"),
-            @ApiResponse(code = 500, message = "Internal Server Error removing a release")
+            @ApiResponse(responseCode = "200", description = "Successfully removed a release"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error removing a release")
     })
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("release")
-    public Response removeRelease(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                  @ApiParam @QueryParam("releaseId") String releaseIdParam) {
+    public Response removeRelease(@Parameter @QueryParam("subjectKey") String subjectKey,
+                                  @Parameter @QueryParam("releaseId") String releaseIdParam) {
         LOG.trace("Start removeRelease({}, releaseId={})", subjectKey, releaseIdParam);
         Long releaseId;
         try {
             try {
-                releaseId = new Long(releaseIdParam);
+                releaseId = Long.valueOf(releaseIdParam);
             } catch (Exception e) {
                 LOG.error("Invalid release ID: {}", releaseIdParam, e);
                 return Response.status(Response.Status.BAD_REQUEST)

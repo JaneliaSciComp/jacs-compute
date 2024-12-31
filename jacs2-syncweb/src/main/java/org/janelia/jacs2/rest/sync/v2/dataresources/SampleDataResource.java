@@ -7,28 +7,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.base.Splitter;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -38,7 +33,6 @@ import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.sample.FileGroup;
 import org.janelia.model.domain.sample.LSMImage;
@@ -50,20 +44,8 @@ import org.janelia.model.domain.sample.SampleProcessingResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
+@Tag(name = "SampleData",
+        description = "Janelia Workstation Domain Data"
 )
 @RequireAuthentication
 @ApplicationScoped
@@ -76,20 +58,19 @@ public class SampleDataResource {
     @Inject
     private SampleDao sampleDao;
 
-    @ApiOperation(value = "Gets a list of matching samples by the name and/or slide code")
+    @Operation(summary = "Gets a list of matching samples by the name and/or slide code")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of samples", response = Sample.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of Sample(s)")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of samples"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of Sample(s)")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/samples")
-    public Response getSamples(@ApiParam @QueryParam("refs") List<String> refs,
-                               @ApiParam @QueryParam("name") List<String> names,
-                               @ApiParam @QueryParam("slideCode") List<String> slideCodes,
-                               @ApiParam @QueryParam("offset") String offsetParam,
-                               @ApiParam @QueryParam("length") String lengthParam) {
+    public Response getSamples(@Parameter @QueryParam("refs") List<String> refs,
+                               @Parameter @QueryParam("name") List<String> names,
+                               @Parameter @QueryParam("slideCode") List<String> slideCodes,
+                               @Parameter @QueryParam("offset") String offsetParam,
+                               @Parameter @QueryParam("length") String lengthParam) {
         LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
         try {
             Set<Long> sampleIds = extractMultiValueParams(refs).stream()
@@ -120,20 +101,19 @@ public class SampleDataResource {
         }
     }
 
-    @ApiOperation(value = "Gets a list of LSMImage stacks for a sample",
-            notes = "Uses the sample ID"
+    @Operation(summary = "Gets a list of LSMImage stacks for a sample",
+            description = "Uses the sample ID"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of LSMImage stacks", response = LSMImage.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of LSMImage Stacks")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of LSMImage stacks"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of LSMImage Stacks")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/lsms")
-    public Response getLsmsForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                     @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                     @ApiParam @QueryParam("sageSynced") @DefaultValue("true") final String sageSynced) {
+    public Response getLsmsForSample(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                     @Parameter @QueryParam("sampleId") final Long sampleId,
+                                     @Parameter @QueryParam("sageSynced") @DefaultValue("true") final String sageSynced) {
         LOG.trace("Start getLsmsForSample({}, {})", subjectKey, sampleId);
         try {
             List<LSMImage> sampleLSMs;
@@ -162,20 +142,19 @@ public class SampleDataResource {
         }
     }
 
-    @ApiOperation(value = "Gets the secondary data files for an LSM within a sample",
-            notes = "Uses the sample ID"
+    @Operation(summary = "Gets the secondary data files for an LSM within a sample",
+            description = "Uses the sample ID"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got LSM secondary data files", response = Map.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting LSM secondary data files")
+            @ApiResponse(responseCode = "200", description = "Successfully got LSM secondary data files"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting LSM secondary data files")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/lsm")
-    public Response getLSMByNameForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                          @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                          @ApiParam @QueryParam("lsmName") final String lsmName) {
+    public Response getLSMByNameForSample(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                          @Parameter @QueryParam("sampleId") final Long sampleId,
+                                          @Parameter @QueryParam("lsmName") final String lsmName) {
         LOG.trace("Start getLSMByNameForSample({}, {}, {})", subjectKey, sampleId, lsmName);
         try {
             for (LSMImage lsmImage : legacyDomainDao.getActiveLsmsBySampleId(subjectKey, sampleId)) {
@@ -199,22 +178,21 @@ public class SampleDataResource {
         }
     }
 
-    @ApiOperation(value = "Gets the alignment data files for a result within a sample",
-            notes = "Uses the sample ID"
+    @Operation(summary = "Gets the alignment data files for a result within a sample",
+            description = "Uses the sample ID"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got alignment files", response = Map.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting alignment files")
+            @ApiResponse(responseCode = "200", description = "Successfully got alignment files"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting alignment files")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/alignment")
-    public Response getAlignmentForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                          @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                          @ApiParam @QueryParam("objective") final String objective,
-                                          @ApiParam @QueryParam("area") final String area,
-                                          @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
+    public Response getAlignmentForSample(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                          @Parameter @QueryParam("sampleId") final Long sampleId,
+                                          @Parameter @QueryParam("objective") final String objective,
+                                          @Parameter @QueryParam("area") final String area,
+                                          @Parameter @QueryParam("alignmentSpace") final String alignmentSpace) {
         LOG.trace("Start getAlignmentForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, alignmentSpace);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
@@ -252,21 +230,20 @@ public class SampleDataResource {
         }
     }
 
-    @ApiOperation(value = "Gets the primary alignment data files for a result within a sample",
-            notes = "Uses the sample ID"
+    @Operation(summary = "Gets the primary alignment data files for a result within a sample",
+            description = "Uses the sample ID"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got primary alignment files", response = FileType.class,
-                    responseContainer = "Map"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting primary alignment files")
+            @ApiResponse(responseCode = "200", description = "Successfully got primary alignment files"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting primary alignment files")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/alignment/primary")
-    public Response getPrimaryAlignmentForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                 @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                                 @ApiParam @QueryParam("objective") final String objective,
-                                                 @ApiParam @QueryParam("area") final String area) {
+    public Response getPrimaryAlignmentForSample(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                                 @Parameter @QueryParam("sampleId") final Long sampleId,
+                                                 @Parameter @QueryParam("objective") final String objective,
+                                                 @Parameter @QueryParam("area") final String area) {
         LOG.trace("Start getPrimaryAlignmentForSample({}, {}, {}, {})", subjectKey, sampleId, objective, area);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
@@ -304,22 +281,21 @@ public class SampleDataResource {
         }
     }
 
-    @ApiOperation(value = "Gets the secondary data files for a result within a sample",
-            notes = "Uses the sample ID and result filepath"
+    @Operation(summary = "Gets the secondary data files for a result within a sample",
+            description = "Uses the sample ID and result filepath"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got secondary data", response = FileType.class,
-                    responseContainer = "Map"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting secondary data")
+            @ApiResponse(responseCode = "200", description = "Successfully got secondary data"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting secondary data")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/secondary")
-    public Response getSecondaryDataForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                              @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                              @ApiParam @QueryParam("objective") final String objective,
-                                              @ApiParam @QueryParam("area") final String area,
-                                              @ApiParam @QueryParam("tile") final String tile) {
+    public Response getSecondaryDataForSample(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                              @Parameter @QueryParam("sampleId") final Long sampleId,
+                                              @Parameter @QueryParam("objective") final String objective,
+                                              @Parameter @QueryParam("area") final String area,
+                                              @Parameter @QueryParam("tile") final String tile) {
         LOG.trace("Start getSecondaryDataForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, tile);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);

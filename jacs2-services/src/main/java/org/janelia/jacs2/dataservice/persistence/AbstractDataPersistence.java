@@ -1,17 +1,17 @@
 package org.janelia.jacs2.dataservice.persistence;
 
-import org.apache.commons.collections4.CollectionUtils;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import jakarta.enterprise.inject.Instance;
+
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.ReadWriteDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
-
-import javax.enterprise.inject.Instance;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
     Instance<D> daoSource;

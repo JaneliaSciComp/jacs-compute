@@ -1,17 +1,15 @@
 package org.janelia.jacs2.dataservice.persistence;
 
-import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
-import org.janelia.model.access.dao.JacsServiceDataDao;
-import org.janelia.model.service.JacsScheduledServiceData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
+
+import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
+import org.janelia.model.service.JacsScheduledServiceData;
 
 public class JacsScheduledServiceDataPersistence extends AbstractDataPersistence<JacsScheduledServiceDataDao, JacsScheduledServiceData, Number> {
 

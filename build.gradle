@@ -15,48 +15,45 @@ project.ext {
 }
 
 subprojects {
-    configurations {
-        provided
-        implementation.extendsFrom(provided)
-        testArtifacts.extendsFrom(testImplementation)
-        integrationTestCompileOnly.extendsFrom(testCompileOnly)
-        integrationTestImplementation.extendsFrom(testImplementation)
-        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "https://nexus.janelia.org/repository/maven-releases"
+        }
+        maven {
+            url "https://nexus.janelia.org/repository/maven-snapshots"
+        }
+        maven {
+            url "https://maven.scijava.org/content/groups/public"
+        }
+        flatDir {
+            dirs "${rootDir}/projectrepository"
+        }
     }
-
-    apply from: "${rootDir}/deps.gradle"
 
     sourceSets {
         integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integrationTest/java')
-            }
-            resources {
-                srcDir file('src/integrationTest/resources')
-            }
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
         }
     }
 
-    afterEvaluate {
-        repositories {
-            mavenLocal()
-            mavenCentral()
-            maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
-            }
-            maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
-            }
-            maven {
-                url "https://maven.scijava.org/content/groups/public"
-            }
-            flatDir {
-                dirs "${rootDir}/projectrepository"
-            }
-        }
+    configurations {
+        testArtifacts.extendsFrom(testImplementation)
 
+        integrationTestImplementation.extendsFrom(testImplementation)
+        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        integrationTestRuntimeElements.extendsFrom(integrationTestImplementation, integrationTestRuntimeOnly)
+
+        mockitoAgent { transitive = false }
+    }
+
+    def mockitoAgentRef = configurations.getByName("mockitoAgent")
+
+    apply from: "${rootDir}/deps.gradle"
+
+    afterEvaluate {
         compileJava {
             doFirst {
                 options.compilerArgs = [
@@ -100,8 +97,7 @@ subprojects {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-                    configurations.integrationTestCompileClasspath,
-                    configurations.integrationTestRuntimeClasspath
+                        configurations.integrationTestRuntimeElements,
                 ]
             }
         }
@@ -114,6 +110,17 @@ subprojects {
         downloadLicenses {
             includeProjectDependencies = true
             dependencyConfiguration = 'implementation'
+        }
+
+        java {
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
+        }
+
+        test {
+            useJUnitPlatform()
+
+            jvmArgs("-javaagent:${mockitoAgentRef.asPath}")
         }
 
         tasks.register('testJar', Jar) {
@@ -130,12 +137,8 @@ subprojects {
             testArtifacts testJar
         }
     }
-    
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.11.1"
+    gradleVersion = "8.11.2"
 }

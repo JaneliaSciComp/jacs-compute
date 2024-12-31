@@ -6,27 +6,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.base.Splitter;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -39,21 +35,7 @@ import org.janelia.model.domain.flyem.EMDataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "EMData", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/emdata")
@@ -65,25 +47,23 @@ public class EMDataResource {
     @Inject
     private EmDataSetDao emDataSetDao;
 
-    @ApiOperation(value = "Gets a list of EM bodies for an em dataset")
+    @Operation(summary = "Gets a list of EM bodies for an em dataset")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of EM bodies",
-                         response = EMBody.class,
-                         responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of EM Bodies")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of EM bodies"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of EM Bodies")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/dataset/{emDatasetName}/{emDatasetVersion}")
-    public Response getEmBodiesForDataset(@ApiParam @PathParam("emDatasetName") String emDatasetName,
-                                          @ApiParam @PathParam("emDatasetVersion") String emDatasetVersion,
-                                          @ApiParam @QueryParam("name") List<String> names,
-                                          @ApiParam @QueryParam("offset") String offsetParam,
-                                          @ApiParam @QueryParam("length") String lengthParam) {
+    public Response getEmBodiesForDataset(@Parameter @PathParam("emDatasetName") String emDatasetName,
+                                          @Parameter @PathParam("emDatasetVersion") String emDatasetVersion,
+                                          @Parameter @QueryParam("name") List<String> names,
+                                          @Parameter @QueryParam("offset") String offsetParam,
+                                          @Parameter @QueryParam("length") String lengthParam) {
         LOG.trace("Start getEmBodiesForDataset({}, {}, {}, {})", emDatasetName, emDatasetVersion, offsetParam, lengthParam);
         try {
             EMDataSet dataSet = emDataSetDao.getDataSetByNameAndVersion(emDatasetName, emDatasetVersion);
-            if (dataSet==null) {
+            if (dataSet == null) {
                 LOG.warn("Could not find data set {}:{}", emDatasetName, emDatasetVersion);
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity(new ErrorResponse("No EM dataset found for " + emDatasetName + ":" + emDatasetVersion))
@@ -94,7 +74,8 @@ public class EMDataResource {
             int length = parseIntegerParam("length", lengthParam, -1);
             List<EMBody> emBodyList = emBodyDao.getBodiesWithNameForDataSet(dataSet, emBodies, offset, length);
             return Response
-                    .ok(new GenericEntity<List<EMBody>>(emBodyList){})
+                    .ok(new GenericEntity<List<EMBody>>(emBodyList) {
+                    })
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting EM bodies for {}:{} between {} and {}", emDatasetName, emDatasetVersion,
@@ -107,17 +88,15 @@ public class EMDataResource {
         }
     }
 
-    @ApiOperation(value = "Gets a list of EM bodies")
+    @Operation(summary = "Gets a list of EM bodies")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of EM bodies",
-                    response = EMBody.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of EM Bodies")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of EM bodies"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of EM Bodies")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/emBodies")
-    public Response getEmBodies(@ApiParam @QueryParam("refs") List<String> refs) {
+    public Response getEmBodies(@Parameter @QueryParam("refs") List<String> refs) {
         LOG.trace("Start getEmBodies({})", refs);
         try {
             Set<Long> emBodyIds = extractMultiValueParams(refs).stream()
@@ -134,7 +113,8 @@ public class EMDataResource {
                     .collect(Collectors.toList());
 
             return Response
-                    .ok(new GenericEntity<List<EMBody>>(emBodyListResult){})
+                    .ok(new GenericEntity<List<EMBody>>(emBodyListResult) {
+                    })
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting EM bodies for {}", refs, e);

@@ -1,39 +1,40 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
-import io.swagger.models.Operation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.rest.ErrorResponse;
@@ -43,27 +44,15 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.tiledMicroscope.*;
-import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
+import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmOperation;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Mouselight Data Service",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
-
+@Tag(name = "TmWorkspace", description = "Janelia Mouselight Data Service")
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
@@ -81,48 +70,20 @@ public class TmWorkspaceResource {
     @Inject
     private HortaDataManager hortaDataManager;
 
-    // TODO: this doesn't seem to belong here, but I'm just commenting it until we can verify
-    //       (with the 9.14 release) that nothing is actually calling this.
-//    @ApiOperation(value = "Gets all the Workspaces a user can read",
-//            notes = "Returns all the Workspaces which are visible to the current user."
-//    )
-//    @ApiResponses(value = {
-//            @ApiResponse(
-//                    code = 200, message = "Successfully got all workspaces",
-//                    response = Workspace.class,
-//                    responseContainer = "List"),
-//            @ApiResponse(code = 500, message = "Internal Server Error getting workspaces")
-//    })
-//    @GET
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @Path("/workspaces")
-//    public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
-//        LOG.info("getAllWorkspace({})", subjectKey);
-//        try {
-//            return legacyWorkspaceDao.getWorkspaces(subjectKey);
-//        } catch (Exception e) {
-//            LOG.error("Error occurred getting default workspace for {}", subjectKey, e);
-//            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-//        } finally {
-//            LOG.trace("Finished getAllWorkspace({})", subjectKey);
-//        }
-//    }
-
-    @ApiOperation(value = "Gets a list of TM Workspaces",
-            notes = "Returns a list of all the TM Workspaces that are accessible by the current user"
+    @Operation(summary = "Gets a list of TM Workspaces",
+            description = "Returns a list of all the TM Workspaces that are accessible by the current user"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of workspaces", response = TmWorkspace.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error occurred while fetching the workspaces")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of workspaces"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while fetching the workspaces")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace")
-    public List<TmWorkspace> getTmWorkspaces(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                             @ApiParam @QueryParam("sampleId") Long sampleId,
-                                             @ApiParam @QueryParam("offset") Long offsetParam,
-                                             @ApiParam @QueryParam("length") Integer lengthParam) {
+    public List<TmWorkspace> getTmWorkspaces(@Parameter @QueryParam("subjectKey") String subjectKey,
+                                             @Parameter @QueryParam("sampleId") Long sampleId,
+                                             @Parameter @QueryParam("offset") Long offsetParam,
+                                             @Parameter @QueryParam("length") Integer lengthParam) {
         LOG.info("getTmWorkspaces({}, sampleId={}, offset={}, length={})", subjectKey, sampleId, offsetParam, lengthParam);
         if (sampleId == null) {
             long offset = offsetParam != null ? offsetParam : 0;
@@ -133,28 +94,26 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "Gets a TM Workspace by id",
-            notes = "Returns the TM Workspace identified by the given id"
-    )
+    @Operation(summary = "Gets a TM Workspace by id",
+            description = "Returns the TM Workspace identified by the given id")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the workspace", response = TmWorkspace.class),
-            @ApiResponse(code = 500, message = "Error occurred while fetching the workspace")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the workspace"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while fetching the workspace")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/{workspaceId}")
-    public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                      @ApiParam @PathParam("workspaceId") Long workspaceId) {
+    public TmWorkspace getTmWorkspace(@Parameter @QueryParam("subjectKey") String subjectKey,
+                                      @Parameter @PathParam("workspaceId") Long workspaceId) {
         LOG.info("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         return tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
     }
 
-    @ApiOperation(value = "Creates a new TmWorkspace",
-            notes = "Creates a TmWorkspace using the DomainObject parameter of the DomainQuery"
-    )
+    @Operation(summary = "Creates a new TmWorkspace",
+            description = "Creates a TmWorkspace using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created a TmWorkspace", response = TmWorkspace.class),
-            @ApiResponse(code = 500, message = "Error occurred while creating a TmWorkspace")
+            @ApiResponse(responseCode = "200", description = "Successfully created a TmWorkspace"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while creating a TmWorkspace")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -165,70 +124,66 @@ public class TmWorkspaceResource {
         return tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
-    @ApiOperation(value = "Creates a copy of an existing TmWorkspace",
-            notes = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery"
-    )
+    @Operation(summary = "Creates a copy of an existing TmWorkspace",
+            description = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully copies a TmWorkspace", response = TmWorkspace.class),
-            @ApiResponse(code = 500, message = "Error occurred while copying a TmWorkspace")
+            @ApiResponse(responseCode = "200", description = "Successfully copies a TmWorkspace"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while copying a TmWorkspace")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/copy")
-    public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
+    public TmWorkspace copyTmWorkspace(@Parameter DomainQuery query) {
         LOG.info("copyTmWorkspace({})", query);
         return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
     }
 
-    @ApiOperation(value = "Updates an existing TmWorkspace",
-            notes = "Updates a TmWorkspace using the DomainObject parameter of the DomainQuery"
-    )
+    @Operation(summary = "Updates an existing TmWorkspace",
+            description = "Updates a TmWorkspace using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated a TmWorkspace", response = TmWorkspace.class),
-            @ApiResponse(code = 500, message = "Error occurred while updating a TmWorkspace")
+            @ApiResponse(responseCode = "200", description = "Successfully updated a TmWorkspace"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while updating a TmWorkspace")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace")
-    public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
+    public TmWorkspace updateTmWorkspace(@Parameter DomainQuery query) {
         LOG.info("updateTmWorkspace({})", query);
         return tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
-    @ApiOperation(value = "Removes a TmWorkspace",
-            notes = "Removes the TmWorkspace using the TmWorkspace Id"
-    )
+    @Operation(summary = "Removes a TmWorkspace",
+            description = "Removes the TmWorkspace using the TmWorkspace Id")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully removed a TmWorkspace"),
-            @ApiResponse(code = 500, message = "Error occurred while removing a TmWorkspace")
+            @ApiResponse(responseCode = "200", description = "Successfully removed a TmWorkspace"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while removing a TmWorkspace")
     })
     @DELETE
     @Path("/workspace")
-    public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                  @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
+    public void removeTmWorkspace(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                  @Parameter @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         hortaDataManager.removeWorkspace(subjectKey, workspace);
     }
 
-    @ApiOperation(value = "Gets the neurons for a workspace",
-            notes = "Returns a list of neurons contained in a given workspace"
-    )
+    @Operation(summary = "Gets the neurons for a workspace",
+            description = "Returns a list of neurons contained in a given workspace")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched neurons", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched neurons"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while occurred while fetching the neurons")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("/workspace/neuron")
-    public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                        @ApiParam @QueryParam("offset") final Long offsetParam,
-                                        @ApiParam @QueryParam("length") final Integer lengthParam,
-                                        @ApiParam @QueryParam("frags") final Boolean fragsParam) {
+    public Response getWorkspaceNeurons(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                        @Parameter @QueryParam("workspaceId") final Long workspaceId,
+                                        @Parameter @QueryParam("offset") final Long offsetParam,
+                                        @Parameter @QueryParam("length") final Integer lengthParam,
+                                        @Parameter @QueryParam("frags") final Boolean fragsParam) {
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         boolean filterFrags = fragsParam == null ? false : fragsParam;
         LOG.info("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={}, frags={})",
@@ -265,18 +220,17 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "loads fragments into a workspace",
-            notes = "saves a list of 3D Bounding Boxes into a given workspace"
-    )
+    @Operation(summary = "loads fragments into a workspace",
+            description = "saves a list of 3D Bounding Boxes into a given workspace")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully saved bounding boxes", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while saving the bounding boxes")
+            @ApiResponse(responseCode = "200", description = "Successfully saved bounding boxes"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while saving the bounding boxes")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/workspace/boundingboxes")
-    public Response saveWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+    public Response saveWorkspaceBoundingBoxes(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                              @Parameter @QueryParam("workspaceId") final Long workspaceId,
                                               List<BoundingBox3d> boxes) {
         LOG.info("saveWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
@@ -297,18 +251,17 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "Gets fragment bounding boxes for a workspace",
-            notes = "Returns a list of 3D Bounding Boxes contained in a given workspace"
-    )
+    @Operation(summary = "Gets fragment bounding boxes for a workspace",
+            description = "Returns a list of 3D Bounding Boxes contained in a given workspace")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched bounding boxes", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the bounding boxes")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched bounding boxes"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while occurred while fetching the bounding boxes")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/boundingboxes")
-    public Response getWorkspaceBoundingBoxes(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
+    public Response getWorkspaceBoundingBoxes(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                        @Parameter @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceBoundingBoxes({}, {})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
@@ -327,19 +280,18 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "Gets neuron metadata given a neuronId",
-            notes = "Returns a list of neurons given their ids"
-    )
+    @Operation(summary = "Gets neuron metadata given a neuronId",
+            description = "Returns a list of neurons given their ids")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched neuron metadata", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched neuron metadata"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while occurred while fetching the neurons")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/neuron/metadata")
-    public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                      @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+    public List<TmNeuronMetadata> getWorkspaceNeurons(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                                      @Parameter @QueryParam("workspaceId") final Long workspaceId,
                                                       List<Long> neuronIds) {
         LOG.info("getWorkspaceNeurons({}, workspaceId={}, neuronIds={})", subjectKey, workspaceId, DomainUtils.abbr(neuronIds));
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
@@ -347,37 +299,35 @@ public class TmWorkspaceResource {
                 neuronIds);
     }
 
-    @ApiOperation(value = "Gets a count of the neurons in a workspace",
-            notes = "Returns a the number of neurons giving a workspace id"
-    )
+    @Operation(summary = "Gets a count of the neurons in a workspace",
+            description = "Returns a the number of neurons giving a workspace id")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched neuron counts", response = List.class),
-            @ApiResponse(code = 500, message = "Error occurred while occurred while processing the neuron count")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched neuron counts"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while occurred while processing the neuron count")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/neurons/totals")
-    public Long getWorkspaceNeuronCount(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
+    public Long getWorkspaceNeuronCount(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                        @Parameter @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceNeuronCount({}, workspaceId={})", subjectKey, workspaceId);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         return tmNeuronMetadataDao.getNeuronCountsForWorkspace(workspace, subjectKey);
     }
 
-    @ApiOperation(value = "Bulk update neuron styles",
-            notes = "Update style for a list of neurons"
-    )
+    @Operation(summary = "Bulk update neuron styles",
+            description = "Update style for a list of neurons")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully bulk updated styles"),
-            @ApiResponse(code = 500, message = "Error occurred while bulk updating styles")
+            @ApiResponse(responseCode = "200", description = "Successfully bulk updated styles"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while bulk updating styles")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuronStyle")
-    public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                       @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                       @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
+    public Response updateNeuronStyles(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                       @Parameter @QueryParam("workspaceId") final Long workspaceId,
+                                       @Parameter final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
         LOG.info("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (bulkNeuronStyleUpdate.getVisible() == null && !StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
@@ -389,22 +339,21 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "Add or remove tags",
-            notes = "Add or remove the given tags to a list of neurons"
-    )
+    @Operation(summary = "Add or remove tags",
+            description = "Add or remove the given tags to a list of neurons")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully bulk updated tags"),
-            @ApiResponse(code = 500, message = "Error occurred while bulk updating tags")
+            @ApiResponse(responseCode = "200", description = "Successfully bulk updated tags"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while bulk updating tags")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuronTags")
-    public Response addNeuronTags(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                  @ApiParam @QueryParam("tags") final String tags,
-                                  @ApiParam @QueryParam("tagState") final boolean tagState,
-                                  @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                  @ApiParam final List<Long> neuronIds) {
+    public Response addNeuronTags(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                  @Parameter @QueryParam("tags") final String tags,
+                                  @Parameter @QueryParam("tagState") final boolean tagState,
+                                  @Parameter @QueryParam("workspaceId") final Long workspaceId,
+                                  @Parameter final List<Long> neuronIds) {
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
         LOG.info("addNeuronTag({}, tags={}, tagState={}, workspaceId={}, neuronIds={})",
@@ -422,23 +371,22 @@ public class TmWorkspaceResource {
     }
 
 
-    @ApiOperation(value = "Creates an TM Operation log for an operation performed during neuron tracing",
-            notes = "Stores the operation log in the TmOperation table for future analysis"
-    )
+    @Operation(summary = "Creates an TM Operation log for an operation performed during neuron tracing",
+            description = "Stores the operation log in the TmOperation table for future analysis")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created an operation log"),
-            @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
+            @ApiResponse(responseCode = "200", description = "Successfully created an operation log"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while creating the operation log")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/operation/log")
-    public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
-                                   @ApiParam @QueryParam("sampleId") Long sampleId,
-                                   @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                   @ApiParam @QueryParam("neuronId") Long neuronId,
-                                   @ApiParam @QueryParam("activity") TmOperation.Activity activity,
-                                   @ApiParam @QueryParam("elapsedTime") Long elapsedTime,
-                                   @ApiParam @QueryParam("timestamp") String timestamp) {
+    public void createOperationLog(@Parameter @QueryParam("username") String subjectKey,
+                                   @Parameter @QueryParam("sampleId") Long sampleId,
+                                   @Parameter @QueryParam("workspaceId") Long workspaceId,
+                                   @Parameter @QueryParam("neuronId") Long neuronId,
+                                   @Parameter @QueryParam("activity") TmOperation.Activity activity,
+                                   @Parameter @QueryParam("elapsedTime") Long elapsedTime,
+                                   @Parameter @QueryParam("timestamp") String timestamp) {
         try {
             DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
             Date timestampDate = null;
@@ -453,21 +401,20 @@ public class TmWorkspaceResource {
         }
     }
 
-    @ApiOperation(value = "gets Operation logs based off username, workspace or timestamp range",
-            notes = "returns a list of operation logs based off the query"
-    )
+    @Operation(summary = "gets Operation logs based off username, workspace or timestamp range",
+            description = "returns a list of operation logs based off the query")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved operation logs"),
-            @ApiResponse(code = 500, message = "Error occurred while getting the operation logs")
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved operation logs"),
+            @ApiResponse(responseCode = "500", description = "Error occurred while getting the operation logs")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/operation/log/search")
-    public  List<TmOperation> getOperationLog(@ApiParam @QueryParam("username") String subjectKey,
-                                                @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                                @ApiParam @QueryParam("neuronId") Long neuronId,
-                                                @ApiParam @QueryParam("startTime") String startTime,
-                                                @ApiParam @QueryParam("endTime") String endTime) {
+    public  List<TmOperation> getOperationLog(@Parameter @QueryParam("username") String subjectKey,
+                                                @Parameter @QueryParam("workspaceId") Long workspaceId,
+                                                @Parameter @QueryParam("neuronId") Long neuronId,
+                                                @Parameter @QueryParam("startTime") String startTime,
+                                                @Parameter @QueryParam("endTime") String endTime) {
         try {
             DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
             Date startTimeDate = null, endTimeDate = null;

@@ -3,7 +3,11 @@ package org.janelia.jacs2.auth.impl;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.directory.api.i18n.I18n;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.ldap.client.api.*;
+import org.apache.directory.ldap.client.api.AbstractPoolableLdapConnectionFactory;
+import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
+import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.ldap.client.api.LdapConnectionConfig;
+import org.apache.directory.ldap.client.api.LdapConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

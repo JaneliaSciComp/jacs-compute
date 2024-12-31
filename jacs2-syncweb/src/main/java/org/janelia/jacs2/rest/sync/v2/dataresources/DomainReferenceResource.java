@@ -4,25 +4,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
@@ -37,21 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Web service for handling Node entities.
  */
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Data Node Service",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "DomainReference", description = "Data Node Service")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/reference")
@@ -84,8 +66,8 @@ public class DomainReferenceResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/direct_ancestors")
-    public Response getNodeDirectAncestors(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                           @ApiParam @QueryParam("nodeRef") String nodeReferenceParam) {
+    public Response getNodeDirectAncestors(@Parameter @QueryParam("subjectKey") String subjectKey,
+                                           @Parameter @QueryParam("nodeRef") String nodeReferenceParam) {
         LOG.trace("Start getNodeDirectAncestors({}, {})", subjectKey, nodeReferenceParam);
         try {
             Reference nodeReference = Reference.createFor(nodeReferenceParam);

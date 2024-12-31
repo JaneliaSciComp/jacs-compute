@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.service.ServiceArgDescriptor;
 import org.janelia.model.service.ServiceMetaData;
 
-import javax.inject.Named;
+import jakarta.inject.Named;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

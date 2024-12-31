@@ -6,16 +6,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
+import jakarta.servlet.ServletException;
+import jakarta.ws.rs.core.Application;
 
 import com.google.common.collect.ImmutableList;
-
-import io.swagger.jersey.config.JerseyJaxrsConfig;
+import io.swagger.v3.jaxrs2.integration.OpenApiServlet;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
-import io.undertow.attribute.*;
+import io.undertow.attribute.BytesSentAttribute;
+import io.undertow.attribute.ExchangeAttribute;
+import io.undertow.attribute.QueryStringAttribute;
+import io.undertow.attribute.RemoteHostAttribute;
+import io.undertow.attribute.RequestHeaderAttribute;
+import io.undertow.attribute.RequestMethodAttribute;
+import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
@@ -91,7 +96,7 @@ public class UndertowAppContainer implements AppContainer {
 
         String basepath = "http://" + appArgs.hostname + ":" + appArgs.portNumber + contextPath;
         ServletInfo swaggerDocsServlet =
-                servlet("swaggerDocsServlet", JerseyJaxrsConfig.class)
+                servlet("swaggerDocsServlet", OpenApiServlet.class)
                         .setLoadOnStartup(2)
                         .addInitParam("api.version", restApiVersion)
                         .addInitParam("swagger.api.basepath", basepath);

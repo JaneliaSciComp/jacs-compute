@@ -1,6 +1,31 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.PasswordProvider;
@@ -21,34 +46,7 @@ import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation User Management",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "User", description = "Janelia Workstation User Management")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
@@ -66,12 +64,10 @@ public class UserResource {
     @Inject
     private UserManager userManager;
 
-    @ApiOperation(value = "Gets a user by their subject key",
-            notes = ""
-    )
+    @Operation(summary = "Gets a user by their subject key")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully attempted user retrieval", response = User.class),
-            @ApiResponse(code = 500, message = "Internal Server Error trying to get or create user")
+            @ApiResponse(responseCode = "200", description = "Successfully attempted user retrieval"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error trying to get or create user")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -101,18 +97,18 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Creates a User",
-            notes = "The users's name must be populated."
+    @Operation(summary = "Creates a User",
+            description = "The users's name must be populated."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created new user", response = User.class),
-            @ApiResponse(code = 500, message = "Internal Server Error trying to create new user")
+            @ApiResponse(responseCode = "200", description = "Successfully created new user"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error trying to create new user")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user")
-    public Response createUser(@ApiParam User user) {
+    public Response createUser(@Parameter User user) {
         String userName = user.getName();
         LOG.trace("Start createUser({})", user.getName());
         try {
@@ -123,22 +119,20 @@ public class UserResource {
             }
             User newUser = userManager.createUser(user);
             return Response.ok(newUser).build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error trying to create new user {}", userName, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to create new user " + userName))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finished createUser({})", userName);
         }
     }
 
-    @ApiOperation(value = "Changes a user's password")
+    @Operation(summary = "Changes a user's password")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully set user password", response = User.class),
-            @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
+            @ApiResponse(responseCode = "200", description = "Successfully set user password"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error setting user preferences")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -172,12 +166,12 @@ public class UserResource {
     /**
      * @deprecated use getUser/createUser instead of this.
      */
-    @ApiOperation(value = "Gets a user, creating the user if necessary",
-            notes = "The authenticated user must be the same as the user being retrieved"
+    @Operation(summary = "Gets a user, creating the user if necessary",
+            description = "The authenticated user must be the same as the user being retrieved"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully attempted user retrieval", response = User.class),
-            @ApiResponse(code = 500, message = "Internal Server Error trying to get or create user")
+            @ApiResponse(responseCode = "200", description = "Successfully attempted user retrieval"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error trying to get or create user")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -198,7 +192,7 @@ public class UserResource {
                 User user = new User();
                 user.setName(username);
                 user = userManager.createUser(user);
-                if (user!=null) {
+                if (user != null) {
                     return Response.ok(user).build();
                 }
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -215,18 +209,18 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Updates a user details",
-            notes = "The user id is used to search for the appropriate user"
+    @Operation(summary = "Updates a user details",
+            description = "The user id is used to search for the appropriate user"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated user", response = User.class),
-            @ApiResponse(code = 500, message = "Internal Server Error trying to update user")
+            @ApiResponse(responseCode = "200", description = "Successfully updated user"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error trying to update user")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/property")
-    public Response updateUser(@ApiParam Map<String, Object> userProperties, @Context ContainerRequestContext containerRequestContext) {
+    public Response updateUser(@Parameter Map<String, Object> userProperties, @Context ContainerRequestContext containerRequestContext) {
         // TODO: this method should update the user based on a user id, which is a stable identifier
         String username = (String) userProperties.get("name");
         try {
@@ -253,38 +247,35 @@ public class UserResource {
                 if (emailR && fullNameR && nameR) {
                     dbUser = subjectDao.findUserByNameOrKey(username);
                     return Response.ok(dbUser).build();
-                }
-                else {
+                } else {
                     return Response.status(Response.Status.BAD_REQUEST).build();
                 }
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error trying to update user {}", username, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to update user roles " + username))
                     .build();
-        }
-        finally {
-           LOG.trace("Finished updateUserProperty");
+        } finally {
+            LOG.trace("Finished updateUserProperty");
         }
     }
 
 
-    @ApiOperation(value = "Updates the user's group roles",
-            notes = "The user id is used to search for the appropriate user"
+    @Operation(summary = "Updates the user's group roles",
+            description = "The user id is used to search for the appropriate user"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated user property", response = User.class),
-            @ApiResponse(code = 500, message = "Internal Server Error trying to update user")
+            @ApiResponse(responseCode = "200", description = "Successfully updated user property"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error trying to update user")
     })
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/roles")
-    public Response updateUserRoles(@ApiParam Set<UserGroupRole> roles,
-                                    @ApiParam @QueryParam("userKey") String userKey) {
+    public Response updateUserRoles(@Parameter Set<UserGroupRole> roles,
+                                    @Parameter @QueryParam("userKey") String userKey) {
         User user = subjectDao.findUserByNameOrKey(userKey);
         LOG.info("Start UpdateUser({}, {})", userKey, roles);
         if (user == null) {
@@ -310,40 +301,37 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Creates a Group",
-            notes = "The group's name and fullName attributes must be populated."
+    @Operation(summary = "Creates a Group",
+            description = "The group's name and fullName attributes must be populated."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created new group", response = Group.class),
-            @ApiResponse(code = 500, message = "Internal Server Error trying to create new group")
+            @ApiResponse(responseCode = "200", description = "Successfully created new group"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error trying to create new group")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/group")
-    public Response createGroup(@ApiParam Group group) {
+    public Response createGroup(@Parameter Group group) {
         String groupName = group.getName();
         LOG.trace("Start CreateGroup({})", group.getName());
         try {
             Group newGroup = userManager.createGroup(group);
             return Response.ok(newGroup).build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error trying to create new group {}", groupName, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to create new group " + groupName))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finished createGroup({})", groupName);
         }
     }
 
-    @ApiOperation(value = "Get a List of the Workstation Users")
+    @Operation(summary = "Get a List of the Workstation Users")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of workstation users", response = Subject.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of workstation users")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of workstation users"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of workstation users")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
@@ -364,11 +352,10 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Get a subject by their name or subject key")
+    @Operation(summary = "Get a subject by their name or subject key")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got subject", response = Subject.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting subject")
+            @ApiResponse(responseCode = "200", description = "Successfully got subject"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting subject")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
@@ -391,11 +378,10 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Get a subject by their name or subject key")
+    @Operation(summary = "Get a subject by their name or subject key")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got subject", response = Subject.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting subject")
+            @ApiResponse(responseCode = "200", description = "Successfully got subject"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting subject")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
@@ -412,17 +398,16 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Get a List of the User's Preferences")
+    @Operation(summary = "Get a List of the User's Preferences")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got user preferences", response = Preference.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting user preferences")
+            @ApiResponse(responseCode = "200", description = "Successfully got user preferences"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting user preferences")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/preferences")
-    public Response getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getPreferences(@Parameter @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getPreferences({})", subjectKey);
         try {
             List<Preference> subjectPreferences = legacyDomainDao.getPreferences(subjectKey);
@@ -435,12 +420,12 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Sets User Preferences",
-            notes = "uses the Preferences Parameter of the DomainQuery."
+    @Operation(summary = "Sets User Preferences",
+            description = "uses the Preferences Parameter of the DomainQuery."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully set user preferences", response = Preference.class),
-            @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
+            @ApiResponse(responseCode = "200", description = "Successfully set user preferences"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error setting user preferences")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -458,18 +443,18 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Sets the permissions for a subject's access to a given domain object",
-            notes = "uses a map (targetClass=domainObject class, granteeKey = user subject key, " +
+    @Operation(summary = "Sets the permissions for a subject's access to a given domain object",
+            description = "uses a map (targetClass=domainObject class, granteeKey = user subject key, " +
                     "rights = read, write, targetId=Id of the domainObject"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully set user preferences"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting user preferences")
+            @ApiResponse(responseCode = "200", description = "Successfully set user preferences"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting user preferences")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/user/permissions")
-    public void setPermissions(@ApiParam Map<String, Object> params) {
+    public void setPermissions(@Parameter Map<String, Object> params) {
         LOG.trace("Start setPermissions({})", params);
         try {
             String subjectKey = (String) params.get("subjectKey");
@@ -490,18 +475,17 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Gets a List of Members",
-            notes = "Uses the group key to retrieve a list of members"
+    @Operation(summary = "Gets a List of Members",
+            description = "Uses the group key to retrieve a list of members"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of members", response = Subject.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error fetching the members")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of members"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error fetching the members")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/group/{groupKey:.*}/members")
-    public List<Subject> getMembers(@ApiParam @PathParam("groupKey") final String groupKey) {
+    public List<Subject> getMembers(@Parameter @PathParam("groupKey") final String groupKey) {
         LOG.trace("Start getMembers({})", groupKey);
         try {
             return subjectDao.getGroupMembers(groupKey);
@@ -510,11 +494,10 @@ public class UserResource {
         }
     }
 
-    @ApiOperation(value = "Get a list of groups and number of users in each group")
+    @Operation(summary = "Get a list of groups and number of users in each group")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of groups", response = Map.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of groups")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of groups"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of groups")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -534,17 +517,16 @@ public class UserResource {
     /**
      * TODO: move this to DatasetResource
      */
-    @ApiOperation(value = "Get a list of data sets a given group has access to read")
+    @Operation(summary = "Get a list of data sets a given group has access to read")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got list of datasets", response = HashMap.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error getting list of datasets")
+            @ApiResponse(responseCode = "200", description = "Successfully got list of datasets"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error getting list of datasets")
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/group/{groupName:.*}/data_sets")
-    public Map<String, String> getDataSets(@ApiParam @PathParam("groupName") final String groupName) {
+    public Map<String, String> getDataSets(@Parameter @PathParam("groupName") final String groupName) {
         LOG.trace("Start getDataSets({})", groupName);
         try {
             return datasetDao.getDatasetsByGroupName(groupName);
@@ -556,7 +538,7 @@ public class UserResource {
         }
     }
 
-    private boolean checkAdministrationPrivileges (String username, ContainerRequestContext containerRequestContext) {
+    private boolean checkAdministrationPrivileges(String username, ContainerRequestContext containerRequestContext) {
         Subject authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubject(containerRequestContext, Subject.class);
         Subject authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubject(containerRequestContext, Subject.class);
 

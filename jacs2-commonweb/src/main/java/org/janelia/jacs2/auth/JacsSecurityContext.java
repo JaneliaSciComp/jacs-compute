@@ -1,12 +1,12 @@
 package org.janelia.jacs2.auth;
 
+import java.security.Principal;
+
+import jakarta.ws.rs.core.SecurityContext;
+
 import com.google.common.base.Preconditions;
 import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
 import org.janelia.model.security.util.SubjectUtils;
-
-import javax.ws.rs.core.SecurityContext;
-import java.security.Principal;
 
 public class JacsSecurityContext implements SecurityContext {
 

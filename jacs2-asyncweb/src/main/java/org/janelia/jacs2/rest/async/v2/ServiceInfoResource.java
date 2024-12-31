@@ -1,11 +1,33 @@
 package org.janelia.jacs2.rest.async.v2;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.UriInfo;
+
 import com.google.common.base.Splitter;
 import com.google.common.io.ByteStreams;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
@@ -22,28 +44,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-@Api(value = "JACS Service Info")
+@Tag(name = "ServiceInfo", description = "JACS Service Info")
 @RequestScoped
 @Produces("application/json")
 @Path("/services")
@@ -53,10 +54,10 @@ public class ServiceInfoResource {
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
 
-    @ApiOperation(value = "Count services", notes = "")
+    @Operation(summary = "Count services")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @GET
     @Produces("text/plain")
@@ -91,10 +92,10 @@ public class ServiceInfoResource {
                 .build();
     }
 
-    @ApiOperation(value = "Search queued services", notes = "")
+    @Operation(summary = "Search queued services")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @GET
     public Response searchServices(@QueryParam("service-name") String serviceName,
@@ -216,10 +217,10 @@ public class ServiceInfoResource {
         return pattern;
     }
 
-    @ApiOperation(value = "Get service info", notes = "Returns data about a given service")
+    @Operation(summary = "Get service info", description = "Returns data about a given service")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @GET
     @Path("/{service-instance-id}")
@@ -242,10 +243,10 @@ public class ServiceInfoResource {
         }
     }
 
-    @ApiOperation(value = "Get service info", notes = "Returns service standard output")
+    @Operation(summary = "Get service info", description = "Returns service standard output")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @GET
     @Produces({"application/json", "application/octet-stream"})
@@ -299,10 +300,10 @@ public class ServiceInfoResource {
         }
     }
 
-    @ApiOperation(value = "Get service info", notes = "Returns service standard error")
+    @Operation(summary = "Get service info", description = "Returns service standard error")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @RequireAuthentication
     @GET
     @Produces({"application/json", "application/octet-stream"})

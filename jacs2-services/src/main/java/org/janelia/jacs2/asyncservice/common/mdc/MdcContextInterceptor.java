@@ -1,11 +1,11 @@
 package org.janelia.jacs2.asyncservice.common.mdc;
 
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InvocationContext;
+
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.MDC;
-
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
 
 @MdcContext
 @Interceptor

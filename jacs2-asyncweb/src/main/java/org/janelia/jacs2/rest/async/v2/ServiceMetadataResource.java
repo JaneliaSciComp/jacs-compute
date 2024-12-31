@@ -1,22 +1,23 @@
 package org.janelia.jacs2.rest.async.v2;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import java.util.List;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.model.service.ServiceMetaData;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import java.util.List;
-
-@Api(value = "JACS Service Info")
+@Tag(name = "ServiceMetadata", description = "JACS Service Info")
 @RequestScoped
 @Produces("application/json")
 @Path("/services")
@@ -24,10 +25,10 @@ public class ServiceMetadataResource {
 
     @Inject private ServiceRegistry serviceRegistry;
 
-    @ApiOperation(value = "Get metadata about all services", notes = "")
+    @Operation(summary = "Get metadata about all services")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @GET
     @Path("/metadata")
     public Response getAllServicesMetadata() {
@@ -38,11 +39,11 @@ public class ServiceMetadataResource {
                 .build();
     }
 
-    @ApiOperation(value = "Get metadata about a given service", notes = "")
+    @Operation(summary = "Get metadata about a given service")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "If the service name is invalid"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "404", description = "If the service name is invalid"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @GET
     @Path("/metadata/{service-name}")
     public Response getServiceMetadata(@PathParam("service-name") String serviceName) {

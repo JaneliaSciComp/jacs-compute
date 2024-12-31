@@ -40,10 +40,14 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
 
     File prepareProcessingDir(Path processDir) {
         File processCwd;
-        if (processDir == null) {
-            processCwd = com.google.common.io.Files.createTempDir();
-        } else {
-            processCwd = processDir.toFile();
+        try {
+            if (processDir == null) {
+                processCwd = Files.createTempDirectory("").toFile();
+            } else {
+                processCwd = processDir.toFile();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
         if (!processCwd.exists()) {
             if (!processCwd.mkdirs()) {

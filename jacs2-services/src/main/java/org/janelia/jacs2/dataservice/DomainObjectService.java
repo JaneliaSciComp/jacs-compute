@@ -9,7 +9,7 @@ import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.jacs2.dao.DaoFactory;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;

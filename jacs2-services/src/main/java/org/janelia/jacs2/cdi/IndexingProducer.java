@@ -3,9 +3,9 @@ package org.janelia.jacs2.cdi;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.Produces;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.Produces;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;

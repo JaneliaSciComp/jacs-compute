@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.ws.rs.core.Application;
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.ws.rs.core.Application;
 
 import org.janelia.jacs2.cdi.SeContainerFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;

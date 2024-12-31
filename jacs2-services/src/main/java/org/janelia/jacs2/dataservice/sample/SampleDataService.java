@@ -25,7 +25,7 @@ import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.jacs2.dataservice.DomainObjectService;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;

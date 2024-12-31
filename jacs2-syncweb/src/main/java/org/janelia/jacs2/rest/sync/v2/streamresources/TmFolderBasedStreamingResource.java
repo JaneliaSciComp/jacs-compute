@@ -6,34 +6,29 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.rendering.Coordinate;
-import org.janelia.rendering.RawImage;
 import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.RenderedVolumeMetadata;
-import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
 
 @ApplicationScoped
@@ -48,11 +43,11 @@ public class TmFolderBasedStreamingResource {
     @Inject
     private Logger logger;
 
-    @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified base folder")
+    @Operation(summary = "Get sample rendering info", description = "Retrieve volume rendering info for the specified base folder")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = RenderedVolumeMetadata.class),
-            @ApiResponse(code = 404, message = "Sample not found or no rendering"),
-            @ApiResponse(code = 500, message = "Error occurred")})
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "404", description = "Sample not found or no rendering"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("volume_info/{baseFolder:.*}")
@@ -77,13 +72,13 @@ public class TmFolderBasedStreamingResource {
                 ;
     }
 
-    @ApiOperation(
-            value = "Find closest tile info from voxel coordinates",
-            notes = "Retrieve info about the closest tile to the specified voxel")
+    @Operation(
+            summary = "Find closest tile info from voxel coordinates",
+            description = "Retrieve info about the closest tile to the specified voxel")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = RawImage.class),
-            @ApiResponse(code = 404, message = "Base folder not found"),
-            @ApiResponse(code = 500, message = "Error occurred")})
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "404", description = "Base folder not found"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("closest_raw_tile_info/{baseFolder:.*}")
@@ -115,13 +110,13 @@ public class TmFolderBasedStreamingResource {
                 ;
     }
 
-    @ApiOperation(
-            value = "Find closest tile info from voxel coordinates",
-            notes = "Retrieve info about the closest tile to the specified voxel")
+    @Operation(
+            summary = "Find closest tile info from voxel coordinates",
+            description = "Retrieve info about the closest tile to the specified voxel")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "Base folder not found"),
-            @ApiResponse(code = 500, message = "Error occurred")})
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "404", description = "Base folder not found"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("closest_raw_tile_stream/{baseFolder:.*}")
@@ -170,10 +165,10 @@ public class TmFolderBasedStreamingResource {
                 ;
     }
 
-    @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")
+    @Operation(summary = "Get sample tile", description = "Returns the requested TM sample tile at the specified zoom level")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred")})
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @GET
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Path("rendering/tile/{baseFolder:.*}")
@@ -195,10 +190,10 @@ public class TmFolderBasedStreamingResource {
                 storageAttributes);
     }
 
-    @ApiOperation(value = "Tiff Stream", notes = "Streams the requested tile stored as a TIFF file")
+    @Operation(summary = "Tiff Stream", description = "Streams the requested tile stored as a TIFF file")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred")})
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred")})
     @GET
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Path("mouseLightTiffStream")

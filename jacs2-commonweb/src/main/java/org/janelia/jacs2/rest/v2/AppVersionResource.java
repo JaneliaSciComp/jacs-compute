@@ -2,33 +2,32 @@ package org.janelia.jacs2.rest.v2;
 
 import java.io.InputStream;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.io.ByteStreams;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.slf4j.Logger;
 
 @ApplicationScoped
 @Path("/version")
-@Api(value = "Application version API")
+@Tag(name = "AppVersion", description = "Application version API")
 public class AppVersionResource {
 
     @Inject private Logger logger;
 
-    @ApiOperation(value = "Get application's version")
+    @Operation(summary = "Get application's version")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Error occurred") })
     @GET
     @Produces({"text/plain", "application/json"})
     public Response getApplicationVersion() {

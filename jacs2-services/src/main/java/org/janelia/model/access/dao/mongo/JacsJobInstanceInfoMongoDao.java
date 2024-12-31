@@ -6,7 +6,7 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.service.JacsJobInstanceInfo;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Mongo based implementation of JacsJobInstanceInfoDao.

@@ -10,7 +10,7 @@ import org.janelia.model.jacs2.sage.ControlledVocabulary;
 import org.janelia.model.jacs2.sage.SlideImage;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

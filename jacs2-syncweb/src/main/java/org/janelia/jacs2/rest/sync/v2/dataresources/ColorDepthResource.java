@@ -12,31 +12,26 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -59,21 +54,7 @@ import org.janelia.model.domain.workspace.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
-                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Janelia Workstation Domain Data",
-        authorizations = {
-                @Authorization("user"),
-                @Authorization("runAs")
-        }
-)
+@Tag(name = "ColorDepth", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
@@ -89,17 +70,16 @@ public class ColorDepthResource {
     @Inject
     private LineReleaseDao lineReleaseDao;
 
-    @ApiOperation(value = "Gets all color depth mips that match the given parameters")
+    @Operation(description = "Gets all color depth mips that match the given parameters")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of color depth mips", response = ColorDepthImage.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Invalid id"),
-            @ApiResponse(code = 500, message = "Internal Server Error fetching the color depth mips")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of color depth mips"),
+            @ApiResponse(responseCode = "404", description = "Invalid id"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error fetching the color depth mips")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("colorDepthMIPs/{id}")
-    public Response getColorDepthMipById(@ApiParam @PathParam("id") Long id) {
+    public Response getColorDepthMipById(@PathParam("id") Long id) {
         LOG.trace("Start getColorDepthMipById({})", id);
         try {
             ColorDepthImage cdm = colorDepthImageDao.findById(id);
@@ -118,23 +98,22 @@ public class ColorDepthResource {
         }
     }
 
-    @ApiOperation(value = "Counts all color depth mips that match the given parameters")
+    @Operation(description = "Counts all color depth mips that match the given parameters")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of color depth mips", response = ColorDepthImage.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error fetching the color depth mips")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of color depth mips"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error fetching the color depth mips")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @Path("colorDepthMIPsCount")
-    public Response countColorDepthMipsByLibrary(@ApiParam @QueryParam("ownerKey") String ownerKey,
-                                                 @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
-                                                 @ApiParam @QueryParam("libraryName") List<String> libraryNames,
-                                                 @ApiParam @QueryParam("id") List<String> ids,
-                                                 @ApiParam @QueryParam("name") List<String> names,
-                                                 @ApiParam @QueryParam("filepath") List<String> filepaths,
-                                                 @ApiParam @QueryParam("dataset") List<String> datasets,
-                                                 @ApiParam @QueryParam("release") List<String> releases) {
+    public Response countColorDepthMipsByLibrary(@QueryParam("ownerKey") String ownerKey,
+                                                 @QueryParam("alignmentSpace") String alignmentSpace,
+                                                 @QueryParam("libraryName") List<String> libraryNames,
+                                                 @QueryParam("id") List<String> ids,
+                                                 @QueryParam("name") List<String> names,
+                                                 @QueryParam("filepath") List<String> filepaths,
+                                                 @QueryParam("dataset") List<String> datasets,
+                                                 @QueryParam("release") List<String> releases) {
         LOG.trace("Start countColorDepthMipsByLibrary({}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets);
         try {
             List<String> sampleRefs = retrieveSampleRefs(extractMultiValueParams(datasets), extractMultiValueParams(releases)).stream()
@@ -159,16 +138,15 @@ public class ColorDepthResource {
         }
     }
 
-    @ApiOperation(value = "Counts all color depth mips per alignment space for the given library")
+    @Operation(description = "Counts all color depth mips per alignment space for the given library")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the color depth mips count", response = Map.class,
-                    responseContainer = "Map"),
-            @ApiResponse(code = 500, message = "Internal Server Error counting the color depth mips")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the color depth mips count"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error counting the color depth mips")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @Path("colorDepthMIPsCountPerAlignmentSpace")
-    public Response countColorDepthMipsPerAlignmentSpaceByLibrary(@ApiParam @QueryParam("libraryName") String libraryName) {
+    public Response countColorDepthMipsPerAlignmentSpaceByLibrary(@QueryParam("libraryName") String libraryName) {
         LOG.trace("Start countColorDepthMipsPerAlignmentSpaceByLibrary({})", libraryName);
         try {
             return Response
@@ -179,25 +157,24 @@ public class ColorDepthResource {
         }
     }
 
-    @ApiOperation(value = "Gets all color depth mips that match the given parameters")
+    @Operation(description = "Gets all color depth mips that match the given parameters")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of color depth mips", response = ColorDepthImage.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error fetching the color depth mips")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of color depth mips"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error fetching the color depth mips")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("colorDepthMIPs")
-    public Response getMatchingColorDepthMips(@ApiParam @QueryParam("ownerKey") String ownerKey,
-                                              @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
-                                              @ApiParam @QueryParam("libraryName") List<String> libraryNames,
-                                              @ApiParam @QueryParam("id") List<String> ids,
-                                              @ApiParam @QueryParam("name") List<String> names,
-                                              @ApiParam @QueryParam("filepath") List<String> filepaths,
-                                              @ApiParam @QueryParam("dataset") List<String> datasets,
-                                              @ApiParam @QueryParam("release") List<String> releases,
-                                              @ApiParam @QueryParam("offset") String offsetParam,
-                                              @ApiParam @QueryParam("length") String lengthParam) {
+    public Response getMatchingColorDepthMips(@QueryParam("ownerKey") String ownerKey,
+                                              @QueryParam("alignmentSpace") String alignmentSpace,
+                                              @QueryParam("libraryName") List<String> libraryNames,
+                                              @QueryParam("id") List<String> ids,
+                                              @QueryParam("name") List<String> names,
+                                              @QueryParam("filepath") List<String> filepaths,
+                                              @QueryParam("dataset") List<String> datasets,
+                                              @QueryParam("release") List<String> releases,
+                                              @QueryParam("offset") String offsetParam,
+                                              @QueryParam("length") String lengthParam) {
         LOG.trace("Start getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets, offsetParam, lengthParam);
         try {
             int offset = parseIntegerParam("offset", offsetParam, 0);
@@ -227,25 +204,24 @@ public class ColorDepthResource {
         }
     }
 
-    @ApiOperation(value = "Gets all color depth mips that match the given parameters with the corresponding samples")
+    @Operation(description = "Gets all color depth mips that match the given parameters with the corresponding samples")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of color depth mips", response = ColorDepthImage.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal Server Error fetching the color depth mips")
+            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of color depth mips"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error fetching the color depth mips")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("colorDepthMIPsWithSamples")
-    public Response getMatchingColorDepthMipsWithSample(@ApiParam @QueryParam("ownerKey") String ownerKey,
-                                                        @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
-                                                        @ApiParam @QueryParam("libraryName") List<String> libraryNames,
-                                                        @ApiParam @QueryParam("id") List<String> ids,
-                                                        @ApiParam @QueryParam("name") List<String> names,
-                                                        @ApiParam @QueryParam("filepath") List<String> filepaths,
-                                                        @ApiParam @QueryParam("dataset") List<String> datasets,
-                                                        @ApiParam @QueryParam("release") List<String> releases,
-                                                        @ApiParam @QueryParam("offset") String offsetParam,
-                                                        @ApiParam @QueryParam("length") String lengthParam) {
+    public Response getMatchingColorDepthMipsWithSample(@QueryParam("ownerKey") String ownerKey,
+                                                        @QueryParam("alignmentSpace") String alignmentSpace,
+                                                        @QueryParam("libraryName") List<String> libraryNames,
+                                                        @QueryParam("id") List<String> ids,
+                                                        @QueryParam("name") List<String> names,
+                                                        @QueryParam("filepath") List<String> filepaths,
+                                                        @QueryParam("dataset") List<String> datasets,
+                                                        @QueryParam("release") List<String> releases,
+                                                        @QueryParam("offset") String offsetParam,
+                                                        @QueryParam("length") String lengthParam) {
         LOG.trace("Start getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, ids, names, filepaths, offsetParam, lengthParam);
         long start = System.currentTimeMillis();
         try {
@@ -345,10 +321,10 @@ public class ColorDepthResource {
         }
     }
 
-    @ApiOperation(value = "Update public URLs for the color depth image")
+    @Operation(description = "Update public URLs for the color depth image")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated the specified color depth image", response = ColorDepthImage.class),
-            @ApiResponse(code = 500, message = "Internal Server Error updating the color depth image")
+            @ApiResponse(responseCode = "200", description = "Successfully updated the specified color depth image"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error updating the color depth image")
     })
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)

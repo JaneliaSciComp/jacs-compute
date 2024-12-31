@@ -2,8 +2,8 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import java.io.File;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableSet;

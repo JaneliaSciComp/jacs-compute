@@ -1,15 +1,15 @@
 package org.janelia.jacs2.asyncservice.common.cluster;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMonitor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Attaches a monitoring thread to a JobManager.

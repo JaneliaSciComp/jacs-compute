@@ -1,9 +1,9 @@
 package org.janelia.jacs2.cdi;
 
-import org.janelia.jacs2.job.BackgroundJobs;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
+import org.janelia.jacs2.job.BackgroundJobs;
 
 public class WebApplicationProducer {
 
