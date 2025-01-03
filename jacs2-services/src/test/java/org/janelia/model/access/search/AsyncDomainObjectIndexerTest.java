@@ -3,28 +3,19 @@ package org.janelia.model.access.search;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        DomainUtils.class,
-})
 public class AsyncDomainObjectIndexerTest {
     private static class TestData {
         private final MessageSender messageSender;
@@ -79,7 +70,7 @@ public class AsyncDomainObjectIndexerTest {
     }
 
     private List<DomainObject> prepareDocumentsForIndexing(boolean searchable) {
-        PowerMockito.mockStatic(DomainUtils.class);
+//        PowerMockito.mockStatic(DomainUtils.class);
 
         return LongStream.rangeClosed(1, 10)
                 .mapToObj(i -> {

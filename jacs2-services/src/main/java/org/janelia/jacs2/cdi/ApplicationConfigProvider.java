@@ -32,7 +32,7 @@ public class ApplicationConfigProvider {
         if (appDynamicArgs != null) APP_DYNAMIC_ARGS.putAll(appDynamicArgs);
     }
 
-    private ApplicationConfig applicationConfig = new ApplicationConfigImpl();
+    private final ApplicationConfig applicationConfig = new ApplicationConfigImpl();
 
     public ApplicationConfigProvider fromDefaultResources() {
         return fromProperties(System.getProperties())

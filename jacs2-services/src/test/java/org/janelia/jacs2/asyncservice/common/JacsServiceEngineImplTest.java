@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import java.util.List;
 
-import javax.enterprise.inject.Instance;
+import jakarta.enterprise.inject.Instance;
 
 import com.google.common.collect.ImmutableList;
 

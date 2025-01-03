@@ -1,13 +1,25 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula.ospackage:com.netflix.nebula.ospackage.gradle.plugin:11.10.1'
+    }
+}
+
 plugins {
     id 'application'
     id 'distribution'
+    id 'com.netflix.nebula.ospackage' version '11.10.1'
 }
 
-mainClassName = 'org.janelia.jacs2.app.SyncServicesApp'
+application {
+    mainClass = 'org.janelia.jacs2.app.SyncServicesApp'
+}
 
-project(":jacs2-syncweb") {
+project(':jacs2-syncweb') {
     dependencies {
-        implementation project(":jacs2-commonweb"),
+        implementation project(':jacs2-commonweb'),
                        JACKSON_JAXRS_XML_PROVIDER,
                        JERSEY_SERVER_LIB,
                        SOLR_SEARCH_LIB,
@@ -16,7 +28,7 @@ project(":jacs2-syncweb") {
                        JACS_STORAGE_CLIENTS_LIB,
                        WELD_CDI_SE_CORE_LIB
 
-        testImplementation project(path: ":jacs2-commonweb", configuration: "testArtifacts")
+        testImplementation project(path: ':jacs2-commonweb', configuration: 'testArtifacts')
     }
 
     distributions {

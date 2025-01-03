@@ -1,5 +1,7 @@
 package org.janelia.jacs2.rest.async.v2;
 
+import jakarta.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableList;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -9,12 +11,9 @@ import org.janelia.model.service.JacsServiceData;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class ServiceInfoResourceTest extends AbstractAsyncServicesAppResourceTest {
 

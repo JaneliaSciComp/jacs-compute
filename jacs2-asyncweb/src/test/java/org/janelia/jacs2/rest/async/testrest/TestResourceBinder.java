@@ -2,8 +2,8 @@ package org.janelia.jacs2.rest.async.testrest;
 
 import java.lang.annotation.Annotation;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.glassfish.hk2.api.Injectee;
 import org.glassfish.hk2.api.InjectionResolver;

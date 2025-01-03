@@ -1,5 +1,11 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+
+import jakarta.enterprise.inject.Instance;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
@@ -25,11 +31,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Instance;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;

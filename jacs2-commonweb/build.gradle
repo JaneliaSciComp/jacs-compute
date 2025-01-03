@@ -1,6 +1,6 @@
-project(":jacs2-commonweb") {
+project(':jacs2-commonweb') {
     dependencies {
-        api project(":jacs2-services"),
+        api project(':jacs2-services'),
             JAKARTA_RS_API_LIB,
             JAKARTA_SERVLET_API_LIB,
             SWAGGER_JAXRS_LIB,

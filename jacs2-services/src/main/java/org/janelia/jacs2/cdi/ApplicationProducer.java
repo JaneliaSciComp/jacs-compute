@@ -87,7 +87,7 @@ public class ApplicationProducer {
         return new ApplicationConfigProvider()
                 .fromDefaultResources()
                 .fromEnvVar("JACS2_CONFIG")
-                .fromMap(ApplicationConfigProvider.getAppDynamicArgs())
+//                .fromMap(ApplicationConfigProvider.getAppDynamicArgs())
                 .build();
     }
 }

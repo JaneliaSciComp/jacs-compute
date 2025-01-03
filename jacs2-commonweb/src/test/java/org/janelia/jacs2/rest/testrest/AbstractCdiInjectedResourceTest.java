@@ -7,8 +7,8 @@ import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.enterprise.inject.se.SeContainerInitializer;
 
 import static org.mockito.Mockito.spy;
 

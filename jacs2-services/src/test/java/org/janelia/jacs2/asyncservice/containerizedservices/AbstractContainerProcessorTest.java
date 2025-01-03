@@ -1,5 +1,11 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+import jakarta.enterprise.inject.Instance;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
@@ -15,11 +21,6 @@ import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Instance;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;

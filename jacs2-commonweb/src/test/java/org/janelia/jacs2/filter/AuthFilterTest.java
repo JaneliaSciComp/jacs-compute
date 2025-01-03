@@ -1,5 +1,16 @@
 package org.janelia.jacs2.filter;
 
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.UriInfo;
+
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -7,43 +18,21 @@ import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
+import org.janelia.model.util.ReflectionUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableMap;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        AuthFilter.class,
-})
-@PowerMockIgnore({"javax.crypto.*" }) // Due to https://github.com/powermock/powermock/issues/294
+@ExtendWith(MockitoExtension.class)
 public class AuthFilterTest {
 
     private static final String TEST_KEY = "TESTKEY";
@@ -57,17 +46,14 @@ public class AuthFilterTest {
     private Logger logger;
     @Mock
     private ResourceInfo resourceInfo;
+    @InjectMocks
     private AuthFilter authFilter;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp() throws NoSuchFieldException {
         authFilter = new AuthFilter();
-        Whitebox.setInternalState(authFilter, "subjectDao", subjectDao);
-        Whitebox.setInternalState(authFilter, "logger", logger);
-        Whitebox.setInternalState(authFilter, "resourceInfo", resourceInfo);
-        Whitebox.setInternalState(authFilter, "jwtProvider", jwtProvider);
-        Whitebox.setInternalState(authFilter, "apiKey", TEST_KEY);
-        Whitebox.setInternalState(authFilter, "systemUser", TEST_SYSTEM_USER);
+        ReflectionUtils.setFieldValue(authFilter, "apiKey", TEST_KEY);
+        ReflectionUtils.setFieldValue(authFilter, "systemUser", TEST_SYSTEM_USER);
     }
 
     @Test
@@ -77,7 +63,8 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod())
+                .then(invocation -> TestResource.class.getMethod("m"));
         authFilter.filter(requestContext);
         Mockito.verifyNoMoreInteractions(requestContext, subjectDao, jwtProvider);
     }
@@ -90,7 +77,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         final String testUserName = "thisuser";
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("UserName", testUserName)));
@@ -122,7 +109,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         final String testUserName = "thisuser";
         final String runAsThisUser = "runasthis";
         Mockito.when(requestContext.getHeaders())
@@ -163,7 +150,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         final String testUserName = "thisuser";
         final String runAsThisUser = "runasthis";
         Mockito.when(requestContext.getHeaders())
@@ -203,7 +190,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "Bearer " + testToken)));
         Mockito.when(jwtProvider.decodeJWT(testToken)).thenReturn(createTestJWT(testUserName));
@@ -234,7 +221,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "APIKEY " + TEST_KEY)));
         UriInfo uriInfo = Mockito.mock(UriInfo.class);
@@ -252,7 +239,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "APIKEY badkey")));
         UriInfo uriInfo = Mockito.mock(UriInfo.class);
@@ -270,7 +257,7 @@ public class AuthFilterTest {
             }
         }
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> TestResource.class.getMethod("m"));
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of()));
         UriInfo uriInfo = Mockito.mock(UriInfo.class);

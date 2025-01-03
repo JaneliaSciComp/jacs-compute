@@ -3,9 +3,9 @@ plugins {
 }
 
 allprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'idea'
-    apply plugin: 'eclipse'
+    apply(plugin: 'java-library')
+    apply(plugin: 'idea')
+    apply(plugin: 'eclipse')
     group = 'org.janelia.jacs2'
     version = '9.20.0-RC1'
 }
@@ -19,13 +19,13 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven {
-            url "https://nexus.janelia.org/repository/maven-releases"
+            url= 'https://nexus.janelia.org/repository/maven-releases'
         }
         maven {
-            url "https://nexus.janelia.org/repository/maven-snapshots"
+            url= 'https://nexus.janelia.org/repository/maven-snapshots'
         }
         maven {
-            url "https://maven.scijava.org/content/groups/public"
+            url= 'https://maven.scijava.org/content/groups/public'
         }
         flatDir {
             dirs "${rootDir}/projectrepository"
@@ -103,8 +103,8 @@ subprojects {
         }
 
         license {
-            header rootProject.file('LICENSE')
-            exclude "**/*"
+            header = rootProject.file('LICENSE')
+            exclude('**/*')
         }
 
         downloadLicenses {
@@ -120,25 +120,25 @@ subprojects {
         test {
             useJUnitPlatform()
 
-            jvmArgs("-javaagent:${mockitoAgentRef.asPath}")
+            jvmArgs("-javaagent:${mockitoAgentRef.asPath}", "-Xshare:off")
         }
 
         tasks.register('testJar', Jar) {
-            from sourceSets.test.output
+            from(sourceSets.test.output)
             archiveClassifier.set("test")
         }
 
         tasks.register('integrationTest', Test) {
-            testClassesDirs += sourceSets.integrationTest.output.classesDirs
+            testClassesDirs = sourceSets.integrationTest.output.classesDirs
             classpath = sourceSets.integrationTest.runtimeClasspath
         }
     
         artifacts {
-            testArtifacts testJar
+            testArtifacts(testJar)
         }
     }
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.11.2"
+    gradleVersion = '8.12'
 }

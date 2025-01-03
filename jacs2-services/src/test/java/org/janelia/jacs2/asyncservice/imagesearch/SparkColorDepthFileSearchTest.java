@@ -32,9 +32,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import static org.junit.Assert.fail;
@@ -44,11 +41,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        SparkColorDepthFileSearch.class,
-        FileUtils.class
-})
 public class SparkColorDepthFileSearchTest {
 
     private static final String TEST_WORKSPACE = "testColorDepthLocalWorkspace";
@@ -119,7 +111,7 @@ public class SparkColorDepthFileSearchTest {
         Mockito.when(sparkAppProcessor.process(any(JacsServiceData.class)))
                 .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult(testService)));
 
-        PowerMockito.mockStatic(Files.class);
+//        PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(Files.find(any(Path.class), anyInt(), any(BiPredicate.class))).then(invocation -> {
             Path root = invocation.getArgument(0);

@@ -2,11 +2,10 @@ package org.janelia.jacs2.rest.sync.testrest;
 
 import java.util.concurrent.ExecutorService;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.InjectionPoint;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JWTProvider;
@@ -28,7 +27,26 @@ import org.janelia.jacs2.user.UserManager;
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.dao.*;
+import org.janelia.model.access.domain.dao.AnnotationDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.EmBodyDao;
+import org.janelia.model.access.domain.dao.EmDataSetDao;
+import org.janelia.model.access.domain.dao.LSMImageDao;
+import org.janelia.model.access.domain.dao.LineReleaseDao;
+import org.janelia.model.access.domain.dao.OntologyDao;
+import org.janelia.model.access.domain.dao.PublishedImageDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
+import org.janelia.model.access.domain.dao.SampleDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
+import org.janelia.model.access.domain.dao.SummaryDao;
+import org.janelia.model.access.domain.dao.SyncedRootDao;
+import org.janelia.model.access.domain.dao.TmAgentDao;
+import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
+import org.janelia.model.access.domain.dao.TmReviewTaskDao;
+import org.janelia.model.access.domain.dao.TmSampleDao;
+import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;

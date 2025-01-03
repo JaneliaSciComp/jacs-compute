@@ -16,7 +16,6 @@ import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.lob.ReaderInputStream;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.data.NamedData;
@@ -112,7 +111,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         return streamOutputDir(outputDir)
                 .map(outputPath -> () -> {
                     try {
-                        return new NamedData<>(outputPath.toString(), new ReaderInputStream(Files.newBufferedReader(outputPath)));
+                        return new NamedData<>(outputPath.toString(), Files.newInputStream(outputPath));
                     } catch (IOException e) {
                         LOG.error("Error streaming {}", outputPath, e);
                         throw new UncheckedIOException(e);

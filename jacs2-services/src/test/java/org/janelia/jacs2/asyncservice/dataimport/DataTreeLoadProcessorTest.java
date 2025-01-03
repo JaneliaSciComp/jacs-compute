@@ -28,12 +28,8 @@ import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
@@ -63,11 +59,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        DataTreeLoadProcessor.class,
-        StorageContentHelper.class
-})
 public class DataTreeLoadProcessorTest {
     private static final String DEFAULT_WORKING_DIR = "testWorking";
     private static final String TEST_LOCAL_WORKSPACE = "testDataTreeLocal";
@@ -249,7 +240,6 @@ public class DataTreeLoadProcessorTest {
                         false,
                         null));
 
-        PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
             InputStream is = invocation.getArgument(0);
@@ -281,8 +271,8 @@ public class DataTreeLoadProcessorTest {
         FileInputStream f2PngMipStream = mock(FileInputStream.class);
         Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
         Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         @SuppressWarnings("unchecked")
@@ -421,7 +411,6 @@ public class DataTreeLoadProcessorTest {
                         false,
                         null));
 
-        PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
             InputStream is = invocation.getArgument(0);
@@ -454,8 +443,8 @@ public class DataTreeLoadProcessorTest {
         FileInputStream f2PngMipStream = mock(FileInputStream.class);
         Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
         Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         @SuppressWarnings("unchecked")
@@ -561,7 +550,6 @@ public class DataTreeLoadProcessorTest {
                         false,
                         null));
 
-        PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
             InputStream is = invocation.getArgument(0);
@@ -593,8 +581,8 @@ public class DataTreeLoadProcessorTest {
         FileInputStream f2PngMipStream = mock(FileInputStream.class);
         Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
         Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         @SuppressWarnings("unchecked")
@@ -744,7 +732,7 @@ public class DataTreeLoadProcessorTest {
 
         Mockito.when(folderService.getOrCreateFolder(any(Number.class), nullable(String.class), anyString(), anyString())).thenThrow(IllegalStateException.class);
 
-        PowerMockito.mockStatic(Files.class);
+//        PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
             InputStream is = invocation.getArgument(0);
@@ -776,8 +764,8 @@ public class DataTreeLoadProcessorTest {
         FileInputStream f2PngMipStream = mock(FileInputStream.class);
         Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
         Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+//        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         @SuppressWarnings("unchecked")

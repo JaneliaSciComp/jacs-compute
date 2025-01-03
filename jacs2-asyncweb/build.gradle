@@ -1,14 +1,25 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula.ospackage:com.netflix.nebula.ospackage.gradle.plugin:11.10.1'
+    }
+}
+
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '4.8.0'
+    id 'com.netflix.nebula.ospackage' version '11.10.1'
 }
 
-mainClassName = 'org.janelia.jacs2.app.AsyncServicesApp'
+application {
+    mainClass = 'org.janelia.jacs2.app.AsyncServicesApp'
+}
 
-project(":jacs2-asyncweb") {
+project(':jacs2-asyncweb') {
     dependencies {
-        implementation project(":jacs2-commonweb"),
+        implementation project(':jacs2-commonweb'),
                        JERSEY_SERVER_LIB,
                        WELD_CDI_SE_CORE_LIB
 

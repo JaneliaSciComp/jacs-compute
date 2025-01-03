@@ -1,8 +1,16 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import jakarta.ws.rs.client.Client;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -11,7 +19,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
-import org.janelia.jacs2.asyncservice.pipeline.PipelineServiceProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.jacs2.utils.HttpUtils;
@@ -21,20 +28,8 @@ import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
-
-import javax.ws.rs.client.Client;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,10 +38,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        PipelineServiceProcessor.class, HttpUtils.class
-})
 public class LightsheetPipelineProcessorTest {
 
     private static final String TEST_WORKING_DIR = "testDir";
@@ -79,7 +70,6 @@ public class LightsheetPipelineProcessorTest {
         });
 
         testHttpClient = Mockito.mock(Client.class);
-        PowerMockito.mockStatic(HttpUtils.class);
         Mockito.when(HttpUtils.createHttpClient()).thenReturn(testHttpClient);
 
         lightsheetPipelineProcessor = new LightsheetPipelineProcessor(serviceComputationFactory,

@@ -47,7 +47,6 @@ dependencies {
         MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.4.1"
         DBCP_LIB = "com.zaxxer:HikariCP:3.3.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
-        HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
         COMMONS_LANG_VERSION = "3.9"

@@ -36,13 +36,8 @@ project(":jacs2-services") {
                        SPARK_LAUNCHER,
                        JACS_STORAGE_CLIENTS_LIB
 
-
         implementation (JONGO_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
-        }
-
-        implementation (HIBERNATE_LIB) {
-            exclude group: 'javax.transaction'
         }
 
         runtimeOnly MARIADB_DRIVER_LIB
