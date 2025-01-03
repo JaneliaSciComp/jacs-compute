@@ -28,6 +28,7 @@ import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
@@ -46,7 +47,6 @@ public class LightsheetPipelineProcessorTest {
     private Map<Number, JacsServiceData> serviceStorage = new HashMap<>();
     private LightsheetPipelineStepProcessor lightsheetPipelineStepProcessor;
     private LightsheetPipelineProcessor lightsheetPipelineProcessor;
-    private Client testHttpClient;
 
     @Before
     public void setUp() {
@@ -68,9 +68,6 @@ public class LightsheetPipelineProcessorTest {
             serviceStorage.put(jacsServiceData.getId(), jacsServiceData);
             return jacsServiceData;
         });
-
-        testHttpClient = Mockito.mock(Client.class);
-        Mockito.when(HttpUtils.createHttpClient()).thenReturn(testHttpClient);
 
         lightsheetPipelineProcessor = new LightsheetPipelineProcessor(serviceComputationFactory,
                 jacsServiceDataPersistence,

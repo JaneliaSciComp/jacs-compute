@@ -8,15 +8,8 @@ import java.util.Set;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.Response;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -28,7 +21,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -103,30 +95,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
 
     private LightsheetProcessingArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LightsheetProcessingArgs());
-    }
-
-    private Map<String, Object> getJsonConfig(String configURL) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target = httpclient.target(configURL);
-            Response response = target.request().get();
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                logger.error("Request for json config to {} returned with {}", target, response.getStatus());
-                throw new IllegalStateException(configURL + " returned with " + response.getStatus());
-            }
-            List<Map<String, Object>> configs = response.readEntity(new GenericType<>(new TypeReference<List<Map<String, Object>>>(){}.getType()));
-            if (CollectionUtils.isNotEmpty(configs)) {
-                return configs.get(0);
-            } else {
-                return ImmutableMap.of();
-            }
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
     }
 
     @SuppressWarnings("unchecked")
