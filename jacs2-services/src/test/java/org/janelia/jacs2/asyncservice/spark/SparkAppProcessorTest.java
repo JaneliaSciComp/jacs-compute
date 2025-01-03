@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.spark;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -14,16 +13,13 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.ProcessingLocation;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import static org.junit.Assert.fail;
@@ -183,8 +179,6 @@ public class SparkAppProcessorTest {
         Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
         Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
 
-//        PowerMockito.mockStatic(Files.class);
-        Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(billingInfo);
 
         SparkClusterInfo testClusterInfo = new SparkClusterInfo(1L, 2L, "spark://sparkmasterhost:7077");
