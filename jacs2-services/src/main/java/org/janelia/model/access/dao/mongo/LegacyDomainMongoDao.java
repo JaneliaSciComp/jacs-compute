@@ -28,6 +28,8 @@ import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,6 +41,7 @@ import java.util.stream.StreamSupport;
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(LegacyDomainMongoDao.class);

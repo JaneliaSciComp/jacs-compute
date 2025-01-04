@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "EMData", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/emdata")
 public class EMDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(EMDataResource.class);

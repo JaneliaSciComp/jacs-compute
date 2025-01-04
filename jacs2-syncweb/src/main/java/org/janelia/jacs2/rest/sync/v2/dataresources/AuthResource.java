@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@ApplicationScoped
 @Path("/auth")
 public class AuthResource {
     private static final Logger LOG = LoggerFactory.getLogger(AuthResource.class);

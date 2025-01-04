@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.io.ByteStreams;
@@ -64,6 +65,7 @@ import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class SWCService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);

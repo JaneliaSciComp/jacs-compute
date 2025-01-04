@@ -21,6 +21,7 @@ import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,6 +33,7 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lt;
 
+@ApplicationScoped
 public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements SampleDao {
     @Inject
     @Jacs2Future

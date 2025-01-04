@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "DataSummary", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class DataSummaryResource {
     private static final Logger LOG = LoggerFactory.getLogger(DataSummaryResource.class);

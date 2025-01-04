@@ -62,5 +62,4 @@ public abstract class AbstractServicesApp {
     }
 
     abstract List<Class<? extends EventListener>> getAppListeners();
-
 }

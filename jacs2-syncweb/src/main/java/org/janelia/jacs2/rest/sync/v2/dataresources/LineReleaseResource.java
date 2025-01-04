@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "LineRelease", description = "Janelia Workstation Line Release(s)")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/process")
 public class LineReleaseResource {
     private static final Logger LOG = LoggerFactory.getLogger(LineReleaseResource.class);

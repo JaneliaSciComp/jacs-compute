@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "Ontology", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class OntologyResource {
     private static final Logger LOG = LoggerFactory.getLogger(OntologyResource.class);

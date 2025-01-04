@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "DomainObject", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class DomainObjectResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainObjectResource.class);

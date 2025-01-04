@@ -21,12 +21,16 @@ project(':jacs2-syncweb') {
     dependencies {
         implementation project(':jacs2-commonweb'),
                        JACKSON_JAXRS_XML_PROVIDER,
-                       JERSEY_SERVER_LIB,
                        SOLR_SEARCH_LIB,
                        JACS_MESSAGING_CORE_LIB,
                        JACS_MESSAGING_BROKER_LIB,
                        JACS_STORAGE_CLIENTS_LIB,
                        WELD_CDI_SE_CORE_LIB
+
+        runtimeOnly JERSEY_INJECT_HK2_LIB,
+                    JERSEY_MEDIA_LIB,
+                    JERSEY_MEDIA_JSON_LIB,
+                    JERSEY_WELD_SE_LIB
 
         testImplementation project(path: ':jacs2-commonweb', configuration: 'testArtifacts')
     }

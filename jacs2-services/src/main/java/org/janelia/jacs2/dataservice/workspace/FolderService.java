@@ -17,8 +17,10 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
+@Dependent
 public class FolderService {
 
     private static final Logger LOG = LoggerFactory.getLogger(FolderService.class);

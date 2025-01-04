@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -11,6 +12,7 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JWTProvider;
@@ -22,6 +24,7 @@ import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authorization filter for async and sync web services.
@@ -39,7 +42,9 @@ import org.slf4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Priority(Priorities.AUTHENTICATION)
+@ApplicationScoped
 public class AuthFilter implements ContainerRequestFilter {
+    private static final Logger LOG = LoggerFactory.getLogger(AuthFilter.class);
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String HEADER_USERNAME = "username";
     private static final String HEADER_RUNASUSER = "runasuser";
@@ -56,8 +61,6 @@ public class AuthFilter implements ContainerRequestFilter {
     @PropertyValue(name = "JACS.ApiKey")
     @Inject
     private String apiKey;
-    @Inject
-    private Logger logger;
     @Context
     private ResourceInfo resourceInfo;
 
@@ -76,7 +79,7 @@ public class AuthFilter implements ContainerRequestFilter {
         if (StringUtils.isNotBlank(authUserName)) {
             authenticatedSubject = subjectDao.findSubjectByNameOrKey(authUserName);
             if (authenticatedSubject == null) {
-                logger.warn("Invalid username parameter passed in for authentication - no entry found for {}", authUserName);
+                LOG.warn("Invalid username parameter passed in for authentication - no entry found for {}", authUserName);
                 subjectCheckResponse = Response.status(Response.Status.UNAUTHORIZED)
                         .entity(new ErrorResponse("Invalid authentication"))
                         .build();
@@ -91,11 +94,11 @@ public class AuthFilter implements ContainerRequestFilter {
                             if (headerApiKey.equals(apiKey)) {
                                 return true;
                             } else {
-                                logger.warn("Header APIKEY {} does not match the configured key", headerApiKey);
+                                LOG.warn("Header APIKEY {} does not match the configured key", headerApiKey);
                                 return false;
                             }
                         } else {
-                            logger.warn("Invalid APIKEY in the authorization header");
+                            LOG.warn("Invalid APIKEY in the authorization header");
                             return false;
                         }
                     })
@@ -128,7 +131,7 @@ public class AuthFilter implements ContainerRequestFilter {
             authorizedSubject = subjectDao.findSubjectByNameOrKey(runAsUserName);
             if (authorizedSubject == null) {
                 // if "run as" is specified it must be a valid user
-                logger.warn("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, runAsUserName);
+                LOG.warn("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, runAsUserName);
                 requestContext.abortWith(
                         Response.status(Response.Status.FORBIDDEN)
                                 .entity(new ErrorResponse("Unauthorized access"))
@@ -140,7 +143,7 @@ public class AuthFilter implements ContainerRequestFilter {
                 // if the user it's trying to run the job as somebody else it must have admin privileges
                 // otherwise if they are the same we should not care
                 if (!authenticatedSubject.hasReadPrivilege()) {
-                    logger.warn("User {} is not authorized to act as subject {}", authUserName, runAsUserName);
+                    LOG.warn("User {} is not authorized to act as subject {}", authUserName, runAsUserName);
                     requestContext.abortWith(
                             Response.status(Response.Status.FORBIDDEN)
                                     .entity(new ErrorResponse("Unauthorized access"))

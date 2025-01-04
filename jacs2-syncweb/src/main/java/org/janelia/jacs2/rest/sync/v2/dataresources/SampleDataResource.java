@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
         description = "Janelia Workstation Domain Data"
 )
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class SampleDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(SampleDataResource.class);

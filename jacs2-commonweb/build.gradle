@@ -1,16 +1,17 @@
 project(':jacs2-commonweb') {
     dependencies {
         api project(':jacs2-services'),
+            JAKARTA_JAXB_API,
             JAKARTA_RS_API_LIB,
             JAKARTA_SERVLET_API_LIB,
+            JERSEY_CONTAINER_SERVLET_LIB,
             SWAGGER_JAXRS_LIB,
+            SWAGGER_SERVLET_LIB,
             WELD_CDI_SERVLET_LIB
 
         implementation CMDLINE_ARG_LIB,
                        JACKSON_JAXRS_JSON_PROVIDER,
-                       JERSEY_CONTAINER_SERVLET_LIB,
                        JERSEY_HTTP_CONTAINERS_LIB,
-                       JERSEY_MEDIA_LIB,
                        JWT_API,
                        LDAP_CLIENT_LIB,
                        UNDERTOW_CORE_LIB,
@@ -27,9 +28,11 @@ project(':jacs2-commonweb') {
     }
 
     processResources {
+        def projectVersion = project.version
+
         filesMatching('**/version.txt') {
             filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
-                    "version": project.version
+                    "version": projectVersion
             ])
         }
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE

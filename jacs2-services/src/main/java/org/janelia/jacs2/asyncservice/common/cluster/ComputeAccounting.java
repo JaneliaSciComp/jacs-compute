@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -31,7 +33,7 @@ import org.slf4j.Logger;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Singleton
+@Dependent
 public class ComputeAccounting {
 
     private static final String DEFAULT_GROUP_NAME = "jacs";

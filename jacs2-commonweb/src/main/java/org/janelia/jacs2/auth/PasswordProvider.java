@@ -11,11 +11,14 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import java.util.regex.Pattern;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 /**
  * Utility class for dealing with salted passwords.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@ApplicationScoped
 public class PasswordProvider {
     private static final Logger LOG = LoggerFactory.getLogger(PasswordProvider.class);
 

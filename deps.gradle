@@ -8,6 +8,7 @@ dependencies {
 
         // JAKARTA API
         JAKARTA_CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
+        JAKARTA_JAXB_API = "jakarta.xml.bind:jakarta.xml.bind-api:4.0.2"
         JAKARTA_SERVLET_API_LIB = "jakarta.servlet:jakarta.servlet-api:6.0.0"
         JAKARTA_RS_API_LIB = "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
 
@@ -42,8 +43,10 @@ dependencies {
         JAVAMAIL_LIB = "com.sun.mail:jakarta.mail:2.0.1"
 
         // database
-        MONGODB_VERSION = "3.12.5"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
+        MONGODB_VERSION = "5.2.1"
+        MONGODB_SYNC_DRIVER_LIB = "org.mongodb:mongodb-driver-sync:${MONGODB_VERSION}"
+        MONGODB_LEGACY_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
+        MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
         MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.4.1"
         DBCP_LIB = "com.zaxxer:HikariCP:3.3.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
@@ -145,5 +148,4 @@ dependencies {
                     JUNIT_PLATFORM_LAUNCHER
 
     mockitoAgent MOCKITO_CORE_LIB
-
 }

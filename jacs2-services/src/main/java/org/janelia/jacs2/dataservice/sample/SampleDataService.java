@@ -25,6 +25,7 @@ import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.jacs2.dataservice.DomainObjectService;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Dependent
 public class SampleDataService {
 
     private final DomainObjectService domainObjectService;

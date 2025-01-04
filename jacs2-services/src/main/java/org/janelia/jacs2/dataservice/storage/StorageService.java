@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
@@ -29,6 +30,7 @@ import org.janelia.model.jacs2.page.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class StorageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);

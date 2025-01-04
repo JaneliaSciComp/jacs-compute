@@ -53,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag(name = "TmWorkspace", description = "Janelia Mouselight Data Service")
-@ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
 public class TmWorkspaceResource {

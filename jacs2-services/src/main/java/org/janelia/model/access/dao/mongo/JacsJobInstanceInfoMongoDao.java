@@ -6,11 +6,13 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.service.JacsJobInstanceInfo;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
  * Mongo based implementation of JacsJobInstanceInfoDao.
  */
+@ApplicationScoped
 public class JacsJobInstanceInfoMongoDao extends AbstractMongoDao<JacsJobInstanceInfo> implements JacsJobInstanceInfoDao {
 
     @Inject

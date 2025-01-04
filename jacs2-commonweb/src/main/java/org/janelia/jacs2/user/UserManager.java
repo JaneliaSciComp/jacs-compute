@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * Creating users requires a lot of actions. This class groups those actions together and provides a centralized
  * way to access user creation logic.
  */
+@Dependent
 public class UserManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserManager.class);

@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "Annotations", description = "Janelia Workstation Domain Data")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class AnnotationResource {
     private static final Logger LOG = LoggerFactory.getLogger(AnnotationResource.class);

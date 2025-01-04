@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "LSMImageInfo", description = "Janelia Workstation Line Release(s)")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/info")
 public class LSMImageInfoResource {
     private static final Logger LOG = LoggerFactory.getLogger(LSMImageInfoResource.class);

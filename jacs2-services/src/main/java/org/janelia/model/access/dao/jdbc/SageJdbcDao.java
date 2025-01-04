@@ -10,6 +10,7 @@ import org.janelia.model.jacs2.sage.ControlledVocabulary;
 import org.janelia.model.jacs2.sage.SlideImage;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -21,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+@ApplicationScoped
 public class SageJdbcDao implements SageDao {
 
     private DataSource dataSource;

@@ -6,8 +6,10 @@ import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.dao.SubjectDao;
 import org.janelia.model.jacs2.DomainModelUtils;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
+@Dependent
 public class SubjectService {
     private final SubjectDao subjectDao;
 

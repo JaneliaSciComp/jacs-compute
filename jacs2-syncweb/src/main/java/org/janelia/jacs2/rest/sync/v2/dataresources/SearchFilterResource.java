@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
         description = "Janelia Data Service"
 )
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class SearchFilterResource {
 

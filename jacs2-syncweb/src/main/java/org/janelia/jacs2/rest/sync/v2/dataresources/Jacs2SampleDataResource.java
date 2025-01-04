@@ -28,7 +28,6 @@ import org.janelia.model.jacs2.sage.SlideImage;
 
 @Tag(name = "SampleData", description = "JACS2 Sample data resource")
 @RequireAuthentication
-@ApplicationScoped
 @Produces("application/json")
 @Path("/samples")
 public class Jacs2SampleDataResource {

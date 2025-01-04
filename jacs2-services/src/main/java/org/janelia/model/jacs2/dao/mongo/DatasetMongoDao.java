@@ -12,9 +12,11 @@ import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.model.jacs2.DomainModelUtils;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 
+@ApplicationScoped
 public class DatasetMongoDao extends AbstractDomainObjectDao<DataSet> implements DatasetDao {
     @Inject
     @Jacs2Future

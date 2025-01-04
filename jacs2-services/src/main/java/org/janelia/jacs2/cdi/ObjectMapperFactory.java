@@ -1,5 +1,7 @@
 package org.janelia.jacs2.cdi;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +16,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
 import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_SETTERS;
 
+@ApplicationScoped
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
 

@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
  */
 @Tag(name = "DomainReference", description = "Data Node Service")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/reference")
 public class DomainReferenceResource {
 

@@ -35,9 +35,8 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
                 integrationTestsConfig.getStringPropertyValue("MongoDB.Password"),
                 integrationTestsConfig.getStringPropertyValue("MongoDB.ReplicaSet"),
                 integrationTestsConfig.getBooleanPropertyValue("MongoDB.UseSSL", false),
-                0, // use default
-                0, // use default
-                -1, // use default
+                0,
+                -1,
                 0,
                 0,
                 0,

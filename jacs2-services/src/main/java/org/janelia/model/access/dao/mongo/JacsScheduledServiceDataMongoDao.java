@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
@@ -26,6 +27,7 @@ import org.janelia.model.service.JacsScheduledServiceData;
 /**
  * Mongo based implementation of JacsServiceDataDao.
  */
+@ApplicationScoped
 public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsScheduledServiceData> implements JacsScheduledServiceDataDao {
 
     @Inject

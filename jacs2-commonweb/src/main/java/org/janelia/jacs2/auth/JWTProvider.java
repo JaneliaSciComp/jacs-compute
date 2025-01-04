@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import io.jsonwebtoken.Claims;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 public class JWTProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(JWTProvider.class);

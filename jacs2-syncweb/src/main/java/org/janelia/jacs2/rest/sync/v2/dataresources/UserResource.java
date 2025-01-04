@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "User", description = "Janelia Workstation User Management")
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class UserResource {
     private static final Logger LOG = LoggerFactory.getLogger(UserResource.class);

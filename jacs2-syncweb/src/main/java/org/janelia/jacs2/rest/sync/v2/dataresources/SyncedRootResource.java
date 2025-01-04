@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 @Tag(name = "SyncedRoot",
         description = "Janelia Workstation Domain Data")
 @RequireAuthentication
-@ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/data")
 public class SyncedRootResource {

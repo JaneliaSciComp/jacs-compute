@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.Function;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -21,6 +22,7 @@ import org.janelia.rendering.RenderedVolumeLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class DataStorageLocationFactory {
     private final static Logger LOG = LoggerFactory.getLogger(DataStorageLocationFactory.class);
 

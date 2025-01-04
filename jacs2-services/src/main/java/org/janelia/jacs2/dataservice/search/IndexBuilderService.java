@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Stopwatch;
@@ -33,6 +34,7 @@ import org.slf4j.MDC;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(IndexBuilderService.class);
 

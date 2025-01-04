@@ -26,6 +26,7 @@ import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import static com.mongodb.client.model.Filters.in;
 /**
  * Mongo based implementation of JacsServiceDataDao.
  */
+@ApplicationScoped
 public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> implements JacsServiceDataDao {
 
     @Inject

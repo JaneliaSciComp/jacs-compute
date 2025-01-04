@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
         description = "Data Node Service"
 )
 @RequireAuthentication
-@ApplicationScoped
 @Path("/data")
 public class DataNodeResource {
 

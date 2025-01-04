@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(name = "TmReview", description = "Janelia Mouselight Data Service")
 @RequireAuthentication
-@ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
 public class TmReviewsResource {

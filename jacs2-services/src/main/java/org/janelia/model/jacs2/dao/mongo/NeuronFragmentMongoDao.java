@@ -7,8 +7,10 @@ import org.janelia.model.jacs2.domain.sample.NeuronFragment;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.NeuronFragmentDao;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+@ApplicationScoped
 public class NeuronFragmentMongoDao extends AbstractDomainObjectDao<NeuronFragment> implements NeuronFragmentDao {
     @Inject
     @Jacs2Future

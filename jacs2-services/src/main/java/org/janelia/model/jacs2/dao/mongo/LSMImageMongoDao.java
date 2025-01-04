@@ -16,6 +16,7 @@ import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.List;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
+@ApplicationScoped
 public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements LSMImageDao {
     @Inject
     @Jacs2Future

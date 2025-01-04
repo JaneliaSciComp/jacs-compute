@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 @Tag(name = "TmSharedState",
         description = "Janelia Mouselight Shared Data Service"
 )
-@ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data/shared")
 public class TmSharedStateResource {

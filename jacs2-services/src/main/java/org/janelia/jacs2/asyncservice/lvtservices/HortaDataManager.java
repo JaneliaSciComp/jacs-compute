@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
@@ -31,6 +33,7 @@ import org.janelia.rendering.ymlrepr.RawVolData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class HortaDataManager {
 
     private static final Logger log = LoggerFactory.getLogger(HortaDataManager.class);

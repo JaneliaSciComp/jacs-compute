@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
 import org.janelia.model.service.JacsScheduledServiceData;
 
+@Dependent
 public class JacsScheduledServiceDataPersistence extends AbstractDataPersistence<JacsScheduledServiceDataDao, JacsScheduledServiceData, Number> {
 
     @Inject

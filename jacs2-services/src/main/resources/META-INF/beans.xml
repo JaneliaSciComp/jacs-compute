@@ -1,14 +1,16 @@
-<beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_2_0.xsd"
-       bean-discovery-mode="all">
-       <interceptors>
-              <class>org.janelia.jacs2.asyncservice.common.mdc.MdcContextInterceptor</class>
-       </interceptors>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://jakarta.ee/xml/ns/jakartaee"
+       xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                           https://jakarta.ee/xml/ns/jakartaee/beans_4_1.xsd"
+       bean-discovery-mode="annotated">
        <scan>
+              <exclude name="org.janelia.jacsstorage.model.**"/>
               <exclude name="org.janelia.model.jacs2.domain.**"/>
               <exclude name="org.janelia.model.jacs2.page.**"/>
               <exclude name="org.janelia.model.jacs2.sage.**"/>
               <exclude name="org.janelia.model.jacs2.service.**"/>
        </scan>
+       <interceptors>
+              <class>org.janelia.jacs2.asyncservice.common.mdc.MdcContextInterceptor</class>
+       </interceptors>
 </beans>

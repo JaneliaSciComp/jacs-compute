@@ -31,10 +31,16 @@ public class ApplicationProducer {
         return objectMapperFactory.newMongoCompatibleObjectMapper();
     }
 
+    @ApplicationScoped
+    @Produces
+    public TimebasedIdentifierGenerator defaultIDGenerator(@PropertyValue(name = "TimebasedIdentifierGenerator.DeploymentContext") Integer deploymentContext) {
+        return new TimebasedIdentifierGenerator(deploymentContext);
+    }
+
     @JacsDefault
     @ApplicationScoped
     @Produces
-    public IdGenerator<Long> idGenerator(@PropertyValue(name = "TimebasedIdentifierGenerator.DeploymentContext") Integer deploymentContext) {
+    public IdGenerator<Long> jacsDefaultIdGenerator(@PropertyValue(name = "TimebasedIdentifierGenerator.DeploymentContext") Integer deploymentContext) {
         return new TimebasedIdentifierGenerator(deploymentContext);
     }
 

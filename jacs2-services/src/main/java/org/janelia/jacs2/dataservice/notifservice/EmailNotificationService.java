@@ -3,6 +3,8 @@ package org.janelia.jacs2.dataservice.notifservice;
 import java.util.Collection;
 import java.util.Properties;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.mail.Message;
 import jakarta.mail.PasswordAuthentication;
@@ -18,6 +20,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class EmailNotificationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailNotificationService.class);

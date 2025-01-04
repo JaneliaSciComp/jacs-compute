@@ -9,6 +9,7 @@ import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.jacs2.dao.DaoFactory;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import java.math.BigInteger;
@@ -16,6 +17,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+@Dependent
 public class DomainObjectService implements LockService {
 
     private static final SecureRandom LOCK_KEY_GENERATOR = new SecureRandom();

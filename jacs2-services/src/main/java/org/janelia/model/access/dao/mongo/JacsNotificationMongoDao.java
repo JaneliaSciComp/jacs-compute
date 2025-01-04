@@ -6,11 +6,13 @@ import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.service.JacsNotification;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
  * Mongo based implementation of JacsNotificationDao.
  */
+@ApplicationScoped
 public class JacsNotificationMongoDao extends AbstractMongoDao<JacsNotification> implements JacsNotificationDao {
 
     @Inject

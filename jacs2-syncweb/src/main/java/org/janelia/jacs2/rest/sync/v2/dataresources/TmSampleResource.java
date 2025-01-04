@@ -47,51 +47,17 @@ import org.slf4j.LoggerFactory;
  */
 @Tag(name = "TmSample", description= "Janelia Mouselight Data Service")
 @RequireAuthentication
-@ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
 public class TmSampleResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(TmSampleResource.class);
 
-    @Inject
-    private LegacyDomainDao legacyDomainDao;
     @AsyncIndex
     @Inject
     private TmSampleDao tmSampleDao;
     @Inject
     private HortaDataManager hortaDataManager;
-
-    /**
-     * @deprecated this feature is no longer used by the client
-     */
-    @Deprecated
-    @Operation(summary = "Gets a list of sample root paths",
-            description = "Returns a list of all the sample root paths used for LVV sample discovery"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully fetched the list of sample paths"),
-            @ApiResponse(responseCode = "500", description = "Error occurred while fetching sample paths")
-    })
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("sampleRootPaths")
-    public Response getSampleRootPreferences(@QueryParam("subjectKey") final String subjectKey) {
-        String updatedSubjectKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
-        LOG.trace("Start getTmSamplePaths({})", updatedSubjectKey);
-        try {
-            @SuppressWarnings("unchecked")
-            List<String> sampleRootPreferences = (List<String>) legacyDomainDao.getPreferenceValue(
-                    updatedSubjectKey,
-                    DomainConstants.PREFERENCE_CATEGORY_MOUSELIGHT,
-                    DomainConstants.PREFERENCE_NAME_SAMPLE_ROOTS);
-            return Response.ok()
-                    .entity(sampleRootPreferences)
-                    .build();
-        } finally {
-            LOG.trace("Finished getTmSamplePaths({})", updatedSubjectKey);
-        }
-    }
 
     @Operation(summary = "Gets a list of TM Samples",
             description = "Returns a list of all the TM Samples that are accessible by the current user"
