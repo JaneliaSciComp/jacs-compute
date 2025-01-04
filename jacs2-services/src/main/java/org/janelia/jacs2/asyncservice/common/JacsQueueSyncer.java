@@ -7,12 +7,14 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 
+@Dependent
 public class JacsQueueSyncer {
 
     private JacsServiceQueue jacsServiceQueue;

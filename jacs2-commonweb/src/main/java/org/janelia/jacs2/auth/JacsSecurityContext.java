@@ -3,11 +3,13 @@ package org.janelia.jacs2.auth;
 import java.security.Principal;
 
 import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.ext.Provider;
 
 import com.google.common.base.Preconditions;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
 
+@Provider
 public class JacsSecurityContext implements SecurityContext {
 
     static JacsSecurityContext UNAUTHENTICATED = new JacsSecurityContext();

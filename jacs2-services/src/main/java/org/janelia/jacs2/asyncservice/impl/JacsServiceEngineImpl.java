@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
@@ -30,7 +31,7 @@ import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
 @MdcContext
-@ApplicationScoped
+@Dependent
 public class JacsServiceEngineImpl implements JacsServiceEngine {
     private static final int DEFAULT_MAX_RUNNING_SLOTS = 1000;
 

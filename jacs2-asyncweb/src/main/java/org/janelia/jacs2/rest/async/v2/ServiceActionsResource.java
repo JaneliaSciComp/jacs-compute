@@ -22,14 +22,15 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Tag(name = "ServiceActions", description = "JACS Service Info")
-@RequestScoped
 @Produces("application/json")
 @Path("/services")
 public class ServiceActionsResource {
 
-    @Inject private Logger logger;
+    private static final Logger LOG = LoggerFactory.getLogger(ServiceActionsResource.class);
+
     @Inject private JacsServiceDataManager jacsServiceDataManager;
     @Inject private JacsServiceEngine jacsServiceEngine;
 
@@ -45,7 +46,7 @@ public class ServiceActionsResource {
                                       @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
-            logger.warn("No service found for {}", instanceId);
+            LOG.warn("No service found for {}", instanceId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -57,7 +58,7 @@ public class ServiceActionsResource {
                     .entity(updatedServiceData)
                     .build();
         } else {
-            logger.warn("Service {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
+            LOG.warn("Service {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .build();
@@ -83,7 +84,7 @@ public class ServiceActionsResource {
                                        @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
-            logger.warn("No service found for {}", instanceId);
+            LOG.warn("No service found for {}", instanceId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -96,7 +97,7 @@ public class ServiceActionsResource {
                     .entity(updatedServiceData)
                     .build();
         } else {
-            logger.warn("Service state {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
+            LOG.warn("Service state {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .build();

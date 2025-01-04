@@ -18,7 +18,6 @@ import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.model.service.ServiceMetaData;
 
 @Tag(name = "ServiceMetadata", description = "JACS Service Info")
-@RequestScoped
 @Produces("application/json")
 @Path("/services")
 public class ServiceMetadataResource {

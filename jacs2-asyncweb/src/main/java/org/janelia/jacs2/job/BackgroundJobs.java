@@ -1,5 +1,6 @@
 package org.janelia.jacs2.job;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
 import jakarta.servlet.ServletContextEvent;
@@ -10,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.JacsScheduledServiceRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceDispatchRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationQueue;
 
+@ApplicationScoped
 public class BackgroundJobs implements ServletContextListener {
 
     private JacsQueueSyncer queueSyncer;

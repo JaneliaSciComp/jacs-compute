@@ -32,7 +32,6 @@ import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.service.JacsServiceData;
 
 @Tag(name = "AsyncService", description = "Asynchronous JACS Service API")
-@RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/async-services")
 public class AsyncServiceResource {

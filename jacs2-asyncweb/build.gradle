@@ -20,8 +20,12 @@ application {
 project(':jacs2-asyncweb') {
     dependencies {
         implementation project(':jacs2-commonweb'),
-                       JERSEY_SERVER_LIB,
                        WELD_CDI_SE_CORE_LIB
+
+        runtimeOnly JERSEY_INJECT_HK2_LIB,
+                    JERSEY_MEDIA_LIB,
+                    JERSEY_MEDIA_JSON_LIB,
+                    JERSEY_WELD_SE_LIB
 
         testImplementation project(path: ":jacs2-commonweb", configuration: "testArtifacts")
     }

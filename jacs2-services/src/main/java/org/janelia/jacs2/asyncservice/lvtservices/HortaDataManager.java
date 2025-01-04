@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
@@ -36,7 +35,7 @@ import org.slf4j.LoggerFactory;
 @Dependent
 public class HortaDataManager {
 
-    private static final Logger log = LoggerFactory.getLogger(HortaDataManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HortaDataManager.class);
 
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
@@ -66,7 +65,7 @@ public class HortaDataManager {
             return null;
         }
         if (samples.size()>1) {
-            log.warn("More than one sample exists with name {}. Choosing the first.", sampleName);
+            LOG.warn("More than one sample exists with name {}. Choosing the first.", sampleName);
         }
         return samples.get(0);
     }
@@ -77,13 +76,13 @@ public class HortaDataManager {
         String octreePath = sample.getFiles().get(FileType.LargeVolumeOctree);
         String altPath = sample.getFiles().get(FileType.LargeVolumeZarr);
 
-        log.info("OCTREE PATH:{}",octreePath);
-        log.info("ZARR PATH:{}",altPath);
+        LOG.info("OCTREE PATH:{}",octreePath);
+        LOG.info("ZARR PATH:{}",altPath);
 
         String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
 
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes().setFromMap(sample.getStorageAttributes());
-        log.info("SAMPLE PATH:{}",samplePath);
+        LOG.info("SAMPLE PATH:{}",samplePath);
         RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null, storageAttributes)
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
@@ -95,7 +94,7 @@ public class HortaDataManager {
             boolean altFound = dataStorageLocationFactory.lookupJadeDataLocation(altPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
-                        log.warn("Could not find any storage for Zarr directory for sample {} at {}", sample.getName(), altPath);
+                        LOG.warn("Could not find any storage for Zarr directory for sample {} at {}", sample.getName(), altPath);
                         return false;
                     });
             sample.setExistsInStorage(altFound);
@@ -105,7 +104,7 @@ public class HortaDataManager {
             boolean transformFound = getConstants(rvl)
                     .map(constants -> {
                         populateConstants(sample, constants);
-                        log.info("Found {} levels in octree", sample.getNumImageryLevels());
+                        LOG.info("Found {} levels in octree", sample.getNumImageryLevels());
                         return true;
                     })
                     .orElse(false);
@@ -115,7 +114,7 @@ public class HortaDataManager {
 
             final String ktxFullPath;
             if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
-                log.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
+                LOG.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
                 ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
             } else {
                 ktxFullPath = sample.getLargeVolumeKTXFilepath();
@@ -125,12 +124,12 @@ public class HortaDataManager {
             boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
-                        log.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
+                        LOG.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
                         return false;
                     });
             if (ktxFound) {
                 if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
-                    log.info("Setting KTX data path to {}", ktxFullPath);
+                    LOG.info("Setting KTX data path to {}", ktxFullPath);
                     sample.setLargeVolumeKTXFilepath(ktxFullPath);
                 }
             } else {
@@ -142,7 +141,7 @@ public class HortaDataManager {
 
         final String acquisitionPath;
         if (StringUtils.isBlank(sample.getAcquisitionFilepath())) {
-            log.info("RAW data path not provided for {}. Attempting to read it from the tilebase.cache.yml...", sample.getName());
+            LOG.info("RAW data path not provided for {}. Attempting to read it from the tilebase.cache.yml...", sample.getName());
             RawVolData rawVolData = readRawVolumeData(rvl);
             if (rawVolData != null) {
                 acquisitionPath = rawVolData.getPath();
@@ -157,13 +156,13 @@ public class HortaDataManager {
             boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
-                        log.warn("Could not find any storage for acquisition path for sample {} at {}", sample.getName(), acquisitionPath);
+                        LOG.warn("Could not find any storage for acquisition path for sample {} at {}", sample.getName(), acquisitionPath);
                         return false;
                     })
                     ;
             if (acquisitionPathFound) {
                 if (StringUtils.isBlank(sample.getAcquisitionFilepath())) {
-                    log.info("Setting RAW data path to {}", acquisitionPath);
+                    LOG.info("Setting RAW data path to {}", acquisitionPath);
                     sample.setAcquisitionFilepath(acquisitionPath, false);
                 }
             } else {
@@ -181,12 +180,12 @@ public class HortaDataManager {
         String octreePath = tmSample.getFiles().get(FileType.LargeVolumeOctree);
         String altPath = tmSample.getFiles().get(FileType.LargeVolumeZarr);
 
-        log.info("OCTREE PATH:{}",octreePath);
-        log.info("ZARR PATH:{}",altPath);
+        LOG.info("OCTREE PATH:{}",octreePath);
+        LOG.info("ZARR PATH:{}",altPath);
 
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes().setFromMap(tmSample.getStorageAttributes());
         String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
-        log.info("Verifying sample path {} for sample {}", samplePath, tmSample);
+        LOG.info("Verifying sample path {} for sample {}", samplePath, tmSample);
 
         boolean samplePathFound = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null, storageAttributes)
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
@@ -207,7 +206,7 @@ public class HortaDataManager {
             boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null, storageAttributes)
                     .map(dl -> true)
                     .orElseGet(() -> {
-                        log.warn("Could not find any storage for KTX directory {} for sample {}", ktxFullPath, tmSample);
+                        LOG.warn("Could not find any storage for KTX directory {} for sample {}", ktxFullPath, tmSample);
                         return false;
                     });
             if (!ktxFound) {
@@ -220,7 +219,7 @@ public class HortaDataManager {
                 boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null, storageAttributes)
                         .map(dl -> true)
                         .orElseGet(() -> {
-                            log.warn("Could not find any storage for acquisition path for sample {} at {}", tmSample.getName(), acquisitionPath);
+                            LOG.warn("Could not find any storage for acquisition path for sample {} at {}", tmSample.getName(), acquisitionPath);
                             return false;
                         });
                 if (!acquisitionPathFound) {
@@ -240,7 +239,7 @@ public class HortaDataManager {
         try {
             return renderedVolumeLoader.loadRawVolumeData(rvl);
         } catch (Exception e) {
-            log.error("Error reading raw volume data from {}/{}", rvl.getBaseStorageLocationURI(), RenderedVolumeLoader.DEFAULT_TILED_VOL_BASE_FILE_NAME);
+            LOG.error("Error reading raw volume data from {}/{}", rvl.getBaseStorageLocationURI(), RenderedVolumeLoader.DEFAULT_TILED_VOL_BASE_FILE_NAME);
         }
         return null;
     }
@@ -248,7 +247,7 @@ public class HortaDataManager {
     private Optional<Map<String, Object>> getConstants(DataLocation rvl) {
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
-        log.info("Reading {} from {}", RenderedVolumeLoader.DEFAULT_TRANSFORM_FILE_NAME, rvl.getBaseStorageLocationURI());
+        LOG.info("Reading {} from {}", RenderedVolumeLoader.DEFAULT_TRANSFORM_FILE_NAME, rvl.getBaseStorageLocationURI());
         return rvl.getContentFromRelativePath(RenderedVolumeLoader.DEFAULT_TRANSFORM_FILE_NAME)
                 .consume(transformStream -> {
                     try {
@@ -276,7 +275,7 @@ public class HortaDataManager {
                         constants.put("numberLevels", values.get("nl").longValue());
                         return constants;
                     } catch (Exception e) {
-                        log.error("Error reading transform constants", e);
+                        LOG.error("Error reading transform constants", e);
                         return null;
                     } finally {
                         IOUtils.closeQuietly(transformStream);
@@ -323,13 +322,13 @@ public class HortaDataManager {
     public TmWorkspace createWorkspace(String subjectKey, TmSample sample, String workspaceName) {
         TmWorkspace tmWorkspace = new TmWorkspace(workspaceName.trim(), sample.getId());
         TmWorkspace createdWorkspace = tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
-        log.info("Created workspace '{}' as {}", createdWorkspace.getName(), createdWorkspace);
+        LOG.info("Created workspace '{}' as {}", createdWorkspace.getName(), createdWorkspace);
         return createdWorkspace;
     }
 
     public void removeWorkspace(String subjectKey, TmWorkspace workspace) {
         tmWorkspaceDao.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
-        log.info("Deleted {} and all of its neurons", workspace);
+        LOG.info("Deleted {} and all of its neurons", workspace);
     }
 
     public TmMappedNeuron createMappedNeuron(String subjectKey, TmMappedNeuron tmMappedNeuron) {
@@ -338,7 +337,7 @@ public class HortaDataManager {
 
     public TmWorkspace updateWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
         TmWorkspace updatedWorkspace = tmWorkspaceDao.updateTmWorkspace(subjectKey, tmWorkspace);
-        log.info("Updated workspace '{}' as {}", tmWorkspace.getName(), tmWorkspace);
+        LOG.info("Updated workspace '{}' as {}", tmWorkspace.getName(), tmWorkspace);
         return updatedWorkspace;
     }
 }

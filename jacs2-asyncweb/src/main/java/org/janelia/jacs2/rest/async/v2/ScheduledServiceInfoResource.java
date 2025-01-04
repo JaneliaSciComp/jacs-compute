@@ -26,7 +26,6 @@ import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsScheduledServiceData;
 
 @Tag(name = "ScheduledServiceInfo", description = "Scheduled JACS Services")
-@RequestScoped
 @Produces("application/json")
 @Path("/scheduled-services")
 public class ScheduledServiceInfoResource {

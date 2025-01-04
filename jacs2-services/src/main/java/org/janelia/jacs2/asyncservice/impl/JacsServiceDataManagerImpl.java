@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
@@ -29,6 +30,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(JacsServiceDataManagerImpl.class);

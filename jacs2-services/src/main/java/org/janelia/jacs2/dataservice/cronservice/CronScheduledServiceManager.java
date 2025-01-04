@@ -20,6 +20,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Dependent
 public class CronScheduledServiceManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(CronScheduledServiceManager.class);
