@@ -1,30 +1,33 @@
 project(':jacs2-commonweb') {
     dependencies {
-        api project(':jacs2-services'),
+        api(project(':jacs2-services'),
             JAKARTA_JAXB_API,
             JAKARTA_RS_API_LIB,
             JAKARTA_SERVLET_API_LIB,
-            JERSEY_CONTAINER_SERVLET_LIB,
             SWAGGER_JAXRS_LIB,
-            SWAGGER_SERVLET_LIB,
-            WELD_CDI_SERVLET_LIB
+            SWAGGER_SERVLET_LIB)
 
-        implementation CMDLINE_ARG_LIB,
+        implementation(CMDLINE_ARG_LIB,
                        JACKSON_JAXRS_JSON_PROVIDER,
-                       JERSEY_HTTP_CONTAINERS_LIB,
                        JWT_API,
                        LDAP_CLIENT_LIB,
-                       UNDERTOW_CORE_LIB,
-                       UNDERTOW_SERVLET_LIB
+                       JERSEY_CONTAINER_SERVLET_LIB,
+                       JERSEY_HTTP_CONTAINERS_LIB,
+                       UNDERTOW_SERVLET_LIB,
+                       WELD_CDI_SERVLET_LIB)
 
-        testImplementation JERSEY_TEST_LIB,
+        implementation(UNDERTOW_CORE_LIB) {
+            exclude(group: 'org.jboss.logging')
+        }
+
+        testImplementation(JERSEY_TEST_LIB,
                            JERSEY_WELD_SE_LIB,
                            JERSEY_INJECT_HK2_LIB,
                            JERSEY_TEST_UTIL_LIB,
-                           JERSEY_TEST_PROVIDER_BUNDLE_LIB
+                           JERSEY_TEST_PROVIDER_BUNDLE_LIB)
 
-        runtimeOnly JWT_RUNTIME_IMPL,
-                    JWT_RUNTIME_JACKSON
+        runtimeOnly(JWT_RUNTIME_IMPL,
+                    JWT_RUNTIME_JACKSON)
     }
 
     processResources {
@@ -38,3 +41,5 @@ project(':jacs2-commonweb') {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
+
+ext.moduleName = 'org.janelia.jacs2.commonweb'

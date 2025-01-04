@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/data")
 public class SyncedRootResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(SyncedRootResource.class);
 
     @AsyncIndex

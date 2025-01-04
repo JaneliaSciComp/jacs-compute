@@ -29,6 +29,7 @@ public class AsyncDomainObjectIndexerTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void indexMultipleDocuments() {
         MessageSender connectedMessageSender = Mockito.mock(MessageSender.class);
@@ -47,7 +48,6 @@ public class AsyncDomainObjectIndexerTest {
             AsyncDomainObjectIndexer indexer = createIndexer(td.messageSender);
             try (MockedStatic<DomainUtils> mockedDomainUtils = Mockito.mockStatic(DomainUtils.class)) {
                 mockedDomainUtils.when(() -> DomainUtils.isSearcheableType(any(Class.class))).thenReturn(true);
-
                 assertEquals(td.expectedMessages, indexer.indexDocumentStream(domainObjects.stream()));
             }
             if (td.messageSender != null) {

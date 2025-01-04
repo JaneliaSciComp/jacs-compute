@@ -50,7 +50,6 @@ import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
 
 public class UndertowAppContainer implements AppContainer {
-
     private static final Logger LOG = LoggerFactory.getLogger(UndertowAppContainer.class);
 
     private final String applicationId;

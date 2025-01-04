@@ -1,19 +1,19 @@
 project(":jacs2-services") {
     dependencies {
-        api JAKARTA_CDI_API_LIB
+        api(JAKARTA_CDI_API_LIB)
 
-        api (JACS_MODEL_ACCESS_LIB) {
+        api(JACS_MODEL_ACCESS_LIB) {
+            exclude(group: 'com.fasterxml.jackson.core')
+        }
+
+        api(JACS_MODEL_CORE_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
         }
 
-        api (JACS_MODEL_CORE_LIB) {
-            exclude group: 'com.fasterxml.jackson.core'
-        }
+        api(JACS_MODEL_RENDERING_LIB,
+            JACS_MESSAGING_CORE_LIB)
 
-        api JACS_MODEL_RENDERING_LIB,
-            JACS_MESSAGING_CORE_LIB
-
-        implementation CMDLINE_ARG_LIB,
+        implementation(CMDLINE_ARG_LIB,
                        COMMOCOMPRESS_LIB,
                        CRON_UTILS_LIB,
                        DBCP_LIB,
@@ -33,12 +33,12 @@ project(":jacs2-services") {
                        MONGODB_SYNC_DRIVER_LIB,
                        MONGODB_LEGACY_DRIVER_LIB,
                        REFLECTIONS_LIB,
-                       SOLR_SEARCH_LIB,
                        SPARK_LAUNCHER,
-                       JACS_STORAGE_CLIENTS_LIB
+                       JACS_STORAGE_CLIENTS_LIB,
+                       SOLR_SEARCH_LIB)
 
-        implementation (JONGO_LIB) {
-            exclude group: 'com.fasterxml.jackson.core'
+        implementation(JONGO_LIB) {
+            exclude(group: 'com.fasterxml.jackson.core')
         }
 
         runtimeOnly MARIADB_DRIVER_LIB
@@ -49,3 +49,5 @@ project(":jacs2-services") {
     }
 
 }
+
+ext.moduleName = 'org.janelia.jacs2.services'

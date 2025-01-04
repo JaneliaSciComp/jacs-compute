@@ -20,6 +20,7 @@ application {
 project(':jacs2-asyncweb') {
     dependencies {
         implementation project(':jacs2-commonweb'),
+                       JERSEY_CONTAINER_SERVLET_LIB,
                        WELD_CDI_SE_CORE_LIB
 
         runtimeOnly JERSEY_INJECT_HK2_LIB,
@@ -58,3 +59,5 @@ project(':jacs2-asyncweb') {
     }
 
 }
+
+ext.moduleName = 'org.janelia.jacs2.asyncweb'

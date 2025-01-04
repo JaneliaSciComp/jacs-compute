@@ -14,6 +14,7 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -29,11 +30,11 @@ import java.util.stream.Stream;
 
 @MdcContext
 public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R> {
+    protected final static Logger logger = LoggerFactory.getLogger(AbstractServiceProcessor.class);
 
     protected final ServiceComputationFactory computationFactory;
     protected final JacsServiceDataPersistence jacsServiceDataPersistence;
     protected final String defaultWorkingDir;
-    protected final Logger logger;
 
     public AbstractServiceProcessor(ServiceComputationFactory computationFactory,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -42,7 +43,6 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         this.computationFactory = computationFactory;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.defaultWorkingDir = defaultWorkingDir;
-        this.logger = logger;
     }
 
     protected <T> ContinuationCond.Cond<T> continueWhenTrue(boolean value, T result) {

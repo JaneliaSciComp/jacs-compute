@@ -1,10 +1,9 @@
 dependencies {
     project.ext {
         // logging
-        SLF4J_VERSION = "2.0.16"
-        LOGBACK_VERSION = "1.5.15"
-        SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
-        LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
+        SLF4J_LIB = "org.slf4j:slf4j-api:2.0.16"
+        SLF4J_SIMPLE_LIB = "org.slf4j:slf4j-simple:1.7.36"
+        LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:1.5.15"
 
         // JAKARTA API
         JAKARTA_CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
@@ -131,21 +130,21 @@ dependencies {
     }
 
     // Included in ALL projects
-    implementation COMMONS_COLLECTIONS_LIB,
+    implementation(COMMONS_COLLECTIONS_LIB,
                    COMMONS_LANG_LIB,
                    GUAVA_LIB,
-                   LOGBACK_CLASSIC_LIB,
-                   SLF4J_LIB
+                   SLF4J_LIB,
+                   LOGBACK_CLASSIC_LIB)
 
-    testImplementation JUNIT4_LIB,
+    testImplementation(JUNIT4_LIB,
                        JUNIT5_LIB,
                        ASSERTJ_LIB,
                        HAMCREST_LIB,
                        MOCKITO_CORE_LIB,
-                       MOCKITO_JUNIT5_LIB
+                       MOCKITO_JUNIT5_LIB)
 
-    testRuntimeOnly JUNIT_ENGINE_LIB,
-                    JUNIT_PLATFORM_LAUNCHER
+    testRuntimeOnly(JUNIT_ENGINE_LIB,
+                    JUNIT_PLATFORM_LAUNCHER)
 
-    mockitoAgent MOCKITO_CORE_LIB
+    mockitoAgent(MOCKITO_CORE_LIB)
 }

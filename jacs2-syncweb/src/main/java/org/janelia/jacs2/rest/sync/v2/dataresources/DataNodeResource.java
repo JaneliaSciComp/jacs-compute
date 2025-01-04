@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
 @RequireAuthentication
 @Path("/data")
 public class DataNodeResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(DataNodeResource.class);
 
     @Inject

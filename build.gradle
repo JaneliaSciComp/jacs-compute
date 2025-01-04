@@ -46,6 +46,10 @@ subprojects {
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         integrationTestRuntimeElements.extendsFrom(integrationTestImplementation, integrationTestRuntimeOnly)
 
+        implementation {
+            exclude(group: 'org.slf4j', module: 'jcl-over-slf4j')
+        }
+
         mockitoAgent { transitive = false }
     }
 

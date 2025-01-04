@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 @Produces("application/json")
 @Path("/mouselight/data/shared")
 public class TmSharedStateResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(TmSharedStateResource.class);
 
     @AsyncIndex

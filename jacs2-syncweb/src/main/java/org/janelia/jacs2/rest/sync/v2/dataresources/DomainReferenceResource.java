@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 @RequireAuthentication
 @Path("/reference")
 public class DomainReferenceResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(DomainReferenceResource.class);
 
     @Inject

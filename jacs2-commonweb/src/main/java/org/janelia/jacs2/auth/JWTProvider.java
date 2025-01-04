@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
  */
 @Dependent
 public class JWTProvider {
-
     private static final Logger LOG = LoggerFactory.getLogger(JWTProvider.class);
 
     public static final String TYPE_HEADER = "typ";

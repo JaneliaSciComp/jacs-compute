@@ -41,6 +41,7 @@ public class SyncServicesApp extends AbstractServicesApp {
                 }
             }).get();
 
+            LOG.info("Start application with {}", appConfig);
             app.start(appArgs, appConfig);
         } catch (Throwable e) {
             // For some reason, any Throwables thrown out of this main function are discarded. Thus, we must log them

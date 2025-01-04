@@ -26,11 +26,13 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight")
 public class TmSampleStreamingResource {
+    private static final Logger LOG = LoggerFactory.getLogger(TmSampleStreamingResource.class);
 
     @Inject
     private TmSampleDao tmSampleDao;
@@ -38,8 +40,6 @@ public class TmSampleStreamingResource {
     private DataStorageLocationFactory dataStorageLocationFactory;
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
-    @Inject
-    private Logger logger;
 
     @Operation(summary = "Get sample rendering info", description = "Retrieve volume rendering info for the specified sample")
     @ApiResponses(value = {
@@ -53,14 +53,14 @@ public class TmSampleStreamingResource {
                                         @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
-            logger.warn("No sample found for {}", sampleId);
+            LOG.warn("No sample found for {}", sampleId);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
         String filepath = tmSample.getLargeVolumeOctreeFilepath();
         if (StringUtils.isBlank(filepath)) {
-            logger.warn("Sample {} found but it has not rendering path", tmSample);
+            LOG.warn("Sample {} found but it has not rendering path", tmSample);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
@@ -97,14 +97,14 @@ public class TmSampleStreamingResource {
                                                         @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
-            logger.warn("No sample found for {}", sampleId);
+            LOG.warn("No sample found for {}", sampleId);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
         String filepath = tmSample.getLargeVolumeOctreeFilepath();
         if (StringUtils.isBlank(filepath)) {
-            logger.warn("Sample {} found but it has not rendering path", tmSample);
+            LOG.warn("Sample {} found but it has not rendering path", tmSample);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
@@ -152,10 +152,10 @@ public class TmSampleStreamingResource {
             @QueryParam("y") Integer yParam,
             @QueryParam("z") Integer zParam,
             @Context ContainerRequestContext requestContext) {
-        logger.debug("Stream tile ({}, {}, {}, {}, {}) for {}", zoomParam, axisParam, xParam, yParam, zParam, sampleId);
+        LOG.debug("Stream tile ({}, {}, {}, {}, {}) for {}", zoomParam, axisParam, xParam, yParam, zParam, sampleId);
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
-            logger.warn("No sample found for {}", sampleId);
+            LOG.warn("No sample found for {}", sampleId);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();

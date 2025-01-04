@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 @RequireAuthentication
 @Path("/data")
 public class SearchFilterResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(SearchFilterResource.class);
 
     @Inject

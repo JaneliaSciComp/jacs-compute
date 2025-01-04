@@ -30,18 +30,18 @@ import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight")
 public class TmFolderBasedStreamingResource {
+    private static final Logger LOG = LoggerFactory.getLogger(TmFolderBasedStreamingResource.class);
 
     @Inject
     private DataStorageLocationFactory dataStorageLocationFactory;
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
-    @Inject
-    private Logger logger;
 
     @Operation(summary = "Get sample rendering info", description = "Retrieve volume rendering info for the specified base folder")
     @ApiResponses(value = {
@@ -54,7 +54,7 @@ public class TmFolderBasedStreamingResource {
     public Response getVolumeInfoFromBaseFolder(@PathParam("baseFolder") String baseFolderParam,
                                                 @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
-            logger.warn("No base folder has been specified: {}", baseFolderParam);
+            LOG.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("No base path has been specified"))
                     .build();
@@ -88,7 +88,7 @@ public class TmFolderBasedStreamingResource {
                                                       @QueryParam("z") Integer zVoxelParam,
                                                       @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
-            logger.warn("No base folder has been specified: {}", baseFolderParam);
+            LOG.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("No base path has been specified"))
                     .build();
@@ -130,7 +130,7 @@ public class TmFolderBasedStreamingResource {
                                                         @QueryParam("channel") Integer channelParam,
                                                         @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
-            logger.warn("No base folder has been specified: {}", baseFolderParam);
+            LOG.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("No base path has been specified"))
                     .build();
@@ -232,7 +232,7 @@ public class TmFolderBasedStreamingResource {
             } else {
                 File[] childFiles = parentDir.listFiles();
                 if (childFiles == null || childFiles.length == 0) {
-                    logger.warn("Parent of suggested path {} - {} is not a directory", pathHint, parentDir);
+                    LOG.warn("Parent of suggested path {} - {} is not a directory", pathHint, parentDir);
                     return Optional.empty();
                 }
                 Predicate<File> filterPredicate;

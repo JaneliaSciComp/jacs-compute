@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 @Produces("application/json")
 @Path("/mouselight/data")
 public class TmSampleResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(TmSampleResource.class);
 
     @AsyncIndex

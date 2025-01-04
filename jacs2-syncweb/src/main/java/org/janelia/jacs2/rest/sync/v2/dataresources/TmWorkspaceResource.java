@@ -56,7 +56,6 @@ import org.slf4j.LoggerFactory;
 @Produces("application/json")
 @Path("/mouselight/data")
 public class TmWorkspaceResource {
-
     private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceResource.class);
 
     @Inject
