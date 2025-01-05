@@ -12,13 +12,14 @@ import java.util.concurrent.TimeUnit;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+@Dependent
 public class ThrottledExeJobsQueue {
 
     private final int initialDelayInMillis;

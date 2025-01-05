@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.demo;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -21,6 +22,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("sleepTest")
 public class SleepTestProcessor extends AbstractExeBasedServiceProcessor<Void> {
 

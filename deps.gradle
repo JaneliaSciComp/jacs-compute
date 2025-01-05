@@ -129,11 +129,12 @@ dependencies {
         ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
     }
 
+    api(SLF4J_LIB)
+
     // Included in ALL projects
     implementation(COMMONS_COLLECTIONS_LIB,
                    COMMONS_LANG_LIB,
                    GUAVA_LIB,
-                   SLF4J_LIB,
                    LOGBACK_CLASSIC_LIB)
 
     testImplementation(JUNIT4_LIB,

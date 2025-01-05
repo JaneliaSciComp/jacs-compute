@@ -46,18 +46,6 @@ project(':jacs2-asyncweb') {
         }
     }
 
-    tasks.withType(CreateStartScripts).each { task ->
-        task.doLast {
-            task.windowsScript.write task.windowsScript.text.replaceFirst(/(set CLASSPATH=%APP_HOME%\\lib\\).*/, {
-                "${it[1]}*"
-            })
-            // on unix also add a line that sets the umask for the process
-            task.unixScript.write task.unixScript.text.replaceFirst(/(CLASSPATH=.APP_HOME\/lib\/).*/, {
-                "CLASSPATH=\$(echo \$APP_HOME/lib/*.jar | tr ' ' ':')\numask 002"
-            })
-        }
-    }
-
 }
 
 ext.moduleName = 'org.janelia.jacs2.asyncweb'

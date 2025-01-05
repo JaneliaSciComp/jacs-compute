@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.common.cluster;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -16,7 +18,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Singleton
+@Dependent
 public class MonitoredJobManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(MonitoredJobManager.class);

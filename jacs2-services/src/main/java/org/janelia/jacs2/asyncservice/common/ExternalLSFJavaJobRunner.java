@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -33,6 +34,7 @@ import org.slf4j.Logger;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 @LSFJavaJob
 public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 

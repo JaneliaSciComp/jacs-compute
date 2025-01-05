@@ -58,8 +58,6 @@ import org.slf4j.LoggerFactory;
 public class TmWorkspaceResource {
     private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceResource.class);
 
-    @Inject
-    private LegacyDomainDao legacyWorkspaceDao;
     @AsyncIndex
     @Inject
     private TmWorkspaceDao tmWorkspaceDao;
@@ -175,7 +173,7 @@ public class TmWorkspaceResource {
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@Parameter @QueryParam("subjectKey") final String subjectKey,
                                         @Parameter @QueryParam("workspaceId") final Long workspaceId,

@@ -14,6 +14,7 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import java.io.File;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Dependent
 @LocalJob
 public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
 
