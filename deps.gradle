@@ -21,7 +21,6 @@ dependencies {
         JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
         JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
-        JERSEY_MEDIA_MOXY_LIB = "org.glassfish.jersey.media:jersey-media-moxy:${JERSEY_VERSION}"
         JERSEY_MEDIA_JSON_BINDING_LIB = "org.glassfish.jersey.media:jersey-media-json-binding:${JERSEY_VERSION}"
         JERSEY_CONTAINER_SERVLET_LIB = "org.glassfish.jersey.containers:jersey-container-servlet:${JERSEY_VERSION}"
         JERSEY_HTTP_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${JERSEY_VERSION}"

@@ -12,7 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.MatcherAssert;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import static org.hamcrest.Matchers.equalTo;

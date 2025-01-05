@@ -8,7 +8,6 @@ project(':jacs2-commonweb') {
             JAKARTA_RS_API_LIB,
             JAKARTA_SERVLET_API_LIB,
             JERSEY_MEDIA_LIB,
-            JERSEY_MEDIA_MOXY_LIB,
             SWAGGER_JAXRS_LIB,
             SWAGGER_SERVLET_LIB)
 

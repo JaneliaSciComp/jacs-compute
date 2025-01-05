@@ -25,7 +25,6 @@ project(':jacs2-syncweb') {
                        JACS_STORAGE_CLIENTS_LIB,
                        SOLR_SEARCH_LIB,
                        JERSEY_CONTAINER_SERVLET_LIB,
-//                       JERSEY_MEDIA_JSON_BINDING_LIB,
                        JERSEY_MEDIA_LIB,
                        JERSEY_MEDIA_JSON_LIB,
                        WELD_CDI_SE_CORE_LIB)
