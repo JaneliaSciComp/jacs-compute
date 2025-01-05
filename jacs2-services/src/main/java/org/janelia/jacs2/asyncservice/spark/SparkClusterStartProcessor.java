@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.spark;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -25,6 +26,7 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("startSparkCluster")
 public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClusterInfo> {
 

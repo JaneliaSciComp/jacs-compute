@@ -12,6 +12,7 @@ import org.janelia.model.domain.files.ZarrContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.util.Map;
@@ -21,6 +22,7 @@ import java.util.Map;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 @Named("zarrDiscoveryAgent")
 public class ZarrDiscoveryAgent implements FileDiscoveryAgent<ZarrContainer> {
 

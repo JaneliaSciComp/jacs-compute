@@ -6,6 +6,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
  * LinkDataProcessor creates a soft link for the specified input. If a link already exists and the errorIfExists is on
  * then the processor fails otherwise it simply overwrites it.
  */
+@Dependent
 @Named("linkData")
 public class LinkDataProcessor extends AbstractServiceProcessor<File> {
 

@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -16,6 +17,7 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("alignment")
 public class AlignmentProcessor extends AbstractAlignmentProcessor {
 

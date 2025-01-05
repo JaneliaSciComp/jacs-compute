@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -14,6 +15,7 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("stopSparkCluster")
 public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
 

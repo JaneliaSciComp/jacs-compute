@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -39,6 +40,7 @@ import org.janelia.model.service.RegisteredJacsNotification;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("sampleResultsCompression")
 public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<List<PipelineResult>> {
 

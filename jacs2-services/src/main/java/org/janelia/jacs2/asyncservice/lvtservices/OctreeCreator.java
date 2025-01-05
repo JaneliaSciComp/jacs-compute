@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 import java.io.File;
 import java.nio.file.Paths;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 @Named("octreeCreator")
 public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, OctreeResult> {
 

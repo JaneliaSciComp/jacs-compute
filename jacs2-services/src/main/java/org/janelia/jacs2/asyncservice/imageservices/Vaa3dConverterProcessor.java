@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.StringJoiner;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -28,6 +29,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("vaa3dConverter")
 public class Vaa3dConverterProcessor extends AbstractServiceProcessor<File> {
 

@@ -13,6 +13,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Map;
 import java.util.Set;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -52,6 +53,7 @@ import org.slf4j.Logger;
 /**
  * Merge paired LSMs into a v3draw (see jacsV1 Vaa3DBulkMergeService).
  */
+@Dependent
 @Named("mergeChannels")
 public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<File> {
 

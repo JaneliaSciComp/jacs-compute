@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -22,6 +23,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("runContainer")
 public class RunContainerProcessor extends AbstractServiceProcessor<Void> {
 

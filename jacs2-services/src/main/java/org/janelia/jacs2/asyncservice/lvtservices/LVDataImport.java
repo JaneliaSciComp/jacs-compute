@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 @Named("lvDataImport")
 public class LVDataImport extends AbstractServiceProcessor<LVResult> {
 

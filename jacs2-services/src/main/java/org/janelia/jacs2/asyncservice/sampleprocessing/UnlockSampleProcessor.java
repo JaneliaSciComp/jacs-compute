@@ -18,9 +18,11 @@ import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+@Dependent
 @Named("unlockSample")
 public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
 

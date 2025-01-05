@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -33,6 +34,7 @@ import org.slf4j.Logger;
 /**
  * Full cycle spark app processor that starts a spark cluster, runs the specified app and shuts down the cluster.
  */
+@Dependent
 @Named("sparkAppProcessor")
 public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
 

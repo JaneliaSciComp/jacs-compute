@@ -19,6 +19,7 @@ import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.File;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 @Named("emSkeletonSync")
 public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
 

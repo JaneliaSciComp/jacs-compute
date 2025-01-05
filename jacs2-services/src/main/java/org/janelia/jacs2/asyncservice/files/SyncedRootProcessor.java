@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -52,6 +53,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Use the SyncedPathResource web API to define a SyncedRoot before invoking this service.
  */
+@Dependent
 @Named("syncedRoot")
 public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 

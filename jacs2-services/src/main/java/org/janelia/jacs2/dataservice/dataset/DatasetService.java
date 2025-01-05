@@ -5,8 +5,10 @@ import org.janelia.model.jacs2.domain.sample.DataSet;
 import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.jacs2.dataservice.subject.SubjectService;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
+@Dependent
 public class DatasetService {
 
     private final DatasetDao datasetDao;

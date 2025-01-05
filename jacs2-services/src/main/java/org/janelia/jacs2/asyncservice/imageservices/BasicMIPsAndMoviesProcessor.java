@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import java.nio.file.Path;
 import java.util.StringJoiner;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
  * 1) If a second image is specified it is normalized to the first one.
  * 2) It supports legends
  */
+@Dependent
 @Named("basicMIPsAndMovies")
 public class BasicMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcessor {
 

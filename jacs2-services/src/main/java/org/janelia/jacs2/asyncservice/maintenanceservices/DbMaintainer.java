@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.maintenanceservices;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.Arrays.asList;
 
+@Dependent
 public class DbMaintainer {
     private static final int SAMPLE_LOCK_EXPIRATION_SECONDS = 43200; // 12 hours
     private static final Logger LOG = LoggerFactory.getLogger(DbMaintainer.class);

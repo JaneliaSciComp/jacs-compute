@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import java.nio.file.Path;
 import java.util.StringJoiner;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
  * 2) Does not support legends.
  * 3) Only supports grey reference channels.
  */
+@Dependent
 @Named("enhancedMIPsAndMovies")
 public class EnhancedMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcessor {
 

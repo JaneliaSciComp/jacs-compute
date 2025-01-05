@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -49,6 +50,7 @@ import org.slf4j.Logger;
  * Create a square montage from given PNGs assuming a tile pattern with the given number of tiles per side. If the number of tiles per side is not specified
  * it tries to form a square from the list of provided images.
  */
+@Dependent
 @Named("imageMagickConverter")
 public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
 

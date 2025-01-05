@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.beust.jcommander.Parameter;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
  * This is a generic async service wrapper which can be used to wrap other service processing.
  * This service is not available in the service registry, therefore it cannot be invoked from the outside.
  */
+@Dependent
 @MdcContext
 public class GenericAsyncServiceProcessor extends AbstractServiceProcessor<Void> {
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
  *
  * @author David Ackerman
  */
+@Dependent
 @Named("lightsheetPipeline")
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
 

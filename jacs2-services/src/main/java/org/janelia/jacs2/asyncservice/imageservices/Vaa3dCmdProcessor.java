@@ -18,12 +18,14 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.util.Map;
 
+@Dependent
 @Named("vaa3dCmd")
 public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
 

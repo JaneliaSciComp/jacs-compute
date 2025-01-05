@@ -17,6 +17,7 @@ import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.function.Predicate;
 /**
  * Pipeline service. The services expects a dictionary argument
  */
+@Dependent
 @Named("pipeline")
 public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
 

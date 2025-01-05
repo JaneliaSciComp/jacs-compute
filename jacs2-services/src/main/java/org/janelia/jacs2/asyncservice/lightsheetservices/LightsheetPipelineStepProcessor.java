@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -53,6 +54,7 @@ import org.slf4j.Logger;
  *
  * @author David Ackerman
  */
+@Dependent
 @Named("lightsheetPipelineStep")
 public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Void> {
 

@@ -19,9 +19,11 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+@Dependent
 @Named("sampleNeuronSeparation")
 public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<NeuronSeparationFiles> {
 

@@ -11,6 +11,7 @@ import org.janelia.model.domain.files.SyncedRoot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.nio.file.Path;
@@ -22,6 +23,7 @@ import java.util.Map;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 @Named("n5DiscoveryAgent")
 public class N5DiscoveryAgent implements FileDiscoveryAgent<N5Container> {
 

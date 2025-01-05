@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -48,6 +49,7 @@ import org.slf4j.Logger;
 /**
  * Create a square montage from PNGs in a given directory.
  */
+@Dependent
 @Named("groupAndMontageImages")
 public class GroupAndMontageFolderImagesProcessor extends AbstractServiceProcessor<Map<String, String>> {
 

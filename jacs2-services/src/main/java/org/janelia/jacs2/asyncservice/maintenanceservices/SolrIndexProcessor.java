@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -33,6 +34,7 @@ import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+@Dependent
 @Named("solrIndexBuilder")
 public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
 

@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -50,6 +51,7 @@ import org.slf4j.Logger;
  * This service creates a TreeNode for the given storage content. Optionally it can also generate and register the MIPs
  * as well for the storage content.
  */
+@Dependent
 @Named("dataTreeLoad")
 public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<ContentStack>> {
 
