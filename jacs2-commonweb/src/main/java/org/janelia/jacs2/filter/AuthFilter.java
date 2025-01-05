@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Priority(Priorities.AUTHENTICATION)
-@ApplicationScoped
 public class AuthFilter implements ContainerRequestFilter {
     private static final Logger LOG = LoggerFactory.getLogger(AuthFilter.class);
     private static final String AUTHORIZATION_HEADER = "Authorization";

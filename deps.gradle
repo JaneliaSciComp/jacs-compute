@@ -24,7 +24,6 @@ dependencies {
         JERSEY_CONTAINER_SERVLET_LIB = "org.glassfish.jersey.containers:jersey-container-servlet:${JERSEY_VERSION}"
         JERSEY_HTTP_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${JERSEY_VERSION}"
         JERSEY_INJECT_HK2_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
-        JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
         JERSEY_WELD_SE_LIB = "org.glassfish.jersey.ext.cdi:jersey-weld2-se:${JERSEY_VERSION}"
 
         JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-core:${JERSEY_VERSION}"

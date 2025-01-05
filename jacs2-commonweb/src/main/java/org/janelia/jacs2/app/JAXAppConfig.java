@@ -3,6 +3,7 @@ package org.janelia.jacs2.app;
 import com.fasterxml.jackson.jakarta.rs.json.JacksonXmlBindJsonProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.jacs2.auth.JacsSecurityContext;
+import org.janelia.jacs2.filter.AuthFilter;
 import org.janelia.jacs2.filter.CORSResponseFilter;
 import org.janelia.jacs2.rest.IllegalStateRequestHandler;
 import org.janelia.jacs2.rest.InvalidArgumentRequestHandler;
@@ -19,6 +20,7 @@ public class JAXAppConfig extends ResourceConfig {
                 JacksonXmlBindJsonProvider.class,
                 AppVersionResource.class,
                 CORSResponseFilter.class,
+                AuthFilter.class,
                 JacsSecurityContext.class);
         // Disable WADL generation, because uses JAXB, produces XML, and ignores our Jackson annotations,
         // and generally doesn't work correctly

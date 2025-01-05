@@ -52,9 +52,6 @@ public class ServiceInfoResource {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceInfoResource.class);
     private static final int DEFAULT_PAGE_SIZE = 100;
 
-    @Context
-    SecurityContext requestSecurityContext;
-
     @Inject
     private JacsServiceDataManager jacsServiceDataManager;
 
@@ -75,9 +72,6 @@ public class ServiceInfoResource {
                                    @QueryParam("service-tags") List<String> serviceTags,
                                    @QueryParam("service-from") Date from,
                                    @QueryParam("service-to") Date to,
-                                   @QueryParam("page") Integer pageNumber,
-                                   @QueryParam("length") Integer pageLength,
-                                   @QueryParam("sort-by") String sortCriteria,
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
         JacsServiceData pattern = createSearchServicesPattern(serviceName,
