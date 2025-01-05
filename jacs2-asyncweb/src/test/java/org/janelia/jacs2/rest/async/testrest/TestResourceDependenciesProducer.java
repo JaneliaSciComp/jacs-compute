@@ -23,37 +23,28 @@ import com.google.common.collect.ImmutableMap;
 import static org.mockito.Mockito.mock;
 
 /**
- * This class is responsible for creating mock objects to be injected  in the test resources. However jersey injection
- * mechanism also requires the binding for the class to the object generated here to be defined in {@link TestResourceBinder}.
+ * This class is responsible for creating mock objects to be injected  in the test resources.
  */
 public class TestResourceDependenciesProducer {
 
-    private Logger logger = LoggerFactory.getLogger(TestResourceDependenciesProducer.class);
-    private ApplicationConfig applicationConfig = new ApplicationConfigProvider()
-            .fromMap(ImmutableMap.<String, String>builder()
-                    .put("JACS.ApiKey", "TESTKEY")
-                    .put("JACS.SystemAppUserName", "TESTUSER")
-                    .build()
-            )
-            .build();
-    private JacsServiceDataManager jacsServiceDataManager = mock(JacsServiceDataManager.class);
-    private ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
-    private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
-    private SubjectDao subjectDao = mock(SubjectDao.class);
-    private JWTProvider jwtProvider = mock(JWTProvider.class);
-    private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
-    private CronScheduledServiceManager jacsScheduledServiceDataManager = mock(CronScheduledServiceManager.class);
-    private JacsServiceEngine jacsServiceEngine = mock(JacsServiceEngine.class);
-
-    @Produces
-    public Logger getLogger() {
-        return logger;
-    }
+    private static JacsServiceDataManager jacsServiceDataManager = mock(JacsServiceDataManager.class);
+    private static ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
+    private static SubjectDao subjectDao = mock(SubjectDao.class);
+    private static JWTProvider jwtProvider = mock(JWTProvider.class);
+    private static ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
+    private static CronScheduledServiceManager jacsScheduledServiceDataManager = mock(CronScheduledServiceManager.class);
+    private static JacsServiceEngine jacsServiceEngine = mock(JacsServiceEngine.class);
 
     @ApplicationProperties
     @Produces
     public ApplicationConfig getApplicationConfig() {
-        return applicationConfig;
+        return new ApplicationConfigProvider()
+                .fromMap(ImmutableMap.<String, String>builder()
+                        .put("JACS.ApiKey", "TESTKEY")
+                        .put("JACS.SystemAppUserName", "TESTUSER")
+                        .build()
+                )
+                .build();
     }
 
     @PropertyValue(name = "")
@@ -76,11 +67,6 @@ public class TestResourceDependenciesProducer {
     @Produces
     public SubjectDao getSubjectDao() {
         return subjectDao;
-    }
-
-    @Produces
-    public LegacyDomainDao getLegacyDomainDao() {
-        return legacyDomainDao;
     }
 
     @Produces

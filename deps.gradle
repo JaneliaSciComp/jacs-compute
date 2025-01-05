@@ -21,6 +21,8 @@ dependencies {
         JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
         JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
+        JERSEY_MEDIA_MOXY_LIB = "org.glassfish.jersey.media:jersey-media-moxy:${JERSEY_VERSION}"
+        JERSEY_MEDIA_JSON_BINDING_LIB = "org.glassfish.jersey.media:jersey-media-json-binding:${JERSEY_VERSION}"
         JERSEY_CONTAINER_SERVLET_LIB = "org.glassfish.jersey.containers:jersey-container-servlet:${JERSEY_VERSION}"
         JERSEY_HTTP_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${JERSEY_VERSION}"
         JERSEY_INJECT_HK2_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
@@ -29,6 +31,16 @@ dependencies {
         JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-core:${JERSEY_VERSION}"
         JERSEY_TEST_UTIL_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
         JERSEY_TEST_PROVIDER_BUNDLE_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
+
+        // JSON
+        JACKSON_VERSION = "2.18.2"
+        JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
+        JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
+        JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
+        JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
+        JACKSON_JAKARTA_JSON_LIB = "com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:${JACKSON_VERSION}"
+        JACKSON_JAKARTA_XML_LIB = "com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-xml-provider:${JACKSON_VERSION}"
+        JACKSON_JAKARTA_XML_BIND_ANNOTATIONS = "com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:${JACKSON_VERSION}"
 
         // ldap
         LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
@@ -72,15 +84,6 @@ dependencies {
         SWAGGER_ANNOTATIONS_LIB = "io.swagger.core.v3:swagger-annotations-jakarta:${SWAGGER_VERSION}"
         SWAGGER_JAXRS_LIB = "io.swagger.core.v3:swagger-jaxrs2-jakarta:${SWAGGER_VERSION}"
         SWAGGER_SERVLET_LIB = "io.swagger.core.v3:swagger-jaxrs2-servlet-initializer-jakarta:${SWAGGER_VERSION}"
-
-        // JSON
-        JACKSON_VERSION = "2.18.2"
-        JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
-        JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
-        JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
-        JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
-        JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
-        JACKSON_JAXRS_XML_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${JACKSON_VERSION}"
 
         // Spark
         SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.12:3.0.1"

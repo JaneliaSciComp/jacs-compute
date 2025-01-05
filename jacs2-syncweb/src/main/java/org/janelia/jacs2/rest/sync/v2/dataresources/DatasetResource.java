@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -21,9 +20,17 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriBuilder;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+//import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+//import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+//import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
@@ -255,24 +262,28 @@ public class DatasetResource {
     }
 
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-    static class SageSyncedDataSet {
+    public static class SageSyncedDataSet {
+        @XmlElement
         @JsonProperty("dataSetIdentifier")
-        String identifier;
+        public String identifier;
+        @XmlElement
         @JsonProperty
-        String name;
+        public String name;
+        @XmlElement
         @JsonProperty
-        String sageSync;
+        public String sageSync;
+        @XmlElement
         @JsonProperty
-        String user;
+        public String user;
     }
 
     @JacksonXmlRootElement(localName = "dataSetList")
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-    static class SageSyncedDataSets {
+    public static class SageSyncedDataSets {
         @JacksonXmlElementWrapper(localName = "dataSetList", useWrapping = false)
         @JsonProperty("dataSetList")
         @JacksonXmlProperty(localName = "dataSet")
-        final List<SageSyncedDataSet> syncedDataSets;
+        public final List<SageSyncedDataSet> syncedDataSets;
 
         SageSyncedDataSets(List<SageSyncedDataSet> syncedDataSets) {
             this.syncedDataSets = syncedDataSets;
@@ -287,8 +298,8 @@ public class DatasetResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Path("dataSet/sage")
-    public SageSyncedDataSets getSageSyncedDataSets(@Parameter @QueryParam("owners") final List<String> owners,
-                                                    @Parameter @QueryParam("sageSync") final Boolean sageSync) {
+    public Response getSageSyncedDataSets(@Parameter @QueryParam("owners") final List<String> owners,
+                                          @Parameter @QueryParam("sageSync") final Boolean sageSync) {
         LOG.trace("Start getSageSyncDataSets(owners={}, sageSync={})", owners, sageSync);
         try {
             List<DataSet> dataSets = datasetDao.getDatasetsByOwnersAndSageSyncFlag(owners, sageSync);
@@ -304,7 +315,9 @@ public class DatasetResource {
                         return sds;
                     })
                     .collect(Collectors.toList());
-            return new SageSyncedDataSets(sageSyncedDataSets);
+            return Response.status(200)
+                    .entity(new SageSyncedDataSets(sageSyncedDataSets))
+                    .build();
         } finally {
             LOG.trace("Finished getSageSyncDataSets(owners={}, sageSync={})", owners, sageSync);
         }

@@ -8,7 +8,7 @@ import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.security.User;
 import org.janelia.model.service.JacsServiceData;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;

@@ -11,10 +11,10 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.security.User;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DatasetResourceTest extends AbstractSyncServicesAppResourceTest {
 

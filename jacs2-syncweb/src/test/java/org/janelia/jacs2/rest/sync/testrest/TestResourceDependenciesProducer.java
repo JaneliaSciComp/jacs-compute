@@ -35,7 +35,6 @@ import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.access.domain.dao.LSMImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
-import org.janelia.model.access.domain.dao.PublishedImageDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
@@ -49,74 +48,63 @@ import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.mockito.Mockito.mock;
 
 /**
- * This class is responsible for creating mock objects to be injected  in the test resources. However jersey injection
- * mechanism also requires the binding for the class to the object generated here to be defined in {@link TestResourceBinder}.
+ * This class is responsible for creating mock objects to be injected  in the test resources.
  */
 public class TestResourceDependenciesProducer {
 
-    private Logger logger = LoggerFactory.getLogger(TestResourceDependenciesProducer.class);
-    private ApplicationConfig applicationConfig = new ApplicationConfigProvider()
-            .fromMap(ImmutableMap.<String, String>builder()
-                    .put("JACS.ApiKey", "TESTKEY")
-                    .put("JACS.SystemAppUserName", "TESTUSER")
-                    .put("Dataset.Storage.DefaultVolume", "testVolume")
-                    .build()
-            )
-            .build();
-    private AnnotationDao annotationDao = mock(AnnotationDao.class);
-    private SyncedRootDao syncedRootDao = mock(SyncedRootDao.class);
-    private DatasetDao datasetDao = mock(DatasetDao.class);
-    private ColorDepthImageDao colorDepthImageDao = mock(ColorDepthImageDao.class);
-    private EmBodyDao emBodyDao = mock(EmBodyDao.class);
-    private EmDataSetDao emDataSetDao = mock(EmDataSetDao.class);
-    private PublishedImageDao publishedImageDao = mock(PublishedImageDao.class);
-    private LineReleaseDao lineReleaseDao = mock(LineReleaseDao.class);
-    private JWTProvider jwtProvider = mock(JWTProvider.class);
-    private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
-    private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
-    private DataStorageLocationFactory volumeLocationFactory = mock(DataStorageLocationFactory.class);
-    private OntologyDao ontologyDao = mock(OntologyDao.class);
-    private RenderedVolumeLoader renderedVolumeLoader = mock(RenderedVolumeLoader.class);
-    private SummaryDao summaryDao = mock(SummaryDao.class);
-    private StorageService storageService = mock(StorageService.class);
-    private TmNeuronMetadataDao tmNeuronMetadataDao = mock(TmNeuronMetadataDao.class);
-    private TmWorkspaceDao tmWorkspaceDao = mock(TmWorkspaceDao.class);
-    private TmReviewTaskDao tmReviewTaskDao = mock(TmReviewTaskDao.class);
-    private TmAgentDao tmAgentDao = mock(TmAgentDao.class);
-    private TmSampleDao tmSampleDao = mock(TmSampleDao.class);
-    private WorkspaceNodeDao workspaceNodeDao = mock(WorkspaceNodeDao.class);
-    private SubjectDao subjectDao = mock(SubjectDao.class);
-    private PasswordProvider pwProvider = mock(PasswordProvider.class);
-    private AuthProvider authProvider = mock(AuthProvider.class);
-    private DomainObjectIndexer domainObjectIndexer = mock(DomainObjectIndexer.class);
-    private DocumentIndexingService documentIndexingService = mock(DocumentIndexingService.class);
-    private IndexBuilderService indexBuilderService = mock(IndexBuilderService.class);
-    private SampleDataService sampleDataService = mock(SampleDataService.class);
-    private SageDataService sageDataService = mock(SageDataService.class);
-    private SampleDao sampleDao = mock(SampleDao.class);
-    private LSMImageDao lsmImageDao = mock(LSMImageDao.class);
-    private ReferenceDomainObjectReadDao referenceDao = mock(ReferenceDomainObjectReadDao.class);
-    private ExecutorService indexingExecutorService = mock(ExecutorService.class);
-    private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
-    private UserManager userManager = mock(UserManager.class);
-    private HortaDataManager hortaDataManager = mock(HortaDataManager.class);
-    private MessageSender messageSender = mock(MessageSender.class);
-
-    @Produces
-    public Logger getLogger() {
-        return logger;
-    }
+    private static AnnotationDao annotationDao = mock(AnnotationDao.class);
+    private static SyncedRootDao syncedRootDao = mock(SyncedRootDao.class);
+    private static DatasetDao datasetDao = mock(DatasetDao.class);
+    private static ColorDepthImageDao colorDepthImageDao = mock(ColorDepthImageDao.class);
+    private static EmBodyDao emBodyDao = mock(EmBodyDao.class);
+    private static EmDataSetDao emDataSetDao = mock(EmDataSetDao.class);
+    private static LineReleaseDao lineReleaseDao = mock(LineReleaseDao.class);
+    private static JWTProvider jwtProvider = mock(JWTProvider.class);
+    private static LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
+    private static ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
+    private static DataStorageLocationFactory volumeLocationFactory = mock(DataStorageLocationFactory.class);
+    private static OntologyDao ontologyDao = mock(OntologyDao.class);
+    private static RenderedVolumeLoader renderedVolumeLoader = mock(RenderedVolumeLoader.class);
+    private static SummaryDao summaryDao = mock(SummaryDao.class);
+    private static StorageService storageService = mock(StorageService.class);
+    private static TmNeuronMetadataDao tmNeuronMetadataDao = mock(TmNeuronMetadataDao.class);
+    private static TmWorkspaceDao tmWorkspaceDao = mock(TmWorkspaceDao.class);
+    private static TmReviewTaskDao tmReviewTaskDao = mock(TmReviewTaskDao.class);
+    private static TmAgentDao tmAgentDao = mock(TmAgentDao.class);
+    private static TmSampleDao tmSampleDao = mock(TmSampleDao.class);
+    private static WorkspaceNodeDao workspaceNodeDao = mock(WorkspaceNodeDao.class);
+    private static SubjectDao subjectDao = mock(SubjectDao.class);
+    private static PasswordProvider pwProvider = mock(PasswordProvider.class);
+    private static AuthProvider authProvider = mock(AuthProvider.class);
+    private static DomainObjectIndexer domainObjectIndexer = mock(DomainObjectIndexer.class);
+    private static DocumentIndexingService documentIndexingService = mock(DocumentIndexingService.class);
+    private static IndexBuilderService indexBuilderService = mock(IndexBuilderService.class);
+    private static SampleDataService sampleDataService = mock(SampleDataService.class);
+    private static SageDataService sageDataService = mock(SageDataService.class);
+    private static SampleDao sampleDao = mock(SampleDao.class);
+    private static LSMImageDao lsmImageDao = mock(LSMImageDao.class);
+    private static ReferenceDomainObjectReadDao referenceDao = mock(ReferenceDomainObjectReadDao.class);
+    private static ExecutorService indexingExecutorService = mock(ExecutorService.class);
+    private static DbMaintainer dbMaintainer = mock(DbMaintainer.class);
+    private static UserManager userManager = mock(UserManager.class);
+    private static HortaDataManager hortaDataManager = mock(HortaDataManager.class);
+    private static MessageSender messageSender = mock(MessageSender.class);
 
     @ApplicationProperties
     @Produces
     public ApplicationConfig getApplicationConfig() {
-        return applicationConfig;
+        return new ApplicationConfigProvider()
+                .fromMap(ImmutableMap.<String, String>builder()
+                        .put("JACS.ApiKey", "TESTKEY")
+                        .put("JACS.SystemAppUserName", "TESTUSER")
+                        .put("Dataset.Storage.DefaultVolume", "testVolume")
+                        .build()
+                )
+                .build();
     }
 
     @PropertyValue(name = "")
@@ -162,11 +150,6 @@ public class TestResourceDependenciesProducer {
     @Produces
     public EmDataSetDao getEmDataSetDao() {
         return emDataSetDao;
-    }
-
-    @Produces
-    public PublishedImageDao getPublishedImageDao() {
-        return publishedImageDao;
     }
 
     @AsyncIndex

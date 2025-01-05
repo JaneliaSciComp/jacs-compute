@@ -1,14 +1,18 @@
 project(':jacs2-commonweb') {
     dependencies {
         api(project(':jacs2-services'),
+            JACKSON_JAKARTA_JSON_LIB,
+            JACKSON_JAKARTA_XML_LIB,
+            JACKSON_JAKARTA_XML_BIND_ANNOTATIONS,
             JAKARTA_JAXB_API,
             JAKARTA_RS_API_LIB,
             JAKARTA_SERVLET_API_LIB,
+            JERSEY_MEDIA_LIB,
+            JERSEY_MEDIA_MOXY_LIB,
             SWAGGER_JAXRS_LIB,
             SWAGGER_SERVLET_LIB)
 
         implementation(CMDLINE_ARG_LIB,
-                       JACKSON_JAXRS_JSON_PROVIDER,
                        JWT_API,
                        LDAP_CLIENT_LIB,
                        JERSEY_CONTAINER_SERVLET_LIB,
