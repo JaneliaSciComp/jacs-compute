@@ -1,15 +1,15 @@
 package org.janelia.jacs2.app.undertow;
 
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.EventListener;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.servlet.ServletException;
 import jakarta.ws.rs.core.Application;
 
-import com.google.common.collect.ImmutableList;
 import io.swagger.v3.jaxrs2.integration.OpenApiServlet;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -55,7 +55,6 @@ public class UndertowAppContainer implements AppContainer {
     private final String applicationId;
     private final String restApiContext;
     private final String restApiVersion;
-    private final String[] excludedPathsFromAccessLog;
     private final ApplicationConfig applicationConfig;
     private final List<ListenerInfo> appListeners;
 
@@ -64,13 +63,11 @@ public class UndertowAppContainer implements AppContainer {
     public UndertowAppContainer(String applicationId,
                                 String restApiContext,
                                 String restApiVersion,
-                                String[] excludedPathsFromAccessLog,
                                 ApplicationConfig applicationConfig,
                                 List<Class<? extends EventListener>> appListenerTypes) {
         this.applicationId = applicationId;
         this.restApiContext = restApiContext;
         this.restApiVersion = restApiVersion;
-        this.excludedPathsFromAccessLog = excludedPathsFromAccessLog;
         this.applicationConfig = applicationConfig;
         this.appListeners = appListenerTypes.stream().map(Servlets::listener).collect(Collectors.toList());
     }
@@ -129,8 +126,8 @@ public class UndertowAppContainer implements AppContainer {
                         .addPrefixPath(contextPath, new SavedRequestBodyHandler(
                                 restApiHttpHandler,
                                 applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false),
-                                applicationConfig.getStringListPropertyValue("AccessLog.RestrictedPaths",
-                                        ImmutableList.of("/auth/authenticate", "/data/user/password")))),
+                                getAccessLogIgnoredPaths()
+                                )),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
@@ -168,17 +165,15 @@ public class UndertowAppContainer implements AppContainer {
     }
 
     private Predicate getAccessLogFilter() {
-        return Predicates.not(
-                Predicates.prefixes(excludedPathsFromAccessLog)
-        );
+        return Predicates.falsePredicate();
     }
 
-    private java.util.function.Predicate<HttpString> getOmittedHeaders() {
-        Set<HttpString> ignoredHeaders =
-                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
-                        .filter(h -> StringUtils.isNotBlank(h))
-                        .map(h -> new HttpString(h.trim()))
-                        .collect(Collectors.toSet());
-        return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
+    private Collection<String> getAccessLogIgnoredPaths() {
+        return Stream.concat(
+                Stream.of("/auth/authenticate", "/data/user/password"),
+                applicationConfig.getStringListPropertyValue("AccessLog.IgnoredPaths").stream()
+                )
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
     }
 }

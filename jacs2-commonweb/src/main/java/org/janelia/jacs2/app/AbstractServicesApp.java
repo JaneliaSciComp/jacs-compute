@@ -37,7 +37,6 @@ public abstract class AbstractServicesApp {
                 getApplicationId(),
                 getRestApiContext(),
                 getApiVersion(),
-                getPathsExcludedFromAccessLog(),
                 applicationConfig,
                 getAppListeners()
         );
@@ -55,10 +54,6 @@ public abstract class AbstractServicesApp {
 
     String getRestApiContext() {
         return "/api";
-    }
-
-    String[] getPathsExcludedFromAccessLog() {
-        return new String[0];
     }
 
     abstract List<Class<? extends EventListener>> getAppListeners();

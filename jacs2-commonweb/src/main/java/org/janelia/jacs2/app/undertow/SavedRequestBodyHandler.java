@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
-
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -37,7 +36,7 @@ public class SavedRequestBodyHandler implements HttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (enabled && supportedMethods.contains(exchange.getRequestMethod().toString()) && isRequestPathNotRestricted(exchange.getRelativePath())) {
             String mimeType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-            if (mimeType != null && supportedMimeTypes.stream().filter(supportedMimeType -> mimeType.startsWith(supportedMimeType)).findAny().orElse(null) != null) {
+            if (mimeType != null && supportedMimeTypes.stream().filter(mimeType::startsWith).findAny().orElse(null) != null) {
                 boolean isMultipart;
                 String boundary;
                 if (mimeType.startsWith("multipart/")) {
