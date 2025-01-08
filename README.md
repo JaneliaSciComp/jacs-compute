@@ -1,6 +1,7 @@
 # JACS - JAnelia Computational Services
 
 [![Java CI with Gradle](https://github.com/JaneliaSciComp/jacs-compute/actions/workflows/gradle.yml/badge.svg)](https://github.com/JaneliaSciComp/jacs-compute/actions/workflows/gradle.yml)
+[![DOI](https://zenodo.org/badge/168217561.svg)](https://doi.org/10.5281/zenodo.14610040)
 
 JACS is both a framework and a collection of computational services for scientific computing at Janelia. It currently includes:
 
