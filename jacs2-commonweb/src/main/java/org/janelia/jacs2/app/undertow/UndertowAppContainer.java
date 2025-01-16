@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import jakarta.servlet.ServletException;
 import jakarta.ws.rs.core.Application;
 
+import com.google.common.collect.Streams;
 import io.swagger.v3.jaxrs2.integration.OpenApiServlet;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -88,8 +89,7 @@ public class UndertowAppContainer implements AppContainer {
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")
-                        .addMappings("/*", "/authenticated/*", "/unauthenticated/*")
-                ;
+                        .addMappings("/*", "/authenticated/*", "/unauthenticated/*");
 
         String basepath = "http://" + appArgs.hostname + ":" + appArgs.portNumber + contextPath;
         ServletInfo swaggerDocsServlet =
@@ -108,8 +108,7 @@ public class UndertowAppContainer implements AppContainer {
                         .addListener(Servlets.listener(Listener.class))
                         .addListeners(appListeners)
                         .addListener(Servlets.listener(WeldTerminalListener.class))
-                        .addServlets(restApiServlet, swaggerDocsServlet)
-                ;
+                        .addServlets(restApiServlet, swaggerDocsServlet);
 
         LOG.info("Deploying REST API at {}", basepath);
         DeploymentManager deploymentManager = Servlets.defaultContainer().addDeployment(servletBuilder);
@@ -122,16 +121,16 @@ public class UndertowAppContainer implements AppContainer {
 
         HttpHandler jacsHandler = new AccessLogHandler(
                 Handlers.path(
-                        Handlers.redirect(docsContextPath))
+                                Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
                         .addPrefixPath(contextPath, new SavedRequestBodyHandler(
                                 restApiHttpHandler,
                                 applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false),
                                 getAccessLogIgnoredPaths()
-                                )),
+                        )),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
-                new JoinedExchangeAttribute(new ExchangeAttribute[] {
+                new JoinedExchangeAttribute(new ExchangeAttribute[]{
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         new AuthenticatedUserAttribute(), // <RemoteUser>
                         new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("Application-Id"))), // <Application-Id>
@@ -172,8 +171,8 @@ public class UndertowAppContainer implements AppContainer {
 
     private Collection<String> getAccessLogIgnoredPaths() {
         return Stream.concat(
-                Stream.of("/auth/authenticate", "/data/user/password"),
-                applicationConfig.getStringListPropertyValue("AccessLog.IgnoredPaths").stream()
+                        Stream.of("/auth/authenticate", "/data/user/password"),
+                        applicationConfig.getStringListPropertyValue("AccessLog.IgnoredPaths").stream()
                 )
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
@@ -181,10 +180,12 @@ public class UndertowAppContainer implements AppContainer {
 
     private java.util.function.Predicate<HttpString> getOmittedHeaders() {
         Set<HttpString> ignoredHeaders =
-                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
-                        .filter(StringUtils::isNotBlank)
-                        .map(h -> new HttpString(h.trim()))
-                        .collect(Collectors.toSet());
+                Streams.concat(
+                        Stream.of("Authorization", "SecretKey"), // these should never be logged
+                        applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
+                ).filter(StringUtils::isNotBlank)
+                 .map(h -> new HttpString(h.trim()))
+                 .collect(Collectors.toSet());
         return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
     }
 
