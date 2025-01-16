@@ -118,7 +118,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         DataTreeLoadArgs args = getArgs(jacsServiceData);
         JadeStorageAttributes jadeStorageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.AccessKey"))
-                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.SecretKey"));
+                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("SampleStorage.SecretKey"))
+                .setAttributeValue("AWSRegion", jacsServiceData.getDictionaryArgAsString("SampleStorage.AWSRegion"))
+                ;
         StorageEntryInfo storageInfo;
         if (StringUtils.isBlank(args.storageLocationURL)) {
             storageInfo = storageContentHelper

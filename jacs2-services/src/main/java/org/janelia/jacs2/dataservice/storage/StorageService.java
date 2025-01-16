@@ -113,7 +113,7 @@ public class StorageService {
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
             }
-            LOG.debug("Requesting {}", target.getUri());
+            LOG.debug("Lookup data bundles with {}", target.getUri());
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageOptions);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
@@ -178,7 +178,7 @@ public class StorageService {
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
             }
-            LOG.debug("Requesting {}", target.getUri());
+            LOG.debug("Lookup storage volumes with {}", target.getUri());
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageOptions);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();

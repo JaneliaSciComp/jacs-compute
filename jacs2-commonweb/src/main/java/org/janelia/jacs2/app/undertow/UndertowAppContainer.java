@@ -4,6 +4,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -143,6 +144,7 @@ public class UndertowAppContainer implements AppContainer {
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
                         new NameValueAttribute("Authorization", new RequestHeaderAttribute(new HttpString("Authorization")), true, true),
                         new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("User-Agent"))), // <Application-Id>
+                        new RequestHeadersAttribute(getOmittedHeaders()),
                         new RequestBodyAttribute(applicationConfig.getIntegerPropertyValue("AccessLog.MaxRequestBody")) // Request Body
                 }, " "),
                 getAccessLogFilter()
@@ -176,4 +178,14 @@ public class UndertowAppContainer implements AppContainer {
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
     }
+
+    private java.util.function.Predicate<HttpString> getOmittedHeaders() {
+        Set<HttpString> ignoredHeaders =
+                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
+                        .filter(StringUtils::isNotBlank)
+                        .map(h -> new HttpString(h.trim()))
+                        .collect(Collectors.toSet());
+        return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
+    }
+
 }

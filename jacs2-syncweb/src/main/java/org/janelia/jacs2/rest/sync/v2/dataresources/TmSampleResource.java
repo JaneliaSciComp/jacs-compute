@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -24,6 +23,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +34,6 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
@@ -99,10 +98,11 @@ public class TmSampleResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("sample/constants")
-    public Response getTmSampleConstants(@QueryParam("subjectKey") final String subjectKey,
-                                         @QueryParam("samplePath") final String samplePath,
-                                         @HeaderParam("AccessKey") String accessKey,
-                                         @HeaderParam("SecretKey") String secretKey,
+    public Response getTmSampleConstants(@Parameter @QueryParam("subjectKey") final String subjectKey,
+                                         @Parameter @QueryParam("samplePath") final String samplePath,
+                                         @Parameter @HeaderParam("AccessKey") String accessKey,
+                                         @Parameter @HeaderParam("SecretKey") String secretKey,
+                                         @Parameter @HeaderParam("AWSRegion") String awsRegion,
                                          @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
         if (StringUtils.isBlank(samplePath)) {
@@ -113,7 +113,8 @@ public class TmSampleResource {
         String authSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", accessKey)
-                .setAttributeValue("SecretKey", secretKey);
+                .setAttributeValue("SecretKey", secretKey)
+                .setAttributeValue("AWSRegion", awsRegion);
         return hortaDataManager.getSampleConstants(authSubjectKey, samplePath, storageAttributes)
                 .map(constants -> Response.ok()
                         .entity(new GenericEntity<Map<String, Object>>(constants){})
@@ -138,11 +139,18 @@ public class TmSampleResource {
     @Path("sample")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createTmSample(@HeaderParam("AccessKey") String accessKey, @HeaderParam("SecretKey") String secretKey, DomainQuery query) {
+    public Response createTmSample(@HeaderParam("AccessKey") String accessKey,
+                                   @HeaderParam("SecretKey") String secretKey,
+                                   @HeaderParam("AWSRegion") String awsRegion,
+                                   DomainQuery query) {
         LOG.trace("createTmSample({})", query);
         TmSample sample = query.getDomainObjectAs(TmSample.class);
-        if (StringUtils.isNotBlank(accessKey)) sample.setStorageAttribute("AccessKey", accessKey);
-        if (StringUtils.isNotBlank(secretKey)) sample.setStorageAttribute("SecretKey", secretKey);
+        if (StringUtils.isNotBlank(accessKey))
+            sample.setStorageAttribute("AccessKey", accessKey);
+        if (StringUtils.isNotBlank(secretKey))
+            sample.setStorageAttribute("SecretKey", secretKey);
+        if (StringUtils.isNotBlank(awsRegion))
+            sample.setStorageAttribute("AWSRegion", awsRegion);
         String samplePath = sample.getLargeVolumeOctreeFilepath();
         LOG.info("Creating new TmSample {} with path {}", sample.getName(), samplePath);
         try {
