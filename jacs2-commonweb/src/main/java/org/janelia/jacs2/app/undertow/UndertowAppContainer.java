@@ -5,6 +5,7 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletException;
 import javax.ws.rs.core.Application;
@@ -46,6 +47,7 @@ import static io.undertow.servlet.Servlets.servlet;
 
 public class UndertowAppContainer implements AppContainer {
 
+    private static final HttpString HTTP_WILDCARD_STRING = new HttpString("*");
     private static final Logger LOG = LoggerFactory.getLogger(UndertowAppContainer.class);
 
     private final String applicationId;
@@ -172,10 +174,12 @@ public class UndertowAppContainer implements AppContainer {
 
     private java.util.function.Predicate<HttpString> getOmittedHeaders() {
         Set<HttpString> ignoredHeaders =
-                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
-                        .filter(h -> StringUtils.isNotBlank(h))
-                        .map(h -> new HttpString(h.trim()))
-                        .collect(Collectors.toSet());
-        return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
+                Stream.concat(
+                        Stream.of("Authorization", "SecretKey"), // these should never be logged
+                        applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
+                ).filter(StringUtils::isNotBlank)
+                 .map(h -> new HttpString(h.trim()))
+                 .collect(Collectors.toSet());
+        return h -> ignoredHeaders.contains(HTTP_WILDCARD_STRING) || ignoredHeaders.contains(h);
     }
 }
