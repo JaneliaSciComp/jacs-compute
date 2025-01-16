@@ -176,7 +176,7 @@ public class StorageService {
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
             }
-            LOG.debug("Lookup storage volumes with {} and {}", target.getUri(), storageOptions);
+            LOG.debug("Lookup storage volumes with {} and {}", target.getUri(), storageOptions.getAsMap());
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageOptions);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
