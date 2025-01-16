@@ -438,7 +438,8 @@ public class StorageService {
                     jacsPrincipal);
         }
         for (String storageAttribute : storageOptions.getAttributeNames()) {
-            requestBuilder.header(storageAttribute, storageOptions.getAttributeValue(storageAttribute));
+            LOG.info("Add request header {}", storageAttribute);
+            requestWithCredentialsBuilder.header(storageAttribute, storageOptions.getAttributeValue(storageAttribute));
         }
         return requestWithCredentialsBuilder;
     }
