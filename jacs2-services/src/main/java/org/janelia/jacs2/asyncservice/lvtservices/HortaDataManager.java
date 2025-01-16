@@ -76,6 +76,7 @@ public class HortaDataManager {
 
         log.info("OCTREE PATH:{}",octreePath);
         log.info("ZARR PATH:{}",altPath);
+        log.info("Storage attributes:{}",sample.getStorageAttributes());
 
         String samplePath = (octreePath.trim().length()!=0)?octreePath:altPath;
 

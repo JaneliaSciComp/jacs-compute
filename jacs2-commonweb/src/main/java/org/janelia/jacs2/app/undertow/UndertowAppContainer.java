@@ -142,6 +142,7 @@ public class UndertowAppContainer implements AppContainer {
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
                         new NameValueAttribute("Authorization", new RequestHeaderAttribute(new HttpString("Authorization")), true, true),
                         new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("User-Agent"))), // <Application-Id>
+                        new RequestHeadersAttribute(getOmittedHeaders()),
                         new RequestBodyAttribute(applicationConfig.getIntegerPropertyValue("AccessLog.MaxRequestBody")) // Request Body
                 }, " "),
                 getAccessLogFilter()

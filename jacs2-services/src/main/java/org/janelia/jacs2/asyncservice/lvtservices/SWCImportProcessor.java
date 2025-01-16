@@ -141,6 +141,9 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         if (jacsServiceData.getDictionaryArgAsString("SecretKey") != null) {
             attributes.put("SecretKey", jacsServiceData.getDictionaryArgAsString("SecretKey"));
         }
+        if (jacsServiceData.getDictionaryArgAsString("AWSRegion") != null) {
+            attributes.put("AWSRegion", jacsServiceData.getDictionaryArgAsString("AWSRegion"));
+        }
         return attributes;
     }
 }
