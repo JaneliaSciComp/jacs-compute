@@ -27,9 +27,10 @@ project(":jacs2-commonweb") {
     }
 
     processResources {
+        def projectVersion = project.version
         filesMatching('**/version.txt') {
             filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
-                    "version": project.version
+                    "version": projectVersion
             ])
         }
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
