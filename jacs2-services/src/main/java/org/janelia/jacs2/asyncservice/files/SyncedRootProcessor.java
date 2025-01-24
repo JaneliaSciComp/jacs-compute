@@ -128,7 +128,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         JadeStorageService jadeStorage = new JadeStorageService(masterStorageServiceURL, storageServiceApiKey, syncedRoot.getOwnerKey(), authToken);
         JadeStorageAttributes jadeStorageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", jacsServiceData.getDictionaryArgAsString("Storage.AccessKey"))
-                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("Storage.SecretKey"));
+                .setAttributeValue("SecretKey", jacsServiceData.getDictionaryArgAsString("Storage.SecretKey"))
+                .setAttributeValue("AWSRegion", jacsServiceData.getDictionaryArgAsString("Storage.AWSRegion"));
         StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(syncedRoot.getFilepath(), jadeStorageAttributes);
         if (storageLocation == null) {
             throw new ComputationException(jacsServiceData, "Could not find storage location for path " + syncedRoot.getFilepath());
@@ -136,7 +137,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
         StorageObject rootMetadata;
         try {
-            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath());
+            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath(), true);
         } catch (StorageObjectNotFoundException e) {
             throw new ComputationException(jacsServiceData, "Could not find metadata for " + storageLocation.getStorageURL() + " path " + syncedRoot.getFilepath());
         }
@@ -210,7 +211,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     if (!args.dryRun) {
                         try {
                             legacyDomainDao.updateProperty(syncedRoot.getOwnerKey(), syncedPath.getClass(),
-                                    syncedPath.getId(), "existsInStorage", false);
+                                    syncedPath.getId(), "existsInStorage", false, boolean.class);
                         } catch (Exception e) {
                             logger.error("Error updating " + syncedPath, e);
                             throw new ComputationException(jacsServiceData, "Could not update " + syncedPath);
@@ -233,7 +234,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                                                    String indent) {
         List<Future<DomainObject>> futures = new ArrayList<>();
         try {
-            for (JadeObject child : jadeObject.getChildren()) {
+            for (JadeObject child : jadeObject.getSubdirs()) {
                 StorageObject storageObject = child.getStorageObject();
                 logger.debug(indent + "{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
                 logger.debug(indent + "      {}", child);
@@ -249,7 +250,9 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     return discoveredObject;
                 }));
 
-                if (levels > 1 && storageObject.isCollection()) {
+                if (levels > 1 &&
+                        storageObject.isCollection() &&
+                        child.getStorageObject().getAbsolutePath().equals(jadeObject.getStorageObject().getAbsolutePath())) {
                     // Recurse into the folder hierarchy
                     futures.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent + "  "));
                 }

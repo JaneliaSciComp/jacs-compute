@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
@@ -41,7 +40,14 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
     File prepareProcessingDir(Path processDir) {
         File processCwd;
         if (processDir == null) {
-            processCwd = com.google.common.io.Files.createTempDir();
+            try {
+                processCwd = Files.createTempDirectory(
+                        Paths.get(System.getProperty("java.io.tmpdir")),
+                        "",
+                        PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"))).toFile();
+            } catch (IOException e) {
+                throw new IllegalStateException("Cannot create temporary working directory", e);
+            }
         } else {
             processCwd = processDir.toFile();
         }

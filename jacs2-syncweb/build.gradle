@@ -3,7 +3,9 @@ plugins {
     id 'distribution'
 }
 
-mainClassName = 'org.janelia.jacs2.app.SyncServicesApp'
+application {
+    mainClass = 'org.janelia.jacs2.app.SyncServicesApp'
+}
 
 project(":jacs2-syncweb") {
     dependencies {
