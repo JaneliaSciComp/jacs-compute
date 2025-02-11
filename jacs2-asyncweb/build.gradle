@@ -4,7 +4,9 @@ plugins {
     id 'nebula.rpm' version '4.8.0'
 }
 
-mainClassName = 'org.janelia.jacs2.app.AsyncServicesApp'
+application {
+    mainClass = 'org.janelia.jacs2.app.AsyncServicesApp'
+}
 
 project(":jacs2-asyncweb") {
     dependencies {

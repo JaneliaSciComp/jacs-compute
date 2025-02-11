@@ -66,7 +66,8 @@ public class TmFolderBasedStreamingResource {
         }
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
-                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"))
+                .setAttributeValue("AWSRegion", requestContext.getHeaderString("AWSRegion"));
         return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderParam, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.loadVolume(rvl))
@@ -103,7 +104,8 @@ public class TmFolderBasedStreamingResource {
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
-                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"))
+                .setAttributeValue("AWSRegion", requestContext.getHeaderString("AWSRegion"));
         return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderParam, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.findClosestRawImageFromVoxelCoord(rvl, xVoxel, yVoxel, zVoxel))
@@ -149,7 +151,8 @@ public class TmFolderBasedStreamingResource {
         int channel = channelParam == null ? 0 : channelParam;
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
-                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"))
+                .setAttributeValue("AWSRegion", requestContext.getHeaderString("AWSRegion"));
         return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderParam, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null, storageAttributes)
                 .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
                 .flatMap(rvl -> renderedVolumeLoader.findClosestRawImageFromVoxelCoord(rvl, xVoxel, yVoxel, zVoxel)
@@ -187,7 +190,8 @@ public class TmFolderBasedStreamingResource {
             @Context ContainerRequestContext requestContext) {
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes()
                 .setAttributeValue("AccessKey", requestContext.getHeaderString("AccessKey"))
-                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"));
+                .setAttributeValue("SecretKey", requestContext.getHeaderString("SecretKey"))
+                .setAttributeValue("AWSRegion", requestContext.getHeaderString("AWSRegion"));
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
                 dataStorageLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),

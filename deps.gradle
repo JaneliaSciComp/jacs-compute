@@ -107,7 +107,7 @@ dependencies {
         JACS_MESSAGING_VERSION = "2.5.0"
         JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
         JACS_MESSAGING_BROKER_LIB = "org.janelia.jacs-messaging:jacs-messaging-broker:${JACS_MESSAGING_VERSION}"
-        JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:1.22.0.RC2"
+        JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:1.22.0"
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
