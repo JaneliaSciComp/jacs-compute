@@ -1,7 +1,10 @@
 package org.janelia.jacs2.asyncservice.files;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.janelia.jacs2.asyncservice.dataimport.StorageContentHelper;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.dataservice.swc.SWCService;
@@ -14,20 +17,23 @@ import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
-import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -111,11 +117,11 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 }
 
                 // Load neurons into workspaces
-
                 Path neuronsPath = Paths.get(storageObject.getAbsolutePath(), "neurons.json");
+                Path deeplinksPath = Paths.get(storageObject.getAbsolutePath(), "deeplinks.json");
                 if (jadeStorage.exists(storageObject.getLocation(), neuronsPath.toString())) {
                     try {
-                        loadNeurons(syncedRoot.getOwnerKey(), jadeObject, neuronsPath, sample);
+                        loadNeurons(syncedRoot.getOwnerKey(), jadeObject, neuronsPath, deeplinksPath, sample);
                     } catch (Exception e) {
                         LOG.error("Error loading neurons from "+neuronsPath, e);
                     }
@@ -158,7 +164,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
      * @param neuronsPath path to the neurons metadata json
      * @param sample sample containing the related imagery
      */
-    private void loadNeurons(String subjectKey, JadeObject jadeObject, Path neuronsPath, TmSample sample) throws IOException {
+    private void loadNeurons(String subjectKey, JadeObject jadeObject, Path neuronsPath, Path deepLinksPath, TmSample sample) throws IOException {
 
         LOG.info("  Loading {} as a workspace", neuronsPath);
 
@@ -173,7 +179,11 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         StorageObject storageObject = jadeObject.getStorageObject();
 
         InputStream content = jadeStorage.getContent(storageObject.getLocation(), neuronsPath.toString());
+
         ObjectMapper objectMapper = new ObjectMapper();
+
+        // create deep link document to store soma locations
+        ArrayNode deeplinkNeuronList = objectMapper.createArrayNode();
 
         JsonNode root = objectMapper.readTree(content);
         String title = root.get("title").asText();
@@ -214,6 +224,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 mappedNeuron.setWorkspaceRef(Reference.createFor(tmWorkspace));
 
                 // Load trace of axon, if available
+                ObjectNode deepLinkNeuron;
                 if (value.has("consensus")) {
                     String consensus = value.get("consensus").asText();
                     String consensusUrl = getPath(folderPath, consensus);
@@ -225,6 +236,19 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                             externalToInternalConverter,
                             sample.getStorageAttributes()
                     );
+
+                    List<TmGeoAnnotation> neuronRoots = consensusNeuron.getRootAnnotations();
+                    if (neuronRoots != null && neuronRoots.size()>0) {
+                        TmGeoAnnotation mainNeuronRoot = neuronRoots.get(0);
+                        deepLinkNeuron = objectMapper.createObjectNode();
+                        String deeplink = generateDeepLink(objectMapper, mainNeuronRoot, tmWorkspace.getId());
+                        deepLinkNeuron.put("name", neuronBrowserName);
+                        deepLinkNeuron.put("originalName", originalName);
+                        deepLinkNeuron.put("type", "consensus");
+                        deepLinkNeuron.put("deeplinkURL", deeplink);
+                        deeplinkNeuronList.add(deepLinkNeuron);
+                    }
+
                     LOG.debug("  Loaded consensus SWC as {}", consensusNeuron);
                     mappedNeuron.addNeuronRef(Reference.createFor(consensusNeuron));
                 }
@@ -241,6 +265,17 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                             externalToInternalConverter,
                             sample.getStorageAttributes()
                     );
+                    List<TmGeoAnnotation> neuronRoots = dendriteNeuron.getRootAnnotations();
+                    if (neuronRoots != null && neuronRoots.size()>0) {
+                        TmGeoAnnotation mainNeuronRoot = neuronRoots.get(0);
+                        deepLinkNeuron = objectMapper.createObjectNode();
+                        String deeplink = generateDeepLink(objectMapper, mainNeuronRoot, tmWorkspace.getId());
+                        deepLinkNeuron.put("name", neuronBrowserName);
+                        deepLinkNeuron.put("originalName", originalName);
+                        deepLinkNeuron.put("type", "dendrite");
+                        deepLinkNeuron.put("deeplinkURL", deeplink);
+                        deeplinkNeuronList.add(deepLinkNeuron);
+                    }
                     LOG.debug("  Loaded dendrite SWC as {}", dendriteNeuron);
                     mappedNeuron.addNeuronRef(Reference.createFor(dendriteNeuron));
                 }
@@ -254,6 +289,9 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                     neuronCount++;
                 }
             }
+            InputStream deepLinkStream = new ByteArrayInputStream(objectMapper.writeValueAsString(deeplinkNeuronList)
+                    .getBytes(StandardCharsets.UTF_8));
+            jadeStorage.setContent(storageObject.getLocation(), deepLinksPath.toString(), deepLinkStream);
 
             // Denormalize information so that it can be traversed during indexing,
             // to allow searching of workspaces by neuron name
@@ -271,6 +309,44 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         }
     }
 
+
+    /**
+     * takes a deep link set of view parameters and URL-escapes them
+     * @param value
+     * @return
+     * @throws UnsupportedEncodingException
+     */
+    private String encodeValue(String value) throws UnsupportedEncodingException {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+    }
+
+    /**
+     *
+     * @param mapper jackson object mapper
+     * @param rootNode soma Node for the neuron
+     * @param workspaceId - current workspace being synchronized
+     * @return
+     */
+    private String generateDeepLink (ObjectMapper mapper, TmGeoAnnotation rootNode, Long workspaceId) {
+        Map<String, Object> deepLinkMap = new HashMap<>();
+        deepLinkMap.put("workspace", workspaceId);
+        deepLinkMap.put("viewFocusX", rootNode.getX());
+        deepLinkMap.put("viewFocusY", rootNode.getY());
+        deepLinkMap.put("viewFocusZ", rootNode.getZ());
+        deepLinkMap.put("viewZoom", 100);
+        String encodedURL = deepLinkMap.keySet().stream()
+                .map(key -> {
+                    try {
+                        String jsonVal = mapper.writeValueAsString(deepLinkMap.get(key));
+                        return key + "=" + encodeValue(jsonVal);
+                    } catch (UnsupportedEncodingException | JsonProcessingException e) {
+                        e.printStackTrace();
+                        return "";
+                    }
+                })
+                .collect(Collectors.joining("&", "deeplink:", ""));
+        return encodedURL;
+    }
     /**
      * Returns the full absolute path to the SWC, given a current working directory. If the given swcPath is
      * absolute, just return it. If it's relative, resolve it relative to the cwd.
