@@ -77,7 +77,8 @@ public class DataSummaryResource {
     public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
                                         @ApiParam @QueryParam("subjectKey") String subjectKey,
                                         @HeaderParam("AccessKey") String accessKey,
-                                        @HeaderParam("SecretKey") String secretKey) {
+                                        @HeaderParam("SecretKey") String secretKey,
+                                        @HeaderParam("AWSRegion") String awsRegion) {
         LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
         try {
             String volumeName;
@@ -92,22 +93,23 @@ public class DataSummaryResource {
                 return Response.ok(new DiskUsageSummary()).build();
             }
             return storageService.fetchQuotaForUser(
-                    volumeName,
-                    subjectKey,
-                    new JadeStorageAttributes()
-                            .setAttributeValue("AccessKey", accessKey)
-                            .setAttributeValue("SecretKey", secretKey))
-                    .map(quotaUsage -> {
-                DiskUsageSummary summary = new DiskUsageSummary();
-                BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
-                Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
-                summary.setUserDataSetsTB(tb);
-                summary.setQuotaUsage(quotaUsage);
-                return summary;
-            })
+                            volumeName,
+                            subjectKey,
+                            new JadeStorageAttributes()
+                                    .setAttributeValue("AccessKey", accessKey)
+                                    .setAttributeValue("SecretKey", secretKey)
+                                    .setAttributeValue("AWSRegion", awsRegion)
+                    ).map(quotaUsage -> {
+                        DiskUsageSummary summary = new DiskUsageSummary();
+                        BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
+                        Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
+                        summary.setUserDataSetsTB(tb);
+                        summary.setQuotaUsage(quotaUsage);
+                        return summary;
+                    })
                     .map(diskUsageSummary -> Response.ok(diskUsageSummary).build())
                     .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST).build())
-            ;
+                    ;
         } finally {
             LOG.trace("Finished getDataSummary({})", subjectKey);
         }

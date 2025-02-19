@@ -15,6 +15,14 @@ project.ext {
 }
 
 subprojects {
+
+    sourceSets {
+        integrationTest {
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+        }
+    }
+
     configurations {
         provided
         implementation.extendsFrom(provided)
@@ -22,38 +30,26 @@ subprojects {
         integrationTestCompileOnly.extendsFrom(testCompileOnly)
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        integrationTestRuntimeElements.extendsFrom(integrationTestImplementation, integrationTestRuntimeOnly)
     }
 
     apply from: "${rootDir}/deps.gradle"
-
-    sourceSets {
-        integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integrationTest/java')
-            }
-            resources {
-                srcDir file('src/integrationTest/resources')
-            }
-        }
-    }
 
     afterEvaluate {
         repositories {
             mavenLocal()
             mavenCentral()
             maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
+                url = "https://nexus.janelia.org/repository/maven-releases"
             }
             maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
+                url = "https://nexus.janelia.org/repository/maven-snapshots"
             }
             maven {
-                url "https://maven.scijava.org/content/groups/public"
+                url = "https://maven.scijava.org/content/groups/public"
             }
             flatDir {
-                dirs "${rootDir}/projectrepository"
+                dirs("${rootDir}/projectrepository")
             }
         }
 
@@ -100,20 +96,24 @@ subprojects {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-                    configurations.integrationTestCompileClasspath,
-                    configurations.integrationTestRuntimeClasspath
+                        configurations.integrationTestRuntimeElements,
                 ]
             }
         }
 
         license {
-            header rootProject.file('LICENSE')
-            exclude "**/*"
+            header = rootProject.file('LICENSE')
+            exclude('**/*')
         }
 
         downloadLicenses {
             includeProjectDependencies = true
             dependencyConfiguration = 'implementation'
+        }
+
+        java {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
         }
 
         tasks.register('testJar', Jar) {
@@ -127,15 +127,11 @@ subprojects {
         }
     
         artifacts {
-            testArtifacts testJar
+            testArtifacts(testJar)
         }
     }
-    
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.1.1"
+    gradleVersion = "8.12"
 }
