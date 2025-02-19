@@ -293,6 +293,9 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                     .getBytes(StandardCharsets.UTF_8));
             jadeStorage.setContent(storageObject.getLocation(), deepLinksPath.toString(), deepLinkStream);
 
+            String jsonString = objectMapper.writeValueAsString(deeplinkNeuronList);
+            LOG.info("{} deeplinks generated for workspace: ", deeplinkNeuronList.size(), jsonString);
+
             // Denormalize information so that it can be traversed during indexing,
             // to allow searching of workspaces by neuron name
             ReverseReference mappedNeuronsRef = new ReverseReference();
