@@ -29,7 +29,7 @@ dependencies {
         MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
         MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.4.1"
         DBCP_LIB = "com.zaxxer:HikariCP:3.3.1"
-        JONGO_LIB = "org.jongo:jongo:1.3.0"
+        JONGO_LIB = "org.jongo:jongo:1.4.1"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
@@ -70,7 +70,7 @@ dependencies {
         SWAGGER_JAXRS_LIB = "io.swagger:swagger-jersey2-jaxrs:${SWAGGER_VERSION}"
 
         // JSON
-        JACKSON_VERSION = "2.9.5"
+        JACKSON_VERSION = "2.9.10"
         JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
         JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
         JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
