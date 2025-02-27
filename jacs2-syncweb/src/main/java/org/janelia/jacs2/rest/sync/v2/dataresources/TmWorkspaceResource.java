@@ -432,9 +432,9 @@ public class TmWorkspaceResource {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/workspace/largest")
-    public void getLargestWorkspaces(@ApiParam @QueryParam("username") String subjectKey) {
+    public Map<TmWorkspace,Long> getLargestWorkspaces(@ApiParam @QueryParam("username") String subjectKey) {
         try {
-            tmWorkspaceDao.getLargestWorkspaces(subjectKey, new Long(20));
+            return tmWorkspaceDao.getLargestWorkspaces(subjectKey, new Long(20));
         } catch (Exception e) {
             LOG.error("Error occurred trying to retrieve largest workspaces report", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
