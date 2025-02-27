@@ -431,6 +431,7 @@ public class TmWorkspaceResource {
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/largest")
     public Map<TmWorkspace,Long> getLargestWorkspaces(@ApiParam @QueryParam("username") String subjectKey) {
         try {
