@@ -421,6 +421,48 @@ public class TmWorkspaceResource {
         return Response.ok("DONE").build();
     }
 
+    @ApiOperation(value = "Retrieves the largest TmWorkspaces in terms of size including the space they take up " +
+            "in the Mongo Database",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully created an operation log"),
+            @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/largest")
+    public List<TmWorkspaceInfo> getLargestWorkspaces(@ApiParam @QueryParam("username") String subjectKey) {
+        try {
+            return tmWorkspaceDao.getLargestWorkspaces(subjectKey, new Long(20));
+        } catch (Exception e) {
+            LOG.error("Error occurred trying to retrieve largest workspaces report", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @ApiOperation(value = "Removes a list of workspaces, including their neurons and bounding boxes",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully removed TmWorkspaces", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while removing the workspaces")
+    })
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/workspaces/remove")
+    public Response removeWorkspaces(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                               List<Long> workspaceIds) {
+        LOG.info("removing TmWorkspaces ({}, {})", subjectKey, workspaceIds);
+        for (Long workspaceId : workspaceIds) {
+           tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
+        }
+        return Response.ok()
+                .build();
+    }
+
 
     @ApiOperation(value = "Creates an TM Operation log for an operation performed during neuron tracing",
             notes = "Stores the operation log in the TmOperation table for future analysis"
