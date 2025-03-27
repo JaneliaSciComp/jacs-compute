@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.lob.ReaderInputStream;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -13,7 +12,6 @@ import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
-import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +110,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         return streamOutputDir(outputDir)
                 .map(outputPath -> () -> {
                     try {
-                        return new NamedData<>(outputPath.toString(), new ReaderInputStream(Files.newBufferedReader(outputPath)));
+                        return new NamedData<>(outputPath.toString(), Files.newInputStream(outputPath));
                     } catch (IOException e) {
                         LOG.error("Error streaming {}", outputPath, e);
                         throw new UncheckedIOException(e);
