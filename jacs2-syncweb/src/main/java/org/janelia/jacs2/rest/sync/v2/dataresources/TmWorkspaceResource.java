@@ -433,9 +433,11 @@ public class TmWorkspaceResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/largest")
-    public List<TmWorkspaceInfo> getLargestWorkspaces(@ApiParam @QueryParam("username") String subjectKey) {
+    public List<TmWorkspaceInfo> getLargestWorkspaces(@ApiParam @QueryParam("username") String subjectKey,
+                                                      @ApiParam @QueryParam("limit") Long limitParam) {
         try {
-            return tmWorkspaceDao.getLargestWorkspaces(subjectKey, new Long(20));
+            long limit = limitParam == null ? 20L : limitParam;
+            return tmWorkspaceDao.getLargestWorkspaces(subjectKey, limit);
         } catch (Exception e) {
             LOG.error("Error occurred trying to retrieve largest workspaces report", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
