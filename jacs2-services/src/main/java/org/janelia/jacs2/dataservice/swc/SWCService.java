@@ -176,8 +176,8 @@ public class SWCService {
         this.neuronIdGenerator = neuronIdGenerator;
         this.executorService = executorService;
         this.defaultSWCLocation = StringUtils.isNotBlank(defaultSWCLocation)
-            ? Paths.get(defaultSWCLocation)
-            : Paths.get("");
+                ? Paths.get(defaultSWCLocation)
+                : Paths.get("");
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName,
@@ -223,9 +223,9 @@ public class SWCService {
         }
         List<TmWorkspace> workspacesList = tmWorkspaceDao.getTmWorkspacesForSample(workspaceOwnerKey, sampleId);
         tmWorkspace = null;
-        for (TmWorkspace workspace: workspacesList) {
+        for (TmWorkspace workspace : workspacesList) {
             if ((newWorkspaceId == null && workspace.getName().equals(workspaceName)) ||
-                (newWorkspaceId != null && newWorkspaceId.equals(workspace.getId()))) {
+                    (newWorkspaceId != null && newWorkspaceId.equals(workspace.getId()))) {
                 // this is to make sure that even if the name is duplicated it picks up
                 // the new workspace created for this import
                 tmWorkspace = workspace;
@@ -236,7 +236,7 @@ public class SWCService {
             LOG.error("Workspace name {} doesn't match with any workspaces associated with Sample Id {}", workspaceName, sampleId);
             throw new IllegalArgumentException("Workspace " + workspaceName + " either does not exist or is not accessible");
         }
-        if (neuronOwnerKey!=null)
+        if (neuronOwnerKey != null)
             tmWorkspace.setTracingGroup(neuronOwnerKey);
         tmWorkspaceDao.updateTmWorkspace(workspaceOwnerKey, tmWorkspace);
 
@@ -290,32 +290,31 @@ public class SWCService {
                     return StreamSupport.stream(storageContentSupplier, true);
                 })
                 .orElseGet(Stream::of)
-                .forEach(swcEntry ->{
+                .forEach(swcEntry -> {
                     LOG.debug("Read swcEntry {} from {}", swcEntry.getName(), swcFolderName);
                     InputStream swcStream = swcEntry.getData();
                     long startTime = System.currentTimeMillis();
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, null,
                             neuronOwnerKey, tmWorkspace, externalToInternalConverter, markAsFragments);
-                   try {
+                    try {
                         LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
                         if (markAsFragments) {
                             neuronMetadata.setFragment(true);
                         }
                         TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                         long endTime = System.currentTimeMillis();
-                        LOG.debug("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(),createdNeuron.getName(), endTime-startTime);
+                        LOG.debug("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(), createdNeuron.getName(), endTime - startTime);
 
                         if (markAsFragments) {
-                           BoundingBox3d box = calcBoundingBox(createdNeuron);
-                           if (box!=null)
-                               boundingBoxes.add(box);
+                            BoundingBox3d box = calcBoundingBox(createdNeuron);
+                            if (box != null) boundingBoxes.add(box);
                         }
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);
                     }
                 });
-        if (markAsFragments && boundingBoxes.size()>0) {
+        if (markAsFragments && boundingBoxes.size() > 0) {
             try {
                 if (!appendToExisting) {
                     tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
@@ -323,7 +322,7 @@ public class SWCService {
                     tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
                 } else {
                     List<BoundingBox3d> existingBoundingBoxes = tmWorkspaceDao.getWorkspaceBoundingBoxes(tmWorkspace.getId());
-                    if (existingBoundingBoxes==null) {
+                    if (existingBoundingBoxes == null) {
                         tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
                         tmWorkspace.setContainsFragments(true);
                         tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
@@ -350,7 +349,7 @@ public class SWCService {
     public VectorOperator getExternalToInternalConverter(TmSample tmSample) {
         String sampleFilepath = tmSample.getLargeVolumeOctreeFilepath();
         String altPath = tmSample.getFiles().get(FileType.LargeVolumeZarr);
-        if (altPath!=null && altPath.length()>0)
+        if (altPath != null && altPath.length() > 0)
             return null;
         JadeStorageAttributes storageAttributes = new JadeStorageAttributes().setFromMap(tmSample.getStorageAttributes());
         RenderedVolumeLocation volumeLocation = dataStorageLocationFactory.asRenderedVolumeLocation(dataStorageLocationFactory.getDataLocationWithLocalCheck(sampleFilepath, tmSample.getOwnerKey(), null, storageAttributes));
@@ -366,9 +365,10 @@ public class SWCService {
 
     /**
      * Import the given SWC file into the given workspace.
+     *
      * @param swcFilepath
      * @param tmWorkspace
-     * @param neuronName Name for the TmNeuronMetadata object. If null, this will attempt to extract the name from the SWC file.
+     * @param neuronName                  Name for the TmNeuronMetadata object. If null, this will attempt to extract the name from the SWC file.
      * @param neuronOwnerKey
      * @param externalToInternalConverter
      */
@@ -385,7 +385,7 @@ public class SWCService {
                 swcFilepath,
                 new JadeStorageAttributes().setFromMap(storageAttributes));
         if (storageLocation == null) {
-            throw new IllegalStateException("Filepath does not exist in Jade: "+swcFilepath);
+            throw new IllegalStateException("Filepath does not exist in Jade: " + swcFilepath);
         }
 
         try (InputStream swcStream = jadeStorage.getContent(storageLocation, swcFilepath)) {
@@ -393,8 +393,7 @@ public class SWCService {
                     neuronOwnerKey, tmWorkspace, externalToInternalConverter, false);
             LOG.debug("Imported neuron {} from {} into {}", neuronMetadata.getName(), swcFilename, tmWorkspace);
             return tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error creating neuron while importing {} into {}", swcFilename, tmWorkspace, e);
             throw new IllegalStateException(e);
         }
@@ -443,7 +442,7 @@ public class SWCService {
 
             @Override
             public boolean tryAdvance(Consumer<? super NamedData<InputStream>> action) {
-                for (; ;) {
+                for (; ; ) {
                     ArchiveInputStreamPosition currentInputStream = archiveInputStreamStack.top();
                     if (currentInputStream == null) {
                         // if the stack is empty we are done
@@ -461,7 +460,8 @@ public class SWCService {
                         ArchiveInputStreamPosition parentInputStream = archiveInputStreamStack.top();
                         if (parentInputStream == null) {
                             // I am at the top level - then fetch the next batch
-                            if (totalEntriesCount.get() < getBatchSize) {
+                            if (currentInputStream.archiveEntriesCount < getBatchSize) {
+                                LOG.info("Retrieved all {} entries", totalEntriesCount.get());
                                 // if this is the top of the stack and totalEntries is less than batchsize
                                 // it means that it retrieved everything so return false
                                 return false;
@@ -484,7 +484,7 @@ public class SWCService {
                             }
                         } // otherwise continue processing entries from the parent because the parent was an archive
                     } else {
-                        LOG.debug("Process {} from {}", currentEntry.getName(), currentInputStream.getStreamName());
+                        LOG.debug("{}. Process {} from {}", totalEntriesCount.get(), currentEntry.getName(), currentInputStream.getStreamName());
                         InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
                         ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
                                 currentInputStream.getStreamName() + ":" + currentEntry.getName(),
@@ -498,7 +498,7 @@ public class SWCService {
                             NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
                             action.accept(entryData);
                             long entriesProcessed = totalEntriesCount.incrementAndGet();
-                            if (maxSize <=0 || entriesProcessed < maxSize) {
+                            if (maxSize <= 0 || entriesProcessed < maxSize) {
                                 return true;
                             } else {
                                 LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.getStreamName());
@@ -541,7 +541,7 @@ public class SWCService {
             String compressor = CompressorStreamFactory.detect(inputStream);
             LOG.debug("{} compression detected for {}", compressor, streamName);
             uncompressedInputStream = new BufferedInputStream(new CompressorStreamFactory()
-                        .createCompressorInputStream(inputStream));
+                    .createCompressorInputStream(inputStream));
         } catch (CompressorException e) {
             // no compression was detected -> use the original stream
             uncompressedInputStream = inputStream;
@@ -549,7 +549,7 @@ public class SWCService {
         try {
             String archiveSignature = ArchiveStreamFactory.detect(uncompressedInputStream);
             LOG.debug("{} signature detected for {}", archiveSignature, streamName);
-            ArchiveInputStream  archiveInputStream = new ArchiveStreamFactory()
+            ArchiveInputStream archiveInputStream = new ArchiveStreamFactory()
                     .createArchiveInputStream(archiveSignature, uncompressedInputStream);
             return new ArchiveInputStreamPosition(streamName, archiveInputStream, offset);
         } catch (ArchiveException e) {
@@ -558,7 +558,7 @@ public class SWCService {
     }
 
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, int depth, boolean orderSWCs, JadeStorageAttributes storageOptions) {
-        LOG.info("Retrieve {} entries from {}:{}", length <= 0 ? "all" : length, swcStorageFolderURL, offset);
+        LOG.info("Retrieve {} entries from {}:{} (depth={})", length <= 0 ? "all" : length, swcStorageFolderURL, offset, depth);
         InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, depth, orderSWCs,
                 "\\.(swc|zip|tar|tgz|tar.gz)$",
                 null,
@@ -635,17 +635,17 @@ public class SWCService {
             // Internal points, as seen in annotations, are same as external
             // points in SWC: represented as voxels. --LLF
             double[] internalPoint;
-            if (externalToInternalConverter!=null) {
-                internalPoint = externalToInternalConverter.apply(new double[] {
+            if (externalToInternalConverter != null) {
+                internalPoint = externalToInternalConverter.apply(new double[]{
                         node.getX() + externalOffset[0],
                         node.getY() + externalOffset[1],
                         node.getZ() + externalOffset[2]
                 });
             } else {
-                internalPoint = new double[] {
-                                node.getX(),
-                                node.getY(),
-                                node.getZ()};
+                internalPoint = new double[]{
+                        node.getX(),
+                        node.getY(),
+                        node.getZ()};
             }
             TmGeoAnnotation unserializedAnnotation = new TmGeoAnnotation(
                     Long.valueOf(node.getIndex()), null, neuronMetadata.getId(),
@@ -668,28 +668,28 @@ public class SWCService {
         return neuronMetadata;
     }
 
-    private BoundingBox3d calcBoundingBox (TmNeuronMetadata neuron) {
-        double[] min = new double[]{1000000000,1000000000,1000000000};
-        double[] max = new double[]{0,0,0};
-        if (neuron.getNeuronData()==null || neuron.getGeoAnnotationMap()==null)
+    private BoundingBox3d calcBoundingBox(TmNeuronMetadata neuron) {
+        double[] min = new double[]{1000000000, 1000000000, 1000000000};
+        double[] max = new double[]{0, 0, 0};
+        if (neuron.getNeuronData() == null || neuron.getGeoAnnotationMap() == null)
             return null;
         Iterator<TmGeoAnnotation> iter = neuron.getGeoAnnotationMap().values().iterator();
         while (iter.hasNext()) {
             TmGeoAnnotation point = iter.next();
-            if (min[0]>point.getX())
+            if (min[0] > point.getX())
                 min[0] = point.getX();
-            if (max[0]<point.getX())
+            if (max[0] < point.getX())
                 max[0] = point.getX();
-            if (min[1]>point.getY())
+            if (min[1] > point.getY())
                 min[1] = point.getY();
-            if (max[1]<point.getY())
+            if (max[1] < point.getY())
                 max[1] = point.getY();
-            if (min[2]>point.getZ())
+            if (min[2] > point.getZ())
                 min[2] = point.getZ();
-            if (max[2]<point.getZ())
+            if (max[2] < point.getZ())
                 max[2] = point.getZ();
         }
-        if (min[0]>max[0] || min[1]>max[1] || min[2]>max[2]) {
+        if (min[0] > max[0] || min[1] > max[1] || min[2] > max[2]) {
             LOG.info("Error creating {}, points of bounding box are incorrect ({},{},{}) - ({},{},{})",
                     neuron.getName(), min[0], min[1], min[2], max[0], max[1], max[2]);
             return null;
