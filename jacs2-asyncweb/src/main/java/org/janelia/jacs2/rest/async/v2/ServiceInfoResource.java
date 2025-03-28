@@ -21,6 +21,7 @@ import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -49,8 +50,8 @@ import java.util.stream.Collectors;
 @Path("/services")
 public class ServiceInfoResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final Logger LOG = LoggerFactory.getLogger(ServiceInfoResource.class);
 
-    @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
 
     @ApiOperation(value = "Count services", notes = "")
@@ -200,7 +201,7 @@ public class ServiceInfoResource {
                 pattern.setState(null);
             }
         } catch (Exception e) {
-            logger.error("Invalid state filter {}", serviceState, e);
+            LOG.error("Invalid state filter {}", serviceState, e);
         }
         uriInfo.getQueryParameters().entrySet().stream()
                 .filter(paramEntry -> paramEntry.getKey().startsWith("serviceArg.") && StringUtils.isNotBlank(paramEntry.getKey().substring("serviceArg.".length())))
@@ -270,7 +271,7 @@ public class ServiceInfoResource {
                                         output.write((namedStream.getName() + "\n").getBytes());
                                         ByteStreams.copy(namedStream.getData(), output);
                                     } catch (IOException ioex) {
-                                        logger.error("Error while streaming service {} standard output", serviceData, ioex);
+                                        LOG.error("Error while streaming service {} standard output", serviceData, ioex);
                                     } finally {
                                         try {
                                             namedStream.getData().close();
@@ -278,11 +279,11 @@ public class ServiceInfoResource {
                                         }
                                     }
                                 } catch (Exception ex) {
-                                    logger.error("Error while opening the output stream(s) for {}", serviceData, ex);
+                                    LOG.error("Error while opening the output stream(s) for {}", serviceData, ex);
                                 }
                             });
                 } catch (Exception e) {
-                    logger.error("Error streaming job output content from {} for {}", serviceData.getOutputPath(), serviceData, e);
+                    LOG.error("Error streaming job output content from {} for {}", serviceData.getOutputPath(), serviceData, e);
                     throw new WebApplicationException(e);
                 }
             };
@@ -327,7 +328,7 @@ public class ServiceInfoResource {
                                         output.write((namedStream.getName() + "\n").getBytes());
                                         ByteStreams.copy(namedStream.getData(), output);
                                     } catch (IOException ioex) {
-                                        logger.error("Error while streaming service {} standard error", serviceData, ioex);
+                                        LOG.error("Error while streaming service {} standard error", serviceData, ioex);
                                     } finally {
                                         try {
                                             namedStream.getData().close();
@@ -335,11 +336,11 @@ public class ServiceInfoResource {
                                         }
                                     }
                                 } catch (Exception ex) {
-                                    logger.error("Error while opening the error stream(s) for {}", serviceData, ex);
+                                    LOG.error("Error while opening the error stream(s) for {}", serviceData, ex);
                                 }
                             });
                 } catch (Exception e) {
-                    logger.error("Error streaming job error content from {} for {}", serviceData.getErrorPath(), serviceData, e);
+                    LOG.error("Error streaming job error content from {} for {}", serviceData.getErrorPath(), serviceData, e);
                     throw new WebApplicationException(e);
                 }
             };
