@@ -129,15 +129,6 @@ public class PersistenceProducer {
         return MongoDBHelper.createMongoDatabase(mongoClient, mongoFutureDatabase);
     }
 
-    @ApplicationScoped
-    @Produces
-    public DataSource createDatasource(@PropertyValue(name = "mouselight.db.url") String dbUrl,
-                                       @PropertyValue(name = "mouselight.db.user") String dbUser,
-                                       @PropertyValue(name = "mouselight.db.password") String dbPassword,
-                                       @StrPropertyValue(name = "mouselight.db.validationQuery", defaultValue = "select 1") String validationQuery) {
-        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery);
-    }
-
     @Sage
     @ApplicationScoped
     @Produces
