@@ -100,7 +100,7 @@ public class SWCService {
         synchronized ArchiveEntry goToNextFileEntry() {
             ArchiveEntry currentEntry = nextEntry();
             for (;
-                 currentEntry != null && currentEntry.isDirectory();
+                 currentEntry != null && (currentEntry.isDirectory() || currentEntry.getSize() == 0);
                  currentEntry = nextEntry()) {
                 // skip directories
             }
