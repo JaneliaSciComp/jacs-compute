@@ -45,7 +45,7 @@ public class SWCData {
     private static final String NAME_HEADER_PREFIX = "NAME";
     private static final String COLOR_HEADER_PREFIX = "COLOR";
 
-    private String swcFilepath;
+    private final String swcFilepath;
     private List<SWCNode> nodeList = new ArrayList<>();
     private List<String> headerList = new ArrayList<>();
 
@@ -55,6 +55,10 @@ public class SWCData {
 
     SWCData(String swcFilepath) {
         this.swcFilepath = swcFilepath;
+    }
+
+    String getSwcFilepath() {
+        return swcFilepath;
     }
 
     void addHeader(String header) {

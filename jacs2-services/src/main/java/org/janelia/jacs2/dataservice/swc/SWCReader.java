@@ -13,12 +13,17 @@ public class SWCReader {
     private static final Logger LOG = LoggerFactory.getLogger(SWCReader.class);
 
     SWCData readSWCStream(String name, InputStream swcStream) {
+        if (swcStream == null) {
+            throw new IllegalArgumentException("Null SWC stream for " + name);
+        }
         SWCData swcData = new SWCData(name);
         try {
+            long startTime = System.currentTimeMillis();
+            LOG.debug("Read {} from the SWC stream", name);
             BufferedReader reader = new BufferedReader(new InputStreamReader(swcStream, Charset.defaultCharset()));
             reader.lines()
-                    .map(l -> l.trim())
-                    .filter(l -> l.length() > 0)
+                    .map(String::trim)
+                    .filter(l -> !l.isEmpty())
                     .forEach(l -> {
                         if (l.startsWith("#")) {
                             swcData.addHeader(l);
@@ -27,6 +32,7 @@ public class SWCReader {
                             if (swcNode != null) swcData.addNode(swcNode);
                         }
                     });
+            LOG.debug("Parsed {} in {}secs", name, (System.currentTimeMillis() - startTime) / 1000.);
             return swcData;
         } catch (Exception e) {
             LOG.error("Error parsing SWC stream {}", name, e);

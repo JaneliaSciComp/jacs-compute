@@ -21,6 +21,7 @@ import java.util.Spliterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -67,7 +68,6 @@ import org.slf4j.LoggerFactory;
 public class SWCService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);
-    TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
 
     private static class ArchiveInputStreamPosition {
         private final String streamName;
@@ -256,11 +256,51 @@ public class SWCService {
                                        boolean markAsFragments,
                                        boolean appendToExisting,
                                        Map<String, Object> storageAttributes) {
+        List<SWCData> swcDataList = getRemoteSWCData(swcFolderName, firstEntry, maxSize, getBatchSize, depth, orderSWCs, storageAttributes);
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
-        List<BoundingBox3d> boundingBoxes = new ArrayList<>();
+        List<BoundingBox3d> boundingBoxes = swcDataList.stream()
+                .map(swcDataEntry -> {
+                    TmNeuronMetadata neuronMetadata = processSWCData(swcDataEntry, null,
+                            neuronOwnerKey, tmWorkspace, externalToInternalConverter, markAsFragments);
+                    neuronMetadata.setFragment(markAsFragments);
+                    return persistTmNeuronData(neuronMetadata, tmWorkspace, neuronOwnerKey, swcDataEntry.getSwcFilepath());
+                })
+                .filter(box3d -> box3d != null)
+                .collect(Collectors.toList());
+        if (markAsFragments && !boundingBoxes.isEmpty()) {
+            try {
+                if (!appendToExisting) {
+                    tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                    tmWorkspace.setContainsFragments(true);
+                    tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+                } else {
+                    List<BoundingBox3d> existingBoundingBoxes = tmWorkspaceDao.getWorkspaceBoundingBoxes(tmWorkspace.getId());
+                    if (existingBoundingBoxes == null) {
+                        tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                        tmWorkspace.setContainsFragments(true);
+                        tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
+                    } else {
+                        boundingBoxes.addAll(existingBoundingBoxes);
+                        tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("Error updating workspace to store fragments flag for workspace {}", tmWorkspace.getId(), e);
+            }
+        }
+        return tmWorkspace;
+    }
+
+    private List<SWCData> getRemoteSWCData(String swcFolderName,
+                                           long firstEntry,
+                                           long maxSize,
+                                           int getBatchSize,
+                                           int depth,
+                                           boolean orderSWCs,
+                                           Map<String, Object> storageAttributes) {
         LOG.info("Lookup SWC folder {}", swcFolderName);
         JadeStorageAttributes jadeStorageAttributes = new JadeStorageAttributes().setFromMap(storageAttributes);
-        storageService.findStorageVolumes(swcFolderName, null, null, jadeStorageAttributes)
+        return storageService.findStorageVolumes(swcFolderName, null, null, jadeStorageAttributes)
                 .stream().findFirst()
                 .map(vsInfo -> {
                     LOG.info("Found {} for SWC folder {}", vsInfo, swcFolderName);
@@ -290,56 +330,9 @@ public class SWCService {
                     return StreamSupport.stream(storageContentSupplier, true);
                 })
                 .orElseGet(Stream::of)
-                .forEach(swcEntry -> {
-                    LOG.debug("Read swcEntry {} from {}", swcEntry.getName(), swcFolderName);
-                    InputStream swcStream = swcEntry.getData();
-                    long startTime = System.currentTimeMillis();
-                    TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, null,
-                            neuronOwnerKey, tmWorkspace, externalToInternalConverter, markAsFragments);
-                    try {
-                        LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
-                        if (markAsFragments) {
-                            neuronMetadata.setFragment(true);
-                        }
-                        TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
-                        long endTime = System.currentTimeMillis();
-                        LOG.debug("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(), createdNeuron.getName(), endTime - startTime);
-
-                        if (markAsFragments) {
-                            BoundingBox3d box = calcBoundingBox(createdNeuron);
-                            if (box != null) boundingBoxes.add(box);
-                        }
-                    } catch (Exception e) {
-                        LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
-                        throw new IllegalStateException(e);
-                    }
-                });
-        if (markAsFragments && boundingBoxes.size() > 0) {
-            try {
-                if (!appendToExisting) {
-                    tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
-                    tmWorkspace.setContainsFragments(true);
-                    tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
-                } else {
-                    List<BoundingBox3d> existingBoundingBoxes = tmWorkspaceDao.getWorkspaceBoundingBoxes(tmWorkspace.getId());
-                    if (existingBoundingBoxes == null) {
-                        tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
-                        tmWorkspace.setContainsFragments(true);
-                        tmWorkspaceDao.updateTmWorkspace(neuronOwnerKey, tmWorkspace);
-                    } else {
-                        boundingBoxes.addAll(existingBoundingBoxes);
-                        tmWorkspaceDao.saveWorkspaceBoundingBoxes(tmWorkspace, boundingBoxes);
-                    }
-                }
-            } catch (Exception e) {
-                LOG.error("Error updating workspace to store fragments flag for workspace {}", tmWorkspace.getId(), e);
-            }
-        }
-        return tmWorkspace;
-    }
-
-    Long createNewId() {
-        return timebasedIdentifierGenerator.generateIdList(1).get(0);
+                .map(swcEntry -> swcReader.readSWCStream(swcEntry.getName(), swcEntry.getData()))
+                .filter(swcData -> swcData != null)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -389,7 +382,8 @@ public class SWCService {
         }
 
         try (InputStream swcStream = jadeStorage.getContent(storageLocation, swcFilepath)) {
-            TmNeuronMetadata neuronMetadata = importSWCFile(swcFilename, swcStream, neuronName,
+            SWCData swcData = swcReader.readSWCStream(swcFilename, swcStream);
+            TmNeuronMetadata neuronMetadata = processSWCData(swcData, neuronName,
                     neuronOwnerKey, tmWorkspace, externalToInternalConverter, false);
             LOG.debug("Imported neuron {} from {} into {}", neuronMetadata.getName(), swcFilename, tmWorkspace);
             return tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
@@ -611,12 +605,10 @@ public class SWCService {
         return tmWorkspace;
     }
 
-    private TmNeuronMetadata importSWCFile(String swcEntryName, InputStream swcStream, String neuronName,
-                                           String neuronOwnerKey, TmWorkspace tmWorkspace,
-                                           VectorOperator externalToInternalConverter, boolean isFragment) {
-        LOG.debug("Read {} from the SWC stream", swcEntryName);
-        SWCData swcData = swcReader.readSWCStream(swcEntryName, swcStream);
-
+    private TmNeuronMetadata processSWCData(SWCData swcData, String neuronName,
+                                            String neuronOwnerKey, TmWorkspace tmWorkspace,
+                                            VectorOperator externalToInternalConverter, boolean isFragment) {
+        LOG.debug("Process {}", swcData.getSwcFilepath());
         // externalOffset is because Vaa3d cannot handle large coordinates in swc
         // se we added an OFFSET header and recentered on zero when exporting
         double[] externalOffset = swcData.extractOffset();
@@ -655,7 +647,6 @@ public class SWCService {
 
             annotations.put(node.getIndex(), unserializedAnnotation);
             nodeParentLinkage.put(node.getIndex(), node.getParentIndex());
-
         }
         TmNeuronUtils.addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuronMetadata, () -> neuronIdGenerator.generateId());
 
@@ -666,6 +657,34 @@ public class SWCService {
             neuronMetadata.setColor(color);
         }
         return neuronMetadata;
+    }
+
+    /**
+     * Persist the neuron data in the provided workspace and
+     * return the bounded box if the neuron is marked as fragment neuron.
+     *
+     * @param neuronMetadata
+     * @param tmWorkspace
+     * @param neuronOwner
+     * @param neuronSourceName
+     * @return bounding box if the neuron is marked as fragment neuron, null otherwise
+     */
+    private BoundingBox3d persistTmNeuronData(TmNeuronMetadata neuronMetadata, TmWorkspace tmWorkspace, String neuronOwner, String neuronSourceName) {
+        try {
+            long startTime = System.currentTimeMillis();
+            LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
+            TmNeuronMetadata createdNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwner, neuronMetadata, tmWorkspace);
+            long endTime = System.currentTimeMillis();
+            LOG.debug("Loading neuron with id {} and name {} took {} ms", createdNeuron.getId(), createdNeuron.getName(), endTime - startTime);
+            if (createdNeuron.isFragment()) {
+                return calcBoundingBox(createdNeuron);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.error("Error creating neuron points while processing {} into {}", neuronSourceName, neuronMetadata, e);
+            throw new IllegalStateException(e);
+        }
     }
 
     private BoundingBox3d calcBoundingBox(TmNeuronMetadata neuron) {
