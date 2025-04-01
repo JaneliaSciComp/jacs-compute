@@ -449,7 +449,7 @@ public class SWCService {
                     // just in case some folders got through - ignore them
                     if (currentEntry == null) {
                         // nothing left in the current stream -> close it
-                        LOG.info("Finished processing {} entries from {}", currentInputStream.archiveEntriesCount, currentInputStream.getStreamName());
+                        LOG.info("Finished retrieving {} entries from {}", currentInputStream.archiveEntriesCount, currentInputStream.getStreamName());
                         currentInputStream.close();
                         // and try to get the next batch
                         archiveInputStreamStack.pop();
@@ -480,7 +480,7 @@ public class SWCService {
                             }
                         } // otherwise continue processing entries from the parent because the parent was an archive
                     } else {
-                        LOG.debug("{}. Process {} from {}", totalEntriesCount.get(), currentEntry.getName(), currentInputStream.getStreamName());
+                        LOG.debug("{}. Retrieve {} from {}", totalEntriesCount.get(), currentEntry.getName(), currentInputStream.getStreamName());
                         InputStream entryStream = currentInputStream.getCurrentEntryStream(currentEntry);
                         ArchiveInputStreamPosition archiveEntryStream = prepareStreamIfArchive(
                                 currentInputStream.getStreamName() + ":" + currentEntry.getName(),
@@ -490,14 +490,14 @@ public class SWCService {
                             // the current entry is a zip or tar
                             archiveInputStreamStack.push(archiveEntryStream);
                         } else {
-                            // this is a regular entry => process it
+                            // this is a regular entry => consume it
                             NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), entryStream);
                             action.accept(entryData);
                             long entriesProcessed = totalEntriesCount.incrementAndGet();
                             if (maxSize <= 0 || entriesProcessed < maxSize) {
                                 return true;
                             } else {
-                                LOG.info("Finished importing {} from {}", entriesProcessed, currentInputStream.getStreamName());
+                                LOG.info("Finished retrieving {} from {}", entriesProcessed, currentInputStream.getStreamName());
                                 // close all stacks
                                 for (ArchiveInputStreamPosition as = archiveInputStreamStack.pop(); as != null; as = archiveInputStreamStack.pop()) {
                                     as.close();
