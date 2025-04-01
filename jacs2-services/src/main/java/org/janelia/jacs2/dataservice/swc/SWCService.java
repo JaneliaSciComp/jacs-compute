@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -257,6 +258,7 @@ public class SWCService {
                                        boolean appendToExisting,
                                        Map<String, Object> storageAttributes) {
         List<SWCData> swcDataList = getRemoteSWCData(swcFolderName, firstEntry, maxSize, getBatchSize, depth, orderSWCs, storageAttributes);
+        LOG.info("Read {} SWC files from {}", swcDataList.size(), swcFolderName);
         VectorOperator externalToInternalConverter = getExternalToInternalConverter(tmSample);
         List<BoundingBox3d> boundingBoxes = swcDataList.stream()
                 .map(swcDataEntry -> {
@@ -331,7 +333,7 @@ public class SWCService {
                 })
                 .orElseGet(Stream::of)
                 .map(swcEntry -> swcReader.readSWCStream(swcEntry.getName(), swcEntry.getData()))
-                .filter(swcData -> swcData != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
