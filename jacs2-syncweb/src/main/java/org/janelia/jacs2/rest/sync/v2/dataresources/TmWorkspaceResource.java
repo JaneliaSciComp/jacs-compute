@@ -477,22 +477,12 @@ public class TmWorkspaceResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/operation/log")
     public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
-                                   @ApiParam @QueryParam("sampleId") Long sampleId,
-                                   @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                   @ApiParam @QueryParam("neuronId") Long neuronId,
-                                   @ApiParam @QueryParam("activity") TmOperation.Activity activity,
-                                   @ApiParam @QueryParam("elapsedTime") Long elapsedTime,
-                                   @ApiParam @QueryParam("timestamp") String timestamp) {
+                                   @ApiParam @QueryParam("operation") TmOperation operation) {
         try {
-            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
-            Date timestampDate = null;
-            if (timestamp!=null) {
-                timestampDate = format.parse(timestamp);
-            }
-            tmNeuronMetadataDao.createOperationLog(sampleId, workspaceId,neuronId, activity, timestampDate, elapsedTime, subjectKey);
+            tmNeuronMetadataDao.createOperationLog(operation, subjectKey);
         } catch (Exception e) {
-            LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
-                    activity,timestamp);
+            LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey, operation.getWorkspaceId(),
+                    operation.getNeuronId(), operation.getTimestamp(), operation.getElapsedTime());
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
