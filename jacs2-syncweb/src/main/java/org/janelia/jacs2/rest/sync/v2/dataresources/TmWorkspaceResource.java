@@ -473,15 +473,14 @@ public class TmWorkspaceResource {
             @ApiResponse(code = 200, message = "Successfully created an operation log"),
             @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
     })
-    @GET
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/operation/log")
-    public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
-                                   @ApiParam @QueryParam("operation") TmOperation operation) {
+    public void createOperationLog(@ApiParam TmOperation operation) {
         try {
-            tmNeuronMetadataDao.createOperationLog(operation, subjectKey);
+            tmNeuronMetadataDao.createOperationLog(operation, operation.getUser());
         } catch (Exception e) {
-            LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey, operation.getWorkspaceId(),
+            LOG.error("Error occurred creating operation log for {},{},{},{},{}", operation.getUser(), operation.getWorkspaceId(),
                     operation.getNeuronId(), operation.getTimestamp(), operation.getElapsedTime());
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
