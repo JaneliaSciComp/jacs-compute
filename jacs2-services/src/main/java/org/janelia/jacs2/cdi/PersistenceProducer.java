@@ -129,7 +129,6 @@ public class PersistenceProducer {
         return MongoDBHelper.createMongoDatabase(mongoClient, mongoFutureDatabase);
     }
 
-    @Sage
     @ApplicationScoped
     @Produces
     public DataSource createSageDatasource(@PropertyValue(name = "sage.db.url") String dbUrl,
