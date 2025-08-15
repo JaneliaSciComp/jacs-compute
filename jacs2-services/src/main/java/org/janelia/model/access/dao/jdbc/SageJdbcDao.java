@@ -27,7 +27,7 @@ public class SageJdbcDao implements SageDao {
     private Logger logger;
 
     @Inject
-    public SageJdbcDao(@Sage DataSource dataSource, Logger logger) {
+    public SageJdbcDao(DataSource dataSource, Logger logger) {
         this.dataSource = dataSource;
         this.logger = logger;
     }
