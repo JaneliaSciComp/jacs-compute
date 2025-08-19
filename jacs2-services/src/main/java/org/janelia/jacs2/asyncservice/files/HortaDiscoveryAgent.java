@@ -61,8 +61,10 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
             LOG.info("Inspecting potential TM sample directory {}", filepath);
 
             String transformPath = getPath(storageObject.getAbsolutePath(), "transform.txt");
+            String topKtxPath = getPath(storageObject.getAbsolutePath() + "/ktx", "block_8_xy_.ktx");
 
-            if (jadeStorage.exists(storageObject.getLocation(), transformPath)) {
+            if (jadeStorage.exists(storageObject.getLocation(), transformPath) &&
+                    jadeStorage.exists(storageObject.getLocation(), topKtxPath)) {
                 LOG.info("  Found transform.txt");
 
                 String sampleName = storageObject.getObjectName();
