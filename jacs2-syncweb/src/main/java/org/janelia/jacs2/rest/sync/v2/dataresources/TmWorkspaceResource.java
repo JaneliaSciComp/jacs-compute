@@ -499,20 +499,12 @@ public class TmWorkspaceResource {
     public  List<TmOperation> getOperationLog(@ApiParam @QueryParam("username") String subjectKey,
                                                 @ApiParam @QueryParam("workspaceId") Long workspaceId,
                                                 @ApiParam @QueryParam("neuronId") Long neuronId,
-                                                @ApiParam @QueryParam("startTime") String startTime,
-                                                @ApiParam @QueryParam("endTime") String endTime) {
+                                                @ApiParam @QueryParam("userId") String userId,
+                                                @ApiParam @QueryParam("activity") TmOperation.Activity activity) {
         try {
-            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
-            Date startTimeDate = null, endTimeDate = null;
-            if (startTime!=null) {
-                startTimeDate = format.parse(startTime);
-            }
-            if (endTime!=null) {
-                endTimeDate = format.parse(endTime);
-            }
-            return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startTimeDate, endTimeDate);
+            return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, userId, activity);
         } catch (Exception e) {
-            LOG.error("Error occurred getting operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId, startTime, endTime);
+            LOG.error("Error occurred getting operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId, userId, activity);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }}
