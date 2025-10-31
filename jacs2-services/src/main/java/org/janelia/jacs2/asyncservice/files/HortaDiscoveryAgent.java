@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.files;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.asyncservice.dataimport.StorageContentHelper;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.dataservice.swc.SWCService;
@@ -10,6 +11,7 @@ import org.janelia.jacs2.dataservice.swc.VectorOperator;
 import org.janelia.jacsstorage.clients.api.JadeStorageService;
 import org.janelia.jacsstorage.clients.api.StorageObject;
 import org.janelia.jacsstorage.clients.api.StorageObjectNotFoundException;
+import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.FileType;
@@ -19,6 +21,8 @@ import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.security.GroupRole;
+import org.janelia.model.security.UserGroupRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +35,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A file discovery agent which finds Horta samples and creates corresponding TmSample objects.
@@ -50,6 +56,12 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
     @Inject
     private SWCService swcService;
 
+    @Inject
+    private LegacyDomainDao domainDao;
+
+    @Inject
+    @PropertyValue(name = "user.defaultReadGroups")
+    private String defaultReadGroups;
 
     public TmSample discover(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, JadeObject jadeObject) {
 
@@ -190,6 +202,13 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
 
         VectorOperator externalToInternalConverter = swcService.getExternalToInternalConverter(sample);
         TmWorkspace tmWorkspace = hortaDataManager.createWorkspace(subjectKey, sample, title);
+        try {
+            domainDao.setPermissions(subjectKey, TmWorkspace.class.getName(), tmWorkspace.getId(),
+                    defaultReadGroups, true, true, true);
+        } catch (Exception e) {
+            LOG.error("Error giving default read group permission to {} for {}", tmWorkspace, defaultReadGroups, e);
+        }
+
         LOG.info("Created workspace {} for sample {} to load neurons from {}", tmWorkspace, sample, neuronsPath);
 
         try {
