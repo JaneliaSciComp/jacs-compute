@@ -42,6 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.domain.SampleQuery;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
@@ -411,11 +412,13 @@ public class ColorDepthResource {
                     .flatMap(r -> r.getChildren().stream())
                     .collect(Collectors.toList());
         } else if (CollectionUtils.isEmpty(releases)) {
-            return sampleDao.findMatchingSample(null, datasets, null, null, 0, -1).stream()
+            return sampleDao.findMatchingSamples(
+                    new SampleQuery().addDatasetIds(datasets).setOffset(0).setLength(-1)).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
         } else {
-            List<Reference> sampleRefsForDatasets = sampleDao.findMatchingSample(null, datasets, null, null, 0, -1).stream()
+            List<Reference> sampleRefsForDatasets = sampleDao.findMatchingSamples(
+                    new SampleQuery().addDatasetIds(datasets).setOffset(0).setLength(-1)).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
             List<Reference> sampleRefsForReleases = lineReleaseDao.findReleasesByName(releases).stream()

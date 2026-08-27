@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -34,11 +35,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.SampleQuery;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.sample.FileGroup;
 import org.janelia.model.domain.sample.LSMImage;
@@ -88,25 +89,28 @@ public class SampleDataResource {
     public Response getSamples(@ApiParam @QueryParam("refs") List<String> refs,
                                @ApiParam @QueryParam("name") List<String> names,
                                @ApiParam @QueryParam("slideCode") List<String> slideCodes,
+                               @ApiParam @QueryParam("flycoreId") List<String> flycoreIds,
+                               @ApiParam @QueryParam("crossBarcode") List<String> crossBarcodes,
                                @ApiParam @QueryParam("offset") String offsetParam,
                                @ApiParam @QueryParam("length") String lengthParam) {
         LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
         try {
-            Set<Long> sampleIds = extractMultiValueParams(refs).stream()
-                    .map(Reference::createFor)
-                    .map(Reference::getTargetId)
-                    .collect(Collectors.toSet());
-            Set<String> sampleNames = extractMultiValueParams(names);
-            Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes);
+            Set<Long> sampleIds = extractMultiValueParams(refs, r -> Reference.createFor(r).getTargetId());
+            Set<String> sampleNames = extractMultiValueParams(names, Function.identity());
+            Set<String> sampleSlideCodes = extractMultiValueParams(names, Function.identity());
+            Set<String> sampleFlycoreIds = extractMultiValueParams(names, Function.identity());
+            Set<Integer> sampleCrossBarcodes = extractMultiValueParams(crossBarcodes, Integer::valueOf);
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
-            List<Sample> sampleList = sampleDao.findMatchingSample(
-                    sampleIds,
-                    null,
-                    sampleNames,
-                    sampleSlideCodes,
-                    offset,
-                    length);
+            SampleQuery sampleQuery = new SampleQuery()
+                    .addSampleIds(sampleIds)
+                    .addSampleNames(sampleNames)
+                    .addSampleSlideCodes(sampleSlideCodes)
+                    .addSampleFlycoreIds(sampleFlycoreIds)
+                    .addSampleCrossBarcodes(sampleCrossBarcodes)
+                    .setOffset(offset)
+                    .setLength(length);
+            List<Sample> sampleList = sampleDao.findMatchingSamples(sampleQuery);
             return Response
                     .ok(new GenericEntity<List<Sample>>(sampleList){})
                     .build();
@@ -394,13 +398,14 @@ public class SampleDataResource {
                 .build();
     }
 
-    private Set<String> extractMultiValueParams(List<String> params) {
+    private <T> Set<T> extractMultiValueParams(List<String> params, Function<String, T> valueExtractor) {
         if (CollectionUtils.isEmpty(params)) {
             return Collections.emptySet();
         } else {
             return params.stream()
                     .filter(StringUtils::isNotBlank)
                     .flatMap(param -> Splitter.on(',').trimResults().omitEmptyStrings().splitToList(param).stream())
+                    .map(valueExtractor)
                     .collect(Collectors.toSet())
                     ;
         }
