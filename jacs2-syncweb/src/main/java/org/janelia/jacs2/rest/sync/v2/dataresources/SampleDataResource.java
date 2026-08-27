@@ -87,6 +87,8 @@ public class SampleDataResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/samples")
     public Response getSamples(@ApiParam @QueryParam("refs") List<String> refs,
+                               @ApiParam @QueryParam("dataset") List<String> datasets,
+                               @ApiParam @QueryParam("line") List<String> lines,
                                @ApiParam @QueryParam("name") List<String> names,
                                @ApiParam @QueryParam("slideCode") List<String> slideCodes,
                                @ApiParam @QueryParam("flycoreId") List<String> flycoreIds,
@@ -96,6 +98,8 @@ public class SampleDataResource {
         LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
         try {
             Set<Long> sampleIds = extractMultiValueParams(refs, r -> Reference.createFor(r).getTargetId());
+            Set<String> sampleDatasets = extractMultiValueParams(datasets, Function.identity());
+            Set<String> sampleLines = extractMultiValueParams(lines, Function.identity());
             Set<String> sampleNames = extractMultiValueParams(names, Function.identity());
             Set<String> sampleSlideCodes = extractMultiValueParams(names, Function.identity());
             Set<String> sampleFlycoreIds = extractMultiValueParams(names, Function.identity());
@@ -104,6 +108,8 @@ public class SampleDataResource {
             int length = parseIntegerParam("length", lengthParam, -1);
             SampleQuery sampleQuery = new SampleQuery()
                     .addSampleIds(sampleIds)
+                    .addDatasetIds(sampleDatasets)
+                    .addSampleLines(sampleLines)
                     .addSampleNames(sampleNames)
                     .addSampleSlideCodes(sampleSlideCodes)
                     .addSampleFlycoreIds(sampleFlycoreIds)
