@@ -141,7 +141,7 @@ public class SampleDataResource {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/alignmentResults")
+    @Path("/sampleAlignmentResults")
     public Response getSampleAlignmentResults(@ApiParam @QueryParam("refs") List<String> refs,
                                               @ApiParam @QueryParam("line") List<String> lines,
                                               @ApiParam @QueryParam("name") List<String> names,
