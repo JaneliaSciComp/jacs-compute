@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.base.Splitter;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -44,7 +44,9 @@ import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.sample.FileGroup;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.ObjectiveSample;
+import org.janelia.model.domain.sample.PipelineResult;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SampleAlignmentResult;
 import org.janelia.model.domain.sample.SamplePipelineRun;
 import org.janelia.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.model.domain.sample.SampleProcessingResult;
@@ -101,8 +103,8 @@ public class SampleDataResource {
             Set<String> sampleDatasets = extractMultiValueParams(datasets, Function.identity());
             Set<String> sampleLines = extractMultiValueParams(lines, Function.identity());
             Set<String> sampleNames = extractMultiValueParams(names, Function.identity());
-            Set<String> sampleSlideCodes = extractMultiValueParams(names, Function.identity());
-            Set<String> sampleFlycoreIds = extractMultiValueParams(names, Function.identity());
+            Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes, Function.identity());
+            Set<String> sampleFlycoreIds = extractMultiValueParams(flycoreIds, Function.identity());
             Set<Integer> sampleCrossBarcodes = extractMultiValueParams(crossBarcodes, Integer::valueOf);
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
@@ -118,7 +120,7 @@ public class SampleDataResource {
                     .setLength(length);
             List<Sample> sampleList = sampleDao.findMatchingSamples(sampleQuery);
             return Response
-                    .ok(new GenericEntity<List<Sample>>(sampleList){})
+                    .ok(new GenericEntity<List<Sample>>(sampleList) {})
                     .build();
         } catch (Exception e) {
             LOG.error("Error getting samples", e);
@@ -127,6 +129,100 @@ public class SampleDataResource {
                     .build();
         } finally {
             LOG.trace("Finished getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
+        }
+    }
+
+    @ApiOperation(value = "Gets the alignment results for the matching samples. If no query parameters for getting the sample have been provided it returns an invalid request.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got list of sample alignment results", response = Sample.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 400, message = "Invalid Request - most likely because the sample query filter is empty", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of Sample(s)", response = ErrorResponse.class)
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/alignmentResults")
+    public Response getSampleAlignmentResults(@ApiParam @QueryParam("refs") List<String> refs,
+                                              @ApiParam @QueryParam("line") List<String> lines,
+                                              @ApiParam @QueryParam("name") List<String> names,
+                                              @ApiParam @QueryParam("slideCode") List<String> slideCodes,
+                                              @ApiParam @QueryParam("crossBarcode") List<String> crossBarcodes) {
+        LOG.trace("Start getSampleAlignmentResults({}, {}, {}, {}, {})", refs, lines, names, slideCodes, crossBarcodes);
+        try {
+            Set<Long> sampleIds = extractMultiValueParams(refs, r -> Reference.createFor(r).getTargetId());
+            Set<String> sampleLines = extractMultiValueParams(lines, Function.identity());
+            Set<String> sampleNames = extractMultiValueParams(names, Function.identity());
+            Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes, Function.identity());
+            Set<Integer> sampleCrossBarcodes = extractMultiValueParams(crossBarcodes, Integer::valueOf);
+            SampleQuery sampleQuery = new SampleQuery()
+                    .addSampleIds(sampleIds)
+                    .addSampleLines(sampleLines)
+                    .addSampleNames(sampleNames)
+                    .addSampleSlideCodes(sampleSlideCodes)
+                    .addSampleCrossBarcodes(sampleCrossBarcodes);
+            if (sampleQuery.isEmpty()) {
+                LOG.error("No sample query provided!");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("No sample filtering parameters were provided!"))
+                        .build();
+            }
+            List<Sample> sampleList = sampleDao.findMatchingSamples(sampleQuery);
+            List<Sample> filteredSamples = sampleList.stream()
+                    .peek(sample -> {
+                        // only return samples with alignment results and if such results are not avaoilale
+                        // don't return the sample at all
+                        List<ObjectiveSample> objectiveSamples = sample.getObjectiveSamples().stream()
+                                .peek(os -> {
+                                    List<SamplePipelineRun> pipelineRuns = os.getPipelineRuns().stream()
+                                            .peek(pipelineRun -> {
+                                                List<PipelineResult> alignmentResults = pipelineRun.getResults().stream()
+                                                        .filter(r -> r instanceof SampleAlignmentResult
+                                                                && (r.getPurged() == null || !r.getPurged())
+                                                                && r.getFiles().containsKey(FileType.VisuallyLosslessStack))
+                                                        .map(ar -> {
+                                                            SampleAlignmentResult ssar = (SampleAlignmentResult) ar;
+                                                            SampleAlignmentResult dsar = new SampleAlignmentResult();
+                                                            String vlStackPath;
+                                                            if (StringUtils.isBlank(ssar.getFilepath())) {
+                                                                vlStackPath = ssar.getFiles().get(FileType.VisuallyLosslessStack);
+                                                            } else {
+                                                                vlStackPath = Paths.get(ssar.getFilepath(), ssar.getFiles().get(FileType.VisuallyLosslessStack)).toString();
+                                                            }
+                                                            dsar.setId(ssar.getId());
+                                                            dsar.setName(ssar.getName());
+                                                            dsar.setAlignmentSpace(ssar.getAlignmentSpace());
+                                                            dsar.setAnatomicalArea(ssar.getAnatomicalArea());
+                                                            dsar.setObjective(ssar.getObjective());
+                                                            dsar.getFiles().put(FileType.VisuallyLosslessStack, vlStackPath);
+                                                            dsar.setCreationDate(ssar.getCreationDate());
+                                                            return dsar;
+                                                        })
+                                                        .collect(Collectors.toList());
+                                                pipelineRun.setResults(alignmentResults);
+                                            })
+                                            .filter(SamplePipelineRun::hasResults)
+                                            .collect(Collectors.toList());
+                                    os.setPipelineRuns(pipelineRuns);
+                                    os.setTiles(Collections.emptyList()); // not interested in tiles
+                                })
+                                .filter(ObjectiveSample::hasPipelineRuns)
+                                .collect(Collectors.toList());
+
+                        sample.setObjectiveSamples(objectiveSamples);
+                    })
+                    .filter(sample -> !sample.getObjectiveSamples().isEmpty())
+                    .collect(Collectors.toList());
+            return Response
+                    .ok(new GenericEntity<List<Sample>>(filteredSamples) {
+                    })
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error getting samples", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving samples"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getSampleAlignmentResults({}, {}, {}, {}, {})", refs, lines, names, slideCodes, crossBarcodes);
         }
     }
 
@@ -160,7 +256,7 @@ public class SampleDataResource {
                         .build();
             }
             return Response
-                    .ok(new GenericEntity<List<LSMImage>>(sampleLSMs){})
+                    .ok(new GenericEntity<List<LSMImage>>(sampleLSMs) {})
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting sample {} LSMs for {}", sampleId, subjectKey, e);
@@ -192,12 +288,12 @@ public class SampleDataResource {
                 if (lsmImage.getName().startsWith(lsmName) || lsmName.startsWith(lsmImage.getName())) {
                     Map<FileType, String> files = getAbsoluteFiles(lsmImage);
                     return Response
-                            .ok(new GenericEntity<Map<FileType, String>>(files){})
+                            .ok(new GenericEntity<Map<FileType, String>>(files) {})
                             .build();
                 }
             }
 
-            return getBadRequest("LSM with name "+lsmName+" not found in Sample#"+sampleId);
+            return getBadRequest("LSM with name " + lsmName + " not found in Sample#" + sampleId);
 
         } catch (Exception e) {
             LOG.error("Error occurred getting sample {} lsm for {}", sampleId, subjectKey, e);
@@ -228,19 +324,19 @@ public class SampleDataResource {
         LOG.trace("Start getAlignmentForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, alignmentSpace);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
-            if (sample==null) {
+            if (sample == null) {
                 LOG.error("Sample {} not found for {}", sampleId, subjectKey);
-                return getBadRequest("Sample "+sampleId+" not found");
+                return getBadRequest("Sample " + sampleId + " not found");
             }
 
             ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
-            if (objectiveSample==null) {
-                return getBadRequest("Objective "+objective+" not found in "+sample);
+            if (objectiveSample == null) {
+                return getBadRequest("Objective " + objective + " not found in " + sample);
             }
 
             SamplePipelineRun latestSuccessfulRun = objectiveSample.getLatestSuccessfulRun();
-            if (latestSuccessfulRun==null) {
-                return getBadRequest("No processing results found for objective "+objective+" in "+sample);
+            if (latestSuccessfulRun == null) {
+                return getBadRequest("No processing results found for objective " + objective + " in " + sample);
             }
 
             List<Map<FileType, String>> results = latestSuccessfulRun.getAlignmentResults().stream()
@@ -249,7 +345,7 @@ public class SampleDataResource {
                     .collect(Collectors.toList());
 
             return Response
-                    .ok(new GenericEntity<List<Map<FileType, String>>>(results){})
+                    .ok(new GenericEntity<List<Map<FileType, String>>>(results) {})
                     .build();
 
         } catch (Exception e) {
@@ -280,28 +376,28 @@ public class SampleDataResource {
         LOG.trace("Start getPrimaryAlignmentForSample({}, {}, {}, {})", subjectKey, sampleId, objective, area);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
-            if (sample==null) {
+            if (sample == null) {
                 LOG.error("Sample {} not found for {}", sampleId, subjectKey);
-                return getBadRequest("Sample "+sampleId+" not found");
+                return getBadRequest("Sample " + sampleId + " not found");
             }
 
             ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
-            if (objectiveSample==null) {
-                return getBadRequest("Objective "+objective+" not found in "+sample);
+            if (objectiveSample == null) {
+                return getBadRequest("Objective " + objective + " not found in " + sample);
             }
 
             SamplePipelineRun latestSuccessfulRun = objectiveSample.getLatestSuccessfulRun();
-            if (latestSuccessfulRun==null) {
-                return getBadRequest("No processing results found for objective "+objective+" in "+sample);
+            if (latestSuccessfulRun == null) {
+                return getBadRequest("No processing results found for objective " + objective + " in " + sample);
             }
 
             Map<FileType, String> results = latestSuccessfulRun.getAlignmentResults().stream()
-                    .filter(s -> s.getAnatomicalArea().equals(area) && s.getBridgeParentAlignmentId()==null)
+                    .filter(s -> s.getAnatomicalArea().equals(area) && s.getBridgeParentAlignmentId() == null)
                     .map(this::getAbsoluteFiles)
                     .findFirst().orElse(Collections.emptyMap());
 
             return Response
-                    .ok(new GenericEntity<Map<FileType, String>>(results){})
+                    .ok(new GenericEntity<Map<FileType, String>>(results) {})
                     .build();
 
         } catch (Exception e) {
@@ -333,38 +429,38 @@ public class SampleDataResource {
         LOG.trace("Start getSecondaryDataForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, tile);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
-            if (sample==null) {
+            if (sample == null) {
                 LOG.error("Sample {} not found for {}", sampleId, subjectKey);
-                return getBadRequest("Sample "+sampleId+" not found");
+                return getBadRequest("Sample " + sampleId + " not found");
             }
 
             ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
-            if (objectiveSample==null) {
-                return getBadRequest("Objective "+objective+" not found in "+sample);
+            if (objectiveSample == null) {
+                return getBadRequest("Objective " + objective + " not found in " + sample);
             }
 
             SamplePipelineRun latestSuccessfulRun = objectiveSample.getLatestSuccessfulRun();
-            if (latestSuccessfulRun==null) {
-                return getBadRequest("No processing results found for objective "+objective+" in "+sample);
+            if (latestSuccessfulRun == null) {
+                return getBadRequest("No processing results found for objective " + objective + " in " + sample);
             }
 
             SamplePostProcessingResult latestResultOfType = latestSuccessfulRun.getLatestResultOfType(SamplePostProcessingResult.class);
-            if (latestResultOfType==null) {
-                return getBadRequest("No post processing results found in "+sample);
+            if (latestResultOfType == null) {
+                return getBadRequest("No post processing results found in " + sample);
             }
 
             FileGroup group;
 
-            if (tile!=null) {
+            if (tile != null) {
                 group = latestResultOfType.getGroup(tile);
-                if (group==null) {
-                    return getBadRequest("No post processing results found for tile "+tile+" in "+sample);
+                if (group == null) {
+                    return getBadRequest("No post processing results found for tile " + tile + " in " + sample);
                 }
             }
             else {
                 group = latestResultOfType.getGroup(area);
-                if (group==null) {
-                    return getBadRequest("No post processing results found for area "+area+" in "+sample);
+                if (group == null) {
+                    return getBadRequest("No post processing results found for area " + area + " in " + sample);
                 }
                 // user wants secondary data for a stitched result, let's add the stack as well for convenience
                 SampleProcessingResult result = latestSuccessfulRun.getSampleProcessingResults().stream()
@@ -376,7 +472,7 @@ public class SampleDataResource {
 
             Map<FileType, String> files = getAbsoluteFiles(group);
             return Response
-                    .ok(new GenericEntity<Map<FileType, String>>(files){})
+                    .ok(new GenericEntity<Map<FileType, String>>(files) {})
                     .build();
 
         } catch (Exception e) {
